@@ -9,7 +9,7 @@ gibi oynatılır (dönüştürme yok), bu yüzden işlemciyi yormaz.
 Sunucuya SSH ile bağlanın ve **normal kullanıcınızla** (root değil) çalıştırın:
 
 ```bash
-curl -fsSL https://github.com/OWNER/homestream/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/omeryilmaz99/homestream/releases/latest/download/install.sh | bash
 ```
 
 Betik şunları yapar: `ffmpeg` kurar, sunucuyu `/opt/homestream` altına yükler,

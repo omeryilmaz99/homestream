@@ -15,5 +15,5 @@ GitHub'a her gönderimde `.github/workflows/build.yml` çalışır ve "latest" s
 ## Sunucu kurulumu (tek komut)
 
 ```
-curl -fsSL https://github.com/OWNER/homestream/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/omeryilmaz99/homestream/releases/latest/download/install.sh | bash
 ```

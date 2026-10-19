@@ -9,7 +9,7 @@
 set -euo pipefail
 
 # ---- ayarlar -------------------------------------------------------------
-HOMESTREAM_DOWNLOAD_BASE="${HOMESTREAM_DOWNLOAD_BASE:-https://github.com/OWNER/homestream/releases/latest/download}"
+HOMESTREAM_DOWNLOAD_BASE="${HOMESTREAM_DOWNLOAD_BASE:-https://github.com/omeryilmaz99/homestream/releases/latest/download}"
 ROOT="${HOMESTREAM_TEST_ROOT:-}"   # only for testing the script
 INSTALL_DIR=$ROOT/opt/homestream
 DATA_DIR=$ROOT/var/lib/homestream
@@ -183,7 +183,7 @@ fi
 # ---- systemd ---------------------------------------------------------------------
 UNIT_CONTENT="[Unit]
 Description=Home Stream medya sunucusu
-Documentation=https://github.com/OWNER/homestream
+Documentation=https://github.com/omeryilmaz99/homestream
 Wants=network-online.target
 After=network-online.target local-fs.target remote-fs.target
 
