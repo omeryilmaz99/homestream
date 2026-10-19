@@ -1,0 +1,80 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Test
+        working-directory: server
+        run: go test ./...
+      - name: Build
+        working-directory: server
+        run: ./build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server
+          path: |
+            server/dist/*
+            server/install.sh
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Build
+        working-directory: client
+        run: |
+          flutter pub get
+          flutter build windows --release
+      - name: Portable zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path client/build/windows/x64/runner/Release/* -DestinationPath dist/HomeStream-Windows-Portable.zip
+      - name: Installer
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" client/installer/homestream.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  release:
+    needs: [server, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Collect files
+        run: |
+          mkdir -p release
+          find out -type f \( -name 'homestream-server-*' -o -name 'install.sh' -o -name '*.exe' -o -name '*.zip' \) -exec cp {} release/ \;
+          ls -la release
+      - name: Publish "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Home Stream (son sürüm)
+          prerelease: false
+          make_latest: true
+          files: release/*
