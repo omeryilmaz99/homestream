@@ -274,7 +274,7 @@ class _DetailDialogState extends State<DetailDialog> {
                             onTap: _openSeries,
                             child: Text(
                               _item.seriesTitle.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 letterSpacing: 2.5,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
@@ -803,7 +803,7 @@ class _EpisodeTileState extends State<_EpisodeTile> {
                     if (e.inProgress)
                       Text(
                         formatRemaining(e.userData.position, e.duration),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.accent2,
                           fontSize: 12.5,
                         ),

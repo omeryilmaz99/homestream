@@ -225,7 +225,7 @@ class _EndScreenState extends State<EndScreen>
                               !_countdown.isAnimating && _countdown.value == 0
                           ? 'SIRADAKİ'
                           : 'SIRADAKİ · $left sn',
-                      style: const TextStyle(
+                      style: TextStyle(
                         letterSpacing: 3,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent2,

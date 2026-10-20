@@ -13,7 +13,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.0.0';
+const appVersion = '1.0.1';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -111,6 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _appearanceSection(),
                 _playbackSection(),
                 _subtitleSection(),
                 _serversSection(),
@@ -120,6 +121,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------- appearance
+  Widget _appearanceSection() {
+    return _Section(
+      icon: Icons.palette_rounded,
+      title: 'Görünüm',
+      subtitle: 'Uygulamanın tema rengi (bu cihaz).',
+      children: [
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: [
+            for (final p in AppTheme.presets)
+              _ThemeSwatch(
+                preset: p,
+                selected: p.id == AppTheme.current.id,
+                onTap: () {
+                  prefs.theme = p.id;
+                  AppTheme.apply(p);
+                },
+              ),
+          ],
         ),
       ],
     );
@@ -786,6 +814,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 // ------------------------------------------------------------ building blocks
+
+class _ThemeSwatch extends StatefulWidget {
+  final ThemePreset preset;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ThemeSwatch({
+    required this.preset,
+    required this.selected,
+    required this.onTap,
+  });
+  @override
+  State<_ThemeSwatch> createState() => _ThemeSwatchState();
+}
+
+class _ThemeSwatchState extends State<_ThemeSwatch> {
+  bool _hover = false;
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.preset;
+    final active = _hover || widget.selected;
+    return FocusableActionDetector(
+      mouseCursor: SystemMouseCursors.click,
+      onShowHoverHighlight: (v) => setState(() => _hover = v),
+      onShowFocusHighlight: (v) => setState(() => _hover = v),
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) => widget.onTap(),
+        ),
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 150,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: active ? AppColors.surface3 : AppColors.surface2,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: widget.selected ? p.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [p.accent, p.accent2],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: widget.selected
+                    ? const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                p.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
+                  color: active ? Colors.white : AppColors.textDim,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _Section extends StatelessWidget {
   final IconData icon;

@@ -386,11 +386,14 @@ class AnimatedBackdrop extends StatefulWidget {
   State<AnimatedBackdrop> createState() => AnimatedBackdropState();
 }
 
+/// Soft drifting colour blobs. Each blob is painted once into its own layer
+/// (RepaintBoundary) and only moved with a Transform, so the animation costs
+/// a layer offset per frame instead of repainting full-screen gradients.
 class AnimatedBackdropState extends State<AnimatedBackdrop>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 24),
+    duration: const Duration(seconds: 30),
   )..repeat();
 
   @override
@@ -400,42 +403,61 @@ class AnimatedBackdropState extends State<AnimatedBackdrop>
   }
 
   @override
-  Widget build(BuildContext context) => RepaintBoundary(
-    child: AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) => CustomPaint(painter: _BlobPainter(_c.value)),
-    ),
-  );
-}
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final w = box.maxWidth, h = box.maxHeight;
+          final side = min(w, h);
+          Widget blob(Color c, double phase, double rx, double ry, double r) {
+            final d = side * r * 2;
+            final child = RepaintBoundary(
+              child: SizedBox(
+                width: d,
+                height: d,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: [
+                        c.withValues(alpha: 0.35),
+                        c.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            return AnimatedBuilder(
+              animation: _c,
+              child: child,
+              builder: (context, child) {
+                final a = 2 * pi * (_c.value + phase);
+                final cx = w * (0.5 + rx * cos(a));
+                final cy = h * (0.5 + ry * sin(a * 1.3));
+                return Transform.translate(
+                  offset: Offset(cx - d / 2, cy - d / 2),
+                  child: child,
+                );
+              },
+            );
+          }
 
-class _BlobPainter extends CustomPainter {
-  final double t;
-  _BlobPainter(this.t);
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = AppColors.bg);
-    void blob(Color c, double phase, double rx, double ry, double r) {
-      final a = 2 * pi * (t + phase);
-      final center = Offset(
-        size.width * (0.5 + rx * cos(a)),
-        size.height * (0.5 + ry * sin(a * 1.3)),
-      );
-      final radius = size.shortestSide * r;
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [c.withValues(alpha: 0.35), c.withValues(alpha: 0)],
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
-      );
-    }
-
-    blob(AppColors.accent, 0, 0.32, 0.28, 0.75);
-    blob(AppColors.accent2, 0.33, 0.35, 0.3, 0.6);
-    blob(const Color(0xFF3B82F6), 0.66, 0.3, 0.32, 0.55);
+          return ClipRect(
+            child: ColoredBox(
+              color: AppColors.bg,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const SizedBox.expand(),
+                  blob(AppColors.accent, 0, 0.32, 0.28, 0.75),
+                  blob(AppColors.accent2, 0.33, 0.35, 0.3, 0.6),
+                  blob(const Color(0xFF3B82F6), 0.66, 0.3, 0.32, 0.55),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant _BlobPainter old) => old.t != t;
 }

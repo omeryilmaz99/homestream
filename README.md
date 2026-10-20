@@ -9,7 +9,7 @@ Ev sunucusundaki filmler ve diziler için Netflix tarzı bir uygulama.
 ## Derleme
 
 GitHub'a her gönderimde `.github/workflows/build.yml` çalışır ve "latest" sürümüne şunları koyar:
-- `HomeStream-Setup-x.y.z.exe` (Windows kurulum dosyası) ve `HomeStream-Windows-Portable.zip`
+- `HomeStream-Setup.exe` (Windows kurulum dosyası) ve `HomeStream-Windows-Portable.zip`
 - `homestream-server-linux-amd64` / `-arm64` ve `install.sh`
 
 ## Sunucu kurulumu (tek komut)

@@ -223,7 +223,7 @@ class _HeroInfo extends StatelessWidget {
       children: [
         Text(
           item.isSeries ? 'DİZİ' : 'FİLM',
-          style: const TextStyle(
+          style: TextStyle(
             letterSpacing: 4,
             fontSize: 12,
             fontWeight: FontWeight.w800,

@@ -39,10 +39,8 @@ class NetImage extends StatelessWidget {
         if (sync) return child;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
-          layoutBuilder: (current, previous) => Stack(
-            fit: StackFit.expand,
-            children: [...previous, ?current],
-          ),
+          layoutBuilder: (current, previous) =>
+              Stack(fit: StackFit.expand, children: [...previous, ?current]),
           child: frame == null ? ph : child,
         );
       },

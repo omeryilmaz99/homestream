@@ -57,6 +57,10 @@ class Prefs {
       ? _p.remove('lastProfile.$serverId')
       : _p.setString('lastProfile.$serverId', profileId);
 
+  String? get theme => _p.getString('theme');
+  set theme(String? v) =>
+      v == null ? _p.remove('theme') : _p.setString('theme', v);
+
   bool get askProfileOnStart => _p.getBool('askProfileOnStart') ?? true;
   set askProfileOnStart(bool v) => _p.setBool('askProfileOnStart', v);
 

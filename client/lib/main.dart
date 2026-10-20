@@ -32,6 +32,7 @@ Future<void> main() async {
   PaintingBinding.instance.imageCache.maximumSize = 2000;
 
   final prefs = await Prefs.load();
+  AppTheme.current = AppTheme.byId(prefs.theme);
   final state = AppState(prefs);
   runApp(
     ChangeNotifierProvider.value(value: state, child: const HomeStreamApp()),

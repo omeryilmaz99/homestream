@@ -184,6 +184,10 @@ class _ProfileTileState extends State<_ProfileTile> {
   bool _active = false;
   @override
   Widget build(BuildContext context) {
+    return RepaintBoundary(child: _buildTile(context));
+  }
+
+  Widget _buildTile(BuildContext context) {
     return FocusableActionDetector(
       autofocus: widget.autofocus,
       mouseCursor: SystemMouseCursors.click,

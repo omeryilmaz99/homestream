@@ -9,24 +9,73 @@ class AppColors {
   static const text = Color(0xFFF5F5F7);
   static const textDim = Color(0xFFB4B4C2);
   static const textMuted = Color(0xFF7C7C8E);
-  static const accent = Color(0xFF8B5CF6);
-  static const accent2 = Color(0xFFEC4899);
+  static Color get accent => AppTheme.current.accent;
+  static Color get accent2 => AppTheme.current.accent2;
   static const success = Color(0xFF22C55E);
   static const warning = Color(0xFFF59E0B);
   static const danger = Color(0xFFEF4444);
 
-  static const brandGradient = LinearGradient(
+  static LinearGradient get brandGradient => LinearGradient(
     colors: [accent, accent2],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 }
 
-Color parseHexColor(String hex, [Color fallback = AppColors.accent]) {
+Color parseHexColor(String hex, [Color? fallback]) {
   var h = hex.replaceAll('#', '');
   if (h.length == 6) h = 'FF$h';
   final v = int.tryParse(h, radix: 16);
-  return v == null ? fallback : Color(v);
+  return v == null ? (fallback ?? AppColors.accent) : Color(v);
+}
+
+/// A named accent colour pair.
+class ThemePreset {
+  final String id;
+  final String name;
+  final Color accent;
+  final Color accent2;
+  const ThemePreset(this.id, this.name, this.accent, this.accent2);
+}
+
+/// App-wide accent theme. Changing it rebuilds the whole widget tree.
+class AppTheme {
+  static const presets = [
+    ThemePreset('violet', 'Mor Gece', Color(0xFF8B5CF6), Color(0xFFEC4899)),
+    ThemePreset('ocean', 'Okyanus', Color(0xFF06B6D4), Color(0xFF3B82F6)),
+    ThemePreset('sunset', 'Gün Batımı', Color(0xFFF97316), Color(0xFFEF4444)),
+    ThemePreset('emerald', 'Zümrüt', Color(0xFF10B981), Color(0xFF84CC16)),
+    ThemePreset(
+      'cinema',
+      'Sinema',
+      Color(0xFFE50914),
+      Color(0xFFFF5F6D),
+    ),
+    ThemePreset('gold', 'Altın Saat', Color(0xFFF59E0B), Color(0xFFF43F5E)),
+    ThemePreset(
+      'aurora',
+      'Kuzey Işıkları',
+      Color(0xFF22D3EE),
+      Color(0xFFA78BFA),
+    ),
+    ThemePreset('rose', 'Gül Kurusu', Color(0xFFF472B6), Color(0xFFFB923C)),
+  ];
+
+  static ThemePreset current = presets.first;
+
+  static ThemePreset byId(String? id) =>
+      presets.firstWhere((p) => p.id == id, orElse: () => presets.first);
+
+  static void apply(ThemePreset p) {
+    if (p.id == current.id) return;
+    current = p;
+    void rebuild(Element e) {
+      e.markNeedsBuild();
+      e.visitChildren(rebuild);
+    }
+
+    WidgetsBinding.instance.rootElement?.visitChildren(rebuild);
+  }
 }
 
 ThemeData buildTheme() {
@@ -75,7 +124,7 @@ ThemeData buildTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        borderSide: BorderSide(color: AppColors.accent, width: 1.5),
       ),
       hintStyle: const TextStyle(color: AppColors.textMuted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -87,11 +136,11 @@ ThemeData buildTheme() {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       width: 420,
     ),
-    sliderTheme: const SliderThemeData(
+    sliderTheme: SliderThemeData(
       activeTrackColor: AppColors.accent,
       thumbColor: Colors.white,
-      inactiveTrackColor: Color(0x33FFFFFF),
-      overlayShape: RoundSliderOverlayShape(overlayRadius: 14),
+      inactiveTrackColor: const Color(0x33FFFFFF),
+      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
@@ -151,8 +200,11 @@ class BrandLogo extends StatelessWidget {
         ),
         SizedBox(width: size * 0.45),
         ShaderMask(
-          shaderCallback: (r) => const LinearGradient(
-            colors: [Colors.white, Color(0xFFE9D5FF)],
+          shaderCallback: (r) => LinearGradient(
+            colors: [
+              Colors.white,
+              Color.lerp(Colors.white, AppColors.accent, 0.3)!,
+            ],
           ).createShader(r),
           child: Text(
             'Home Stream',

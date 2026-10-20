@@ -220,29 +220,28 @@ class _ControlsBody extends StatelessWidget {
             ],
           ),
         ),
-        // track / settings menu
-        ValueListenableBuilder<bool>(
-          valueListenable: state.menuOpen,
-          builder: (context, open, _) => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (c, a) => FadeTransition(
-              opacity: a,
-              child: SlideTransition(
-                position: Tween(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(a),
-                child: c,
+        // track / settings menu (Positioned must be a direct child of the Stack)
+        Positioned(
+          right: 24,
+          bottom: 96,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: state.menuOpen,
+            builder: (context, open, _) => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (c, a) => FadeTransition(
+                opacity: a,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(a),
+                  child: c,
+                ),
               ),
+              child: open
+                  ? TrackMenu(key: const ValueKey('menu'), state: state)
+                  : const SizedBox.shrink(key: ValueKey('none')),
             ),
-            child: open
-                ? Positioned(
-                    key: const ValueKey('menu'),
-                    right: 24,
-                    bottom: 96,
-                    child: TrackMenu(state: state),
-                  )
-                : const SizedBox.shrink(key: ValueKey('none')),
           ),
         ),
       ],
@@ -590,11 +589,7 @@ class _TrackMenuState extends State<TrackMenu> {
             SizedBox(
               width: 26,
               child: selected
-                  ? const Icon(
-                      Icons.check_rounded,
-                      size: 18,
-                      color: AppColors.accent,
-                    )
+                  ? Icon(Icons.check_rounded, size: 18, color: AppColors.accent)
                   : null,
             ),
             Expanded(

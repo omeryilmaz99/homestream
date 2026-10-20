@@ -1,7 +1,7 @@
 ; Inno Setup script for Home Stream (Windows)
 #define AppName "Home Stream"
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.0.1"
 #endif
 
 [Setup]
@@ -13,7 +13,7 @@ DefaultDirName={autopf}\Home Stream
 DefaultGroupName=Home Stream
 DisableProgramGroupPage=yes
 OutputDir=..\..\dist
-OutputBaseFilename=HomeStream-Setup-{#AppVersion}
+OutputBaseFilename=HomeStream-Setup
 SetupIconFile=..\windows\runner\resources\app_icon.ico
 UninstallDisplayIcon={app}\HomeStream.exe
 Compression=lzma2/max

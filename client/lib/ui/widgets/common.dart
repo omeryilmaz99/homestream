@@ -149,9 +149,7 @@ class ProgressLine extends StatelessWidget {
           FractionallySizedBox(
             widthFactor: value.clamp(0.0, 1.0),
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.brandGradient,
-              ),
+              decoration: BoxDecoration(gradient: AppColors.brandGradient),
             ),
           ),
         ],
