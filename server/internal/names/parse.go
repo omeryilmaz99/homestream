@@ -91,6 +91,22 @@ var genericDirs = foldSet(
 	"cinema", "multimedia", "plex", "jellyfin", "emby", "library", "kütüphane", "arşiv", "archive",
 )
 
+// groupDirs are folders used to group titles (language, dub, category,
+// quality, extras); they never name a show themselves.
+var groupDirs = foldSet(
+	"türkçe dublaj", "turkce dublaj", "dublaj", "dublajlı", "dublajli", "tr dublaj", "türkçe", "turkce",
+	"altyazı", "altyazılı", "altyazili", "türkçe altyazı", "türkçe altyazılı", "tr altyazı",
+	"orijinal", "original", "orijinal dil", "dubbed", "subbed", "dual", "dual audio",
+	"yabancı", "yabanci", "yerli", "yabancı diziler", "yerli diziler", "türk dizileri", "foreign", "domestic",
+	"english", "ingilizce", "korean", "kore", "japanese", "japon", "asya", "asian",
+	"1080p", "720p", "2160p", "4k", "hd", "uhd", "sd",
+	"extras", "ekstra", "ekstralar", "bonus", "featurettes", "behind the scenes", "kamera arkası",
+	"tamamlananlar", "devam edenler", "izlenecekler", "izlendi", "watched", "ongoing", "completed",
+)
+
+// IsGroupDir reports whether a folder name only groups titles (dub, language, category…).
+func IsGroupDir(name string) bool { return groupDirs[Fold(name)] }
+
 var seriesRoots = foldSet("diziler", "dizi", "dizilerim", "series", "tv", "tv shows", "tvshows", "shows", "tv series")
 var movieRoots = foldSet("filmler", "film", "filmlerim", "movies", "movie", "films")
 
@@ -114,7 +130,7 @@ func foldSet(xs ...string) map[string]bool {
 
 // IsGenericDir reports whether a folder name is a generic container name
 // ("Filmler", "Diziler", "Downloads", …) that does not name a title.
-func IsGenericDir(name string) bool { return genericDirs[Fold(name)] }
+func IsGenericDir(name string) bool { k := Fold(name); return genericDirs[k] || groupDirs[k] }
 
 type seasonInfo struct {
 	isSeason bool
@@ -229,24 +245,37 @@ func ParseAs(rel, kind, folderName string) Parsed {
 				return p
 			}
 		}
-		virtual := "Diziler/"
-		if len(parts) == 1 || IsSeasonFolder(parts[0]) {
-			virtual += strings.ReplaceAll(folderName, "/", " ") + "/"
-		}
-		p := ParsePath(virtual + rel)
-		// SeriesDir must stay relative to the real folder
-		if p.SeriesDir != "" {
-			sd := strings.TrimPrefix(p.SeriesDir+"/", virtual)
-			if len(sd) == len(p.SeriesDir)+1 { // not under the virtual prefix
-				sd = p.SeriesDir + "/"
+		parseUnder := func(virtual string) Parsed {
+			p := ParsePath(virtual + rel)
+			// SeriesDir must stay relative to the real folder
+			if p.SeriesDir != "" {
+				sd := strings.TrimPrefix(p.SeriesDir+"/", virtual)
+				if len(sd) == len(p.SeriesDir)+1 { // not under the virtual prefix
+					sd = p.SeriesDir + "/"
+				}
+				sd = strings.TrimSuffix(sd, "/")
+				if sd == "" {
+					sd = "."
+				}
+				p.SeriesDir = sd
 			}
-			sd = strings.TrimSuffix(sd, "/")
-			if sd == "" {
-				sd = "."
-			}
-			p.SeriesDir = sd
+			return p
 		}
-		return p
+		named := false // some folder in the path can name the show
+		for _, d := range parts[:len(parts)-1] {
+			if !IsSeasonFolder(d) && !IsGroupDir(d) {
+				named = true
+				break
+			}
+		}
+		if named {
+			return parseUnder("Diziler/")
+		}
+		// only season/grouping folders: the file name, else the library folder, names the show
+		if p := parseUnder("Diziler/"); p.Kind == Episode && p.FilePrefix != "" && Key(p.SeriesTitle) == Key(p.FilePrefix) {
+			return p
+		}
+		return parseUnder("Diziler/" + strings.ReplaceAll(folderName, "/", " ") + "/")
 	}
 	return ParsePath(rel)
 }
@@ -324,7 +353,22 @@ func ParsePath(rel string) Parsed {
 	join := func(n int) string { return strings.Join(dirs[:n], "/") }
 	switch {
 	case inShowFolder:
-		show := dirs[seriesRootIdx+1]
+		// the show folder is the deepest folder below the series root that is
+		// not a season folder or a grouping folder ("Türkçe Dublaj", "Yabancı"…)
+		showIdx := len(dirs) - 1
+		for showIdx > seriesRootIdx+1 && (seasonFolder(dirs[showIdx]).isSeason && seasonFolder(dirs[showIdx]).prefix == "" || IsGroupDir(dirs[showIdx])) {
+			showIdx--
+		}
+		for showIdx > seriesRootIdx+1 && IsGroupDir(dirs[showIdx]) {
+			showIdx--
+		}
+		show := dirs[showIdx]
+		if IsGroupDir(show) && p.FilePrefix != "" {
+			// episodes lie directly in a grouping folder: the file names the show
+			title, year = p.FilePrefix, p.FilePrefixYear
+			p.SeriesDir = join(showIdx + 1)
+			break
+		}
 		si := seasonFolder(show)
 		name := show
 		if si.isSeason {
@@ -334,8 +378,8 @@ func ParsePath(rel string) Parsed {
 			}
 		}
 		title, year = CleanTitle(name)
-		p.SeriesDir = join(seriesRootIdx + 2)
-		if len(dirs) == seriesRootIdx+2 && !si.isSeason {
+		p.SeriesDir = join(showIdx + 1)
+		if len(dirs) == showIdx+1 && !si.isSeason {
 			p.TitleFromFolder = true
 		}
 	case pInfo.isSeason && pInfo.prefix != "":

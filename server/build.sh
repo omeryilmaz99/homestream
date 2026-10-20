@@ -2,7 +2,7 @@
 # Builds static Linux binaries into dist/ (amd64 + arm64).
 set -euo pipefail
 cd "$(dirname "$0")"
-VERSION="${VERSION:-1.2.0}"
+VERSION="${VERSION:-1.2.1}"
 GO="${GO:-$(command -v go || echo /usr/local/go/bin/go)}"
 export GOTOOLCHAIN="${GOTOOLCHAIN:-local}"
 mkdir -p dist

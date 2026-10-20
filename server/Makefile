@@ -1,4 +1,4 @@
-VERSION ?= 1.2.0
+VERSION ?= 1.2.1
 GO ?= $(shell command -v go || echo /usr/local/go/bin/go)
 export GOTOOLCHAIN ?= local
 

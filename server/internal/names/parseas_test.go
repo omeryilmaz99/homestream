@@ -16,6 +16,12 @@ func TestParseAs(t *testing.T) {
 		{"Sezon 1/03.mkv", "series", "Ezel", Episode, "", "Ezel", 1, 3, "."},
 		{"Ezel 7.mkv", "series", "Ezel", Episode, "", "Ezel", 1, 7, "."},
 		{"Breaking Bad S01E03.mkv", "series", "Arsiv", Episode, "", "Breaking Bad", 1, 3, ""},
+		{"Türkçe Dublaj/Prison Break/Sezon 2/Prison Break S02E04.mkv", "series", "Diziler", Episode, "", "Prison Break", 2, 4, "Türkçe Dublaj/Prison Break"},
+		{"Yabancı/The Office/03.mkv", "series", "Diziler", Episode, "", "The Office", 1, 3, "Yabancı/The Office"},
+		{"Yabancı/Lost S01E05.mkv", "series", "Diziler", Episode, "", "Lost", 1, 5, "Yabancı"},
+		{"Türkçe Dublaj/Sezon 1/05.mkv", "series", "Ezel", Episode, "", "Ezel", 1, 5, "."},
+		{"Dark/Sezon 1/Türkçe Dublaj/Dark S01E02.mkv", "series", "Diziler", Episode, "", "Dark", 1, 2, "Dark"},
+		{"Diziler/Türkçe Dublaj/Prison Break/Sezon 1/Bolum 3.mkv", "auto", "HomeStream", Episode, "", "Prison Break", 1, 3, "Diziler/Türkçe Dublaj/Prison Break"},
 		{"Filmler/Inception (2010).mkv", "auto", "HomeStream", Movie, "Inception", "", 0, 0, ""},
 	}
 	for _, c := range cases {
