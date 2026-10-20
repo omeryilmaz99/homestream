@@ -264,7 +264,7 @@ func (l *Library) scan(ctx context.Context, refreshMeta bool) error {
 
 		parsed := make([]names.Parsed, len(w.files))
 		for i, wf := range w.files {
-			parsed[i] = names.ParsePath(wf.rel)
+			parsed[i] = names.ParseAs(wf.rel, f.Kind, filepath.Base(f.Path))
 		}
 		applyMultiPrefixRule(w.files, parsed)
 

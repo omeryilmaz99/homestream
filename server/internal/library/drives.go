@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"homestream/internal/store"
 )
 
 // WatchDrives adds every disk mounted under dir (one sub-folder per disk, see
@@ -51,7 +53,7 @@ func (l *Library) WatchDrives(ctx context.Context, dir string) {
 			}
 			seen[p] = true
 			added = true
-			if _, err := l.St.AddFolder(p, e.Name()); err != nil {
+			if _, err := l.St.AddFolder(p, e.Name(), store.FolderAuto); err != nil {
 				log.Printf("drives: cannot add %s: %v", p, err)
 				continue
 			}

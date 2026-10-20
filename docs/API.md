@@ -108,7 +108,8 @@ suffix like `Movie.tr.srt`, `Movie.Turkish.srt`, `Movie.eng.forced.srt`.
 | GET | `/api/images/{itemId}/{kind}` | kind = `poster` (2:3) | `backdrop` (16:9) | `thumb` (16:9 episode/movie frame). Query `w=` width (snapped to 160/320/480/780/1280/1920). JPEG, `Cache-Control: public, max-age=604800`, ETag. Fallback chain: local image file → TMDB → generated frame from the video (poster: center-crop of frame) → a dark generated placeholder. Never 404 for a known item. |
 | GET | `/api/settings` | `{"serverName","libraryFolders":[{"id","path","name","available":bool,"itemCount"}],"tmdbApiKey":"(masked or empty)","tmdbEnabled":bool,"metadataLanguage":"tr-TR","scanIntervalMinutes":30}` |
 | PUT | `/api/settings` | partial body with any of `serverName`, `tmdbApiKey`, `metadataLanguage`, `scanIntervalMinutes` |
-| POST | `/api/folders` | body `{"path":"/media/disk1/Filmler","name":"Harici Disk"}` → adds a library folder and starts a scan |
+| POST | `/api/folders` | body `{"path":"/media/disk1/Filmler","name":"Harici Disk","kind":"auto"\|"movies"\|"series"}` → adds a library folder and starts a scan. `kind`: `movies` = every video is a movie, `series` = every video is an episode (first sub-folder = show), `auto` (default) = decided per file |
+| PATCH | `/api/folders/{id}` | body `{"kind":"movies"}` → changes a folder's kind and rescans |
 | DELETE | `/api/folders/{id}` | removes a library folder (not the default HomeStream folder) and its items |
 | GET | `/api/fs?path=/` | server filesystem directory picker: `{"path":"/media","parent":"/","dirs":[{"name","path"}]}` (hidden dirs and /proc,/sys,/dev,/run skipped) |
 | POST | `/api/scan` | start a full scan (`{"refreshMetadata":false}` optional) |

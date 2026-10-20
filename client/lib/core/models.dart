@@ -383,8 +383,12 @@ class LibraryFolder {
   final String name;
   final bool available;
   final int itemCount;
+
+  /// 'auto' (genel), 'movies' (film) or 'series' (dizi).
+  final String kind;
   LibraryFolder.fromJson(Map<String, dynamic> j)
-    : id = _s(j['id']),
+    : kind = _s(j['kind']).isEmpty ? 'auto' : _s(j['kind']),
+      id = _s(j['id']),
       path = _s(j['path']),
       name = _s(j['name']),
       available = j['available'] != false,

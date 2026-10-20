@@ -13,7 +13,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.0.2';
+const appVersion = '1.0.3';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -479,30 +479,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: f.name.isNotEmpty ? f.name : f.path,
             subtitle:
                 '${f.path} · ${f.available ? '${f.itemCount} video' : 'Şu an erişilemiyor (disk takılı mı?)'}',
-            trailing: s.libraryFolders.first.id == f.id
-                ? const Tooltip(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _FolderKindMenu(
+                  kind: f.kind,
+                  onChanged: (k) => _setFolderKind(f, k),
+                ),
+                const SizedBox(width: 4),
+                if (s.libraryFolders.first.id == f.id)
+                  const Tooltip(
                     message: 'Ana klasör kaldırılamaz',
-                    child: Icon(
-                      Icons.lock_outline_rounded,
-                      color: AppColors.textMuted,
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.lock_outline_rounded,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   )
-                : IconButton(
+                else
+                  IconButton(
                     tooltip: 'Klasörü kütüphaneden çıkar',
                     icon: const Icon(Icons.remove_circle_outline_rounded),
                     onPressed: () => _removeFolder(f),
                   ),
+              ],
+            ),
           ),
         Padding(
           padding: const EdgeInsets.only(top: 6, bottom: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: PillButton(
-              icon: Icons.create_new_folder_rounded,
-              label: 'Klasör ekle (ör. harici disk)',
-              height: 40,
-              onPressed: _addFolder,
-            ),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final k in folderKinds)
+                PillButton(
+                  icon: k.icon,
+                  label: k.addLabel,
+                  height: 40,
+                  onPressed: () => _addFolder(k.id),
+                ),
+            ],
           ),
         ),
         const Divider(color: AppColors.border, height: 28),
@@ -668,15 +686,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _addFolder() async {
+  Future<void> _addFolder(String kind) async {
     final picked = await showDialog<(String, String)>(
       context: context,
-      builder: (_) => const _ServerFolderPicker(),
+      builder: (_) => _ServerFolderPicker(kind: kind),
     );
     if (picked == null) return;
     try {
-      await _state.api!.addFolder(picked.$1, picked.$2);
+      await _state.api!.addFolder(picked.$1, picked.$2, kind: kind);
       if (mounted) showToast(context, 'Klasör eklendi, taranıyor');
+      _loadServer();
+      _pollScan();
+    } catch (e) {
+      if (mounted) showToast(context, e.toString(), error: true);
+    }
+  }
+
+  Future<void> _setFolderKind(LibraryFolder f, String kind) async {
+    if (kind == f.kind) return;
+    try {
+      await _state.api!.setFolderKind(f.id, kind);
+      if (mounted) {
+        showToast(
+          context,
+          '"${f.name}" artık ${folderKindOf(kind).label.toLowerCase()}, yeniden taranıyor',
+        );
+      }
       _loadServer();
       _pollScan();
     } catch (e) {
@@ -1055,8 +1090,98 @@ class _Select<T> extends StatelessWidget {
 }
 
 /// Lets the user pick a folder on the server (e.g. an external disk under /media).
+/// Library folder kinds (server: auto / movies / series).
+class FolderKind {
+  final String id;
+  final String label;
+  final String addLabel;
+  final String hint;
+  final IconData icon;
+  const FolderKind(this.id, this.label, this.addLabel, this.hint, this.icon);
+}
+
+const folderKinds = [
+  FolderKind(
+    'movies',
+    'Film klasörü',
+    'Film klasörü ekle',
+    'İçindeki her video film olarak eklenir.',
+    Icons.movie_rounded,
+  ),
+  FolderKind(
+    'series',
+    'Dizi klasörü',
+    'Dizi klasörü ekle',
+    'Her alt klasör bir dizi sayılır, içindeki videolar bölüm olarak eklenir.',
+    Icons.live_tv_rounded,
+  ),
+  FolderKind(
+    'auto',
+    'Genel klasör',
+    'Genel klasör ekle',
+    'Film mi dizi mi olduğu dosya ve klasör adlarından anlaşılır.',
+    Icons.folder_rounded,
+  ),
+];
+
+FolderKind folderKindOf(String id) =>
+    folderKinds.firstWhere((k) => k.id == id, orElse: () => folderKinds.last);
+
+class _FolderKindMenu extends StatelessWidget {
+  final String kind;
+  final ValueChanged<String> onChanged;
+  const _FolderKindMenu({required this.kind, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final cur = folderKindOf(kind);
+    return PopupMenuButton<String>(
+      tooltip: 'Klasör türünü değiştir',
+      onSelected: onChanged,
+      itemBuilder: (_) => [
+        for (final k in folderKinds)
+          PopupMenuItem(
+            value: k.id,
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                k.icon,
+                color: k.id == kind ? AppColors.accent : null,
+              ),
+              title: Text(k.label),
+              subtitle: Text(k.hint, style: const TextStyle(fontSize: 12)),
+              trailing: k.id == kind
+                  ? Icon(Icons.check_rounded, color: AppColors.accent)
+                  : null,
+            ),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface3,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(cur.icon, size: 16, color: AppColors.textDim),
+            const SizedBox(width: 6),
+            Text(
+              cur.label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const Icon(Icons.expand_more_rounded, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ServerFolderPicker extends StatefulWidget {
-  const _ServerFolderPicker();
+  final String kind;
+  const _ServerFolderPicker({this.kind = 'auto'});
   @override
   State<_ServerFolderPicker> createState() => _ServerFolderPickerState();
 }
@@ -1108,14 +1233,20 @@ class _ServerFolderPickerState extends State<_ServerFolderPicker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Sunucuda klasör seç',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              Text(
+                '${folderKindOf(widget.kind).label} seç',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Harici diskler genelde /media veya /mnt altında görünür.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+              Text(
+                '${folderKindOf(widget.kind).hint} Harici diskler /media/homestream altında görünür.',
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 14),
               Container(

@@ -554,11 +554,12 @@ type folderJSON struct {
 	Available bool   `json:"available"`
 	ItemCount int    `json:"itemCount"`
 	IsDefault bool   `json:"isDefault"`
+	Kind      string `json:"kind"`
 }
 
 func (s *Server) folderJSON(f store.Folder) folderJSON {
 	return folderJSON{ID: f.IDString(), Path: names.DisplayString(f.Path), Name: f.Name, Available: f.Available,
-		ItemCount: s.St.FolderFileCount(f.ID), IsDefault: f.IsDefault}
+		ItemCount: s.St.FolderFileCount(f.ID), IsDefault: f.IsDefault, Kind: f.Kind}
 }
 
 func maskKey(k string) string {
@@ -669,9 +670,15 @@ func (s *Server) handleAddFolder(w http.ResponseWriter, r *http.Request) {
 	var b struct {
 		Path string `json:"path"`
 		Name string `json:"name"`
+		Kind string `json:"kind"`
 	}
 	if err := readJSON(r, &b); err != nil {
 		writeError(w, http.StatusBadRequest, "Geçersiz istek")
+		return
+	}
+	kind, ok := store.ValidFolderKind(b.Kind)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "Geçersiz klasör türü")
 		return
 	}
 	p := strings.TrimSpace(b.Path)
@@ -704,7 +711,7 @@ func (s *Server) handleAddFolder(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = names.DisplayString(filepath.Base(p))
 	}
-	f, err := s.St.AddFolder(p, name)
+	f, err := s.St.AddFolder(p, name, kind)
 	if err != nil {
 		if errors.Is(err, store.ErrExists) {
 			writeError(w, http.StatusConflict, "Bu klasör zaten kütüphanede")
@@ -713,10 +720,48 @@ func (s *Server) handleAddFolder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Klasör eklenemedi")
 		return
 	}
-	log.Printf("folders: added %q (%s)", p, name)
+	log.Printf("folders: added %q (%s, %s)", p, name, kind)
 	_ = s.Lib.Reload()
 	s.Lib.RequestScan(false)
 	writeJSON(w, http.StatusCreated, s.folderJSON(f))
+}
+
+func (s *Server) handleUpdateFolder(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "Klasör bulunamadı")
+		return
+	}
+	var b struct {
+		Kind string `json:"kind"`
+	}
+	if err := readJSON(r, &b); err != nil {
+		writeError(w, http.StatusBadRequest, "Geçersiz istek")
+		return
+	}
+	kind, ok := store.ValidFolderKind(b.Kind)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "Geçersiz klasör türü")
+		return
+	}
+	folders, _ := s.St.Folders()
+	for _, f := range folders {
+		if f.ID != id {
+			continue
+		}
+		if f.Kind != kind {
+			if err := s.St.SetFolderKind(id, kind); err != nil {
+				writeError(w, http.StatusInternalServerError, "Kaydedilemedi")
+				return
+			}
+			f.Kind = kind
+			log.Printf("folders: %q is now %s", f.Path, kind)
+			s.Lib.RequestScan(false)
+		}
+		writeJSON(w, http.StatusOK, s.folderJSON(f))
+		return
+	}
+	writeError(w, http.StatusNotFound, "Klasör bulunamadı")
 }
 
 func (s *Server) handleDeleteFolder(w http.ResponseWriter, r *http.Request) {

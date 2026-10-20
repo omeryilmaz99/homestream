@@ -228,8 +228,10 @@ class ApiClient {
   );
   Future<void> updateSettings(Map<String, dynamic> patch) =>
       _send('PUT', '/api/settings', body: patch);
-  Future<void> addFolder(String path, String name) =>
-      _post('/api/folders', {'path': path, 'name': name});
+  Future<void> addFolder(String path, String name, {String kind = 'auto'}) =>
+      _post('/api/folders', {'path': path, 'name': name, 'kind': kind});
+  Future<void> setFolderKind(String id, String kind) =>
+      _send('PATCH', '/api/folders/$id', body: {'kind': kind});
   Future<void> removeFolder(String id) => _send('DELETE', '/api/folders/$id');
   Future<FsListing> fs(String path) async => FsListing.fromJson(
     await _get('/api/fs', {'path': path}) as Map<String, dynamic>,

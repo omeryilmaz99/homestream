@@ -69,6 +69,15 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("schema: %w", err)
 	}
+	// migrations (ignore "duplicate column" on databases that already have them)
+	for _, m := range []string{
+		`ALTER TABLE folders ADD COLUMN kind TEXT NOT NULL DEFAULT 'auto'`,
+	} {
+		if _, err := db.Exec(m); err != nil && !strings.Contains(err.Error(), "duplicate column") {
+			db.Close()
+			return nil, fmt.Errorf("migrate: %w", err)
+		}
+	}
 	return &Store{DB: db}, nil
 }
 
@@ -102,13 +111,32 @@ type Folder struct {
 	Name      string
 	IsDefault bool
 	Available bool
+	Kind      string // FolderAuto, FolderMovies or FolderSeries
 	CreatedAt int64
+}
+
+// Folder kinds: how video files in a folder are classified.
+const (
+	FolderAuto   = "auto"   // decided per file from names and folders
+	FolderMovies = "movies" // every video is a movie
+	FolderSeries = "series" // every video is an episode
+)
+
+// ValidFolderKind normalises a kind string ("" → auto); ok is false for unknown values.
+func ValidFolderKind(k string) (string, bool) {
+	switch k {
+	case "", FolderAuto:
+		return FolderAuto, true
+	case FolderMovies, FolderSeries:
+		return k, true
+	}
+	return "", false
 }
 
 func (f Folder) IDString() string { return strconv.FormatInt(f.ID, 10) }
 
 func (s *Store) Folders() ([]Folder, error) {
-	rows, err := s.DB.Query(`SELECT id,path,name,is_default,available,created_at FROM folders ORDER BY is_default DESC, id`)
+	rows, err := s.DB.Query(`SELECT id,path,name,is_default,available,created_at,kind FROM folders ORDER BY is_default DESC, id`)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +144,7 @@ func (s *Store) Folders() ([]Folder, error) {
 	var out []Folder
 	for rows.Next() {
 		var f Folder
-		if err := rows.Scan(&f.ID, &f.Path, &f.Name, &f.IsDefault, &f.Available, &f.CreatedAt); err != nil {
+		if err := rows.Scan(&f.ID, &f.Path, &f.Name, &f.IsDefault, &f.Available, &f.CreatedAt, &f.Kind); err != nil {
 			return nil, err
 		}
 		out = append(out, f)
@@ -149,9 +177,10 @@ func (s *Store) EnsureDefaultFolder(path, name string) error {
 
 var ErrExists = errors.New("exists")
 
-func (s *Store) AddFolder(path, name string) (Folder, error) {
+func (s *Store) AddFolder(path, name, kind string) (Folder, error) {
 	now := time.Now().Unix()
-	res, err := s.DB.Exec(`INSERT INTO folders(path,name,is_default,available,created_at) VALUES(?,?,0,1,?)`, path, name, now)
+	kind, _ = ValidFolderKind(kind)
+	res, err := s.DB.Exec(`INSERT INTO folders(path,name,is_default,available,created_at,kind) VALUES(?,?,0,1,?,?)`, path, name, now, kind)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
 			return Folder{}, ErrExists
@@ -159,7 +188,7 @@ func (s *Store) AddFolder(path, name string) (Folder, error) {
 		return Folder{}, err
 	}
 	id, _ := res.LastInsertId()
-	return Folder{ID: id, Path: path, Name: name, Available: true, CreatedAt: now}, nil
+	return Folder{ID: id, Path: path, Name: name, Available: true, CreatedAt: now, Kind: kind}, nil
 }
 
 // DeleteFolder removes a folder and its files (user data is kept).
@@ -179,6 +208,12 @@ func (s *Store) DeleteFolder(id int64) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+// SetFolderKind changes how a folder's videos are classified.
+func (s *Store) SetFolderKind(id int64, kind string) error {
+	_, err := s.DB.Exec(`UPDATE folders SET kind=? WHERE id=?`, kind, id)
+	return err
 }
 
 func (s *Store) SetFolderAvailable(id int64, avail bool) error {

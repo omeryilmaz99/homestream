@@ -60,6 +60,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/settings", s.handlePutSettings)
 	mux.HandleFunc("POST /api/folders", s.handleAddFolder)
 	mux.HandleFunc("DELETE /api/folders/{id}", s.handleDeleteFolder)
+	mux.HandleFunc("PATCH /api/folders/{id}", s.handleUpdateFolder)
 	mux.HandleFunc("GET /api/fs", s.handleFS)
 	mux.HandleFunc("POST /api/scan", s.handleScan)
 	mux.HandleFunc("GET /api/scan/status", s.handleScanStatus)

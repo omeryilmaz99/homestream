@@ -200,6 +200,57 @@ func findEpisode(base string) epMatch {
 }
 
 // ParsePath parses a video path relative to its library folder ("/" separated).
+// ParseAs parses rel for a folder whose kind forces the result: "movies"
+// makes every file a movie, "series" makes every file an episode (the first
+// sub-folder, or folderName for files at the top, is the show). Anything else
+// behaves like ParsePath.
+func ParseAs(rel, kind, folderName string) Parsed {
+	rel = strings.Trim(strings.ReplaceAll(rel, "\\", "/"), "/")
+	switch kind {
+	case "movies":
+		p := ParsePath("Filmler/" + rel)
+		if p.Kind == Movie {
+			return p
+		}
+		parts := strings.Split(rel, "/")
+		file := parts[len(parts)-1]
+		parent := ""
+		if len(parts) > 1 {
+			parent = DisplayString(parts[len(parts)-2])
+		}
+		base := DisplayString(strings.TrimSuffix(file, path.Ext(file)))
+		clean, year := CleanTitle(base)
+		return parseMovie(base, clean, year, parent)
+	case "series":
+		parts := strings.Split(rel, "/")
+		if len(parts) == 1 {
+			// "Show S01E02.mkv" at the top: the file name already names the show
+			if p := ParsePath(rel); p.Kind == Episode && p.FilePrefix != "" {
+				return p
+			}
+		}
+		virtual := "Diziler/"
+		if len(parts) == 1 || IsSeasonFolder(parts[0]) {
+			virtual += strings.ReplaceAll(folderName, "/", " ") + "/"
+		}
+		p := ParsePath(virtual + rel)
+		// SeriesDir must stay relative to the real folder
+		if p.SeriesDir != "" {
+			sd := strings.TrimPrefix(p.SeriesDir+"/", virtual)
+			if len(sd) == len(p.SeriesDir)+1 { // not under the virtual prefix
+				sd = p.SeriesDir + "/"
+			}
+			sd = strings.TrimSuffix(sd, "/")
+			if sd == "" {
+				sd = "."
+			}
+			p.SeriesDir = sd
+		}
+		return p
+	}
+	return ParsePath(rel)
+}
+
 func ParsePath(rel string) Parsed {
 	rel = strings.Trim(strings.ReplaceAll(rel, "\\", "/"), "/")
 	parts := strings.Split(rel, "/")
