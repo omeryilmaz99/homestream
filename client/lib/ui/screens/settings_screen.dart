@@ -13,7 +13,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.0.1';
+const appVersion = '1.0.2';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

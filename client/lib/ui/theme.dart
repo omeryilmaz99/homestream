@@ -45,12 +45,7 @@ class AppTheme {
     ThemePreset('ocean', 'Okyanus', Color(0xFF06B6D4), Color(0xFF3B82F6)),
     ThemePreset('sunset', 'Gün Batımı', Color(0xFFF97316), Color(0xFFEF4444)),
     ThemePreset('emerald', 'Zümrüt', Color(0xFF10B981), Color(0xFF84CC16)),
-    ThemePreset(
-      'cinema',
-      'Sinema',
-      Color(0xFFE50914),
-      Color(0xFFFF5F6D),
-    ),
+    ThemePreset('cinema', 'Sinema', Color(0xFFE50914), Color(0xFFFF5F6D)),
     ThemePreset('gold', 'Altın Saat', Color(0xFFF59E0B), Color(0xFFF43F5E)),
     ThemePreset(
       'aurora',

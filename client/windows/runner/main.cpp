@@ -19,6 +19,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   flutter::DartProject project(L"data");
 
+  // Use the mature Skia renderer by default: the Impeller (OpenGLES/ANGLE)
+  // renderer was suspected of unbounded memory growth on some Windows PCs.
+  // Set HOMESTREAM_IMPELLER=1 to opt back in.
+  wchar_t impeller_env[8] = {0};
+  const bool want_impeller =
+      ::GetEnvironmentVariableW(L"HOMESTREAM_IMPELLER", impeller_env, 8) > 0 &&
+      impeller_env[0] == L'1';
+  project.set_impeller_switch(want_impeller
+                                  ? flutter::ImpellerSwitch::Enabled
+                                  : flutter::ImpellerSwitch::Disabled);
+
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
 
