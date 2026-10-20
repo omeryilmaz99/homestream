@@ -28,7 +28,18 @@ class AppState extends ChangeNotifier {
 
   List<ServerConfig> get servers => prefs.servers;
 
+  // Compile-time hooks used only by the CI memory test build.
+  static const _testServer = String.fromEnvironment('HS_TEST_SERVER');
+  static const _testScreen = String.fromEnvironment('HS_TEST_SCREEN');
+
   Future<void> start() async {
+    if (_testServer.isNotEmpty) {
+      await connect(ServerConfig(id: 'test', name: '', url: _testServer));
+      if (_testScreen == 'home' && profiles.isNotEmpty) {
+        selectProfile(profiles.first);
+      }
+      return;
+    }
     final list = prefs.servers;
     if (list.isEmpty) {
       stage = AppStage.noServer;

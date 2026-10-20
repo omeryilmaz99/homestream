@@ -1,0 +1,85 @@
+name: Memory test (Windows)
+
+on:
+  push:
+    branches: ['memtest/**']
+  workflow_dispatch:
+
+jobs:
+  memtest:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        screen: [profile, home]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Start test server
+        shell: pwsh
+        run: |
+          cd server
+          $env:CGO_ENABLED = "0"
+          go build -o $env:RUNNER_TEMP\hs-server.exe .
+          $lib = "$env:RUNNER_TEMP\lib\HomeStream"
+          New-Item -ItemType Directory -Force "$lib\Filmler", "$lib\Diziler\Test Dizi\Sezon 1" | Out-Null
+          $names = @("Filmler\Inception (2010).mkv", "Filmler\Matrix (1999).mkv", "Filmler\Interstellar (2014).mkv",
+                     "Filmler\Esaretin Bedeli (1994).mkv", "Filmler\Gezegenimiz (2019).mkv",
+                     "Diziler\Test Dizi\Sezon 1\Test Dizi S01E01.mkv", "Diziler\Test Dizi\Sezon 1\Test Dizi S01E02.mkv")
+          $buf = New-Object byte[] (2MB)
+          foreach ($n in $names) {
+            [IO.File]::WriteAllBytes("$lib\$n", $buf)
+            (Get-Item "$lib\$n").LastWriteTime = (Get-Date).AddDays(-2)
+          }
+          Start-Process -FilePath "$env:RUNNER_TEMP\hs-server.exe" -ArgumentList "--port","8420","--data","$env:RUNNER_TEMP\data","--library","$lib","--name","CI" -RedirectStandardOutput "$env:RUNNER_TEMP\server.log" -RedirectStandardError "$env:RUNNER_TEMP\server.err"
+          Start-Sleep 8
+          Invoke-RestMethod http://127.0.0.1:8420/api/info | ConvertTo-Json
+          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body '{"name":"Omer","color":"#8B5CF6","avatar":"😎"}' -ContentType 'application/json; charset=utf-8'
+          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body '{"name":"Misafir","color":"#10B981","avatar":"🦊"}' -ContentType 'application/json; charset=utf-8'
+          Start-Sleep 5
+          Invoke-RestMethod http://127.0.0.1:8420/api/info | ConvertTo-Json
+
+      - name: Build client
+        working-directory: client
+        run: |
+          flutter pub get
+          flutter build windows --release --dart-define=HS_TEST_SERVER=http://127.0.0.1:8420 --dart-define=HS_TEST_SCREEN=${{ matrix.screen }}
+
+      - name: Run and sample memory
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          function Shot($name) {
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            New-Item -ItemType Directory -Force shots | Out-Null
+            $bmp.Save("shots\$name.png")
+          }
+          $p = Start-Process -FilePath client\build\windows\x64\runner\Release\HomeStream.exe -PassThru
+          "sec,privateMB,workingSetMB" | Tee-Object -FilePath mem.csv
+          for ($i = 0; $i -le 300; $i += 10) {
+            Start-Sleep 10
+            $p.Refresh()
+            if ($p.HasExited) { "exited with $($p.ExitCode)"; break }
+            "{0},{1:N0},{2:N0}" -f ($i + 10), ($p.PrivateMemorySize64 / 1MB), ($p.WorkingSet64 / 1MB) | Tee-Object -FilePath mem.csv -Append
+            if ($i -eq 20) { Shot "early" }
+          }
+          Shot "late"
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memtest-${{ matrix.screen }}
+          path: |
+            mem.csv
+            shots/*
