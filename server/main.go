@@ -44,6 +44,7 @@ func main() {
 	discPort := flag.Int("discovery-port", defDisc, "UDP discovery port (HOMESTREAM_DISCOVERY_PORT)")
 	dataDir := flag.String("data", envOr("HOMESTREAM_DATA", "/var/lib/homestream"), "data directory for database and image cache (HOMESTREAM_DATA)")
 	libDir := flag.String("library", envOr("HOMESTREAM_LIBRARY", filepath.Join(home, "HomeStream")), "default library folder (HOMESTREAM_LIBRARY)")
+	drives := flag.String("drives", envOr("HOMESTREAM_DRIVES", ""), "folder whose sub-folders are auto-mounted disks; each is added to the library (HOMESTREAM_DRIVES)")
 	name := flag.String("name", envOr("HOMESTREAM_NAME", host), "server name shown in the apps (HOMESTREAM_NAME)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
@@ -112,6 +113,7 @@ func main() {
 	log.Printf("Home Stream %s: %q listening on :%d, library %s, data %s", version, srv.ServerName(), *port, *libDir, *dataDir)
 
 	go lib.Run(ctx)
+	go lib.WatchDrives(ctx, *drives)
 	go srv.RunDiscovery(ctx, *discPort)
 
 	errc := make(chan error, 1)

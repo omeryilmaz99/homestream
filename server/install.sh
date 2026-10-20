@@ -82,12 +82,142 @@ server_ip() {
 ufw_active() { command -v ufw >/dev/null 2>&1 && $SUDO ufw status 2>/dev/null | grep -q "Status: active"; }
 
 # ---- kaldırma ---------------------------------------------------------------
+# ---- otomatik disk bağlama ----------------------------------------------------------
+# Takılan her veri diski /media/homestream/<disk adı> altına bağlanır; sunucu bu
+# klasörleri kendiliğinden kütüphaneye ekler. Sistem diski ve küçük/özel bölümler atlanır.
+AUTOMOUNT_BIN=$ROOT/usr/local/sbin/homestream-automount
+AUTOMOUNT_UNIT=$ROOT/etc/systemd/system/homestream-automount.service
+AUTOMOUNT_TIMER=$ROOT/etc/systemd/system/homestream-automount.timer
+AUTOMOUNT_RULE=$ROOT/etc/udev/rules.d/99-homestream-automount.rules
+DRIVES_DIR=/media/homestream
+
+setup_automount() {
+  msg "Otomatik disk bağlama kuruluyor ($DRIVES_DIR)"
+  if ! command -v ntfs-3g >/dev/null 2>&1 || ! command -v mkfs.exfat >/dev/null 2>&1; then
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ntfs-3g exfatprogs >/dev/null 2>&1 || true
+  fi
+  $SUDO mkdir -p "$(dirname "$AUTOMOUNT_BIN")" "$(dirname "$AUTOMOUNT_RULE")"
+  cat <<'AMEOF' | sed "s/@UID@/$(id -u "$RUN_USER")/; s/@GID@/$(getent group "$RUN_GROUP" | cut -d: -f3)/" | $SUDO tee "$AUTOMOUNT_BIN" >/dev/null
+#!/bin/bash
+# Home Stream: mount every unmounted data partition under /media/homestream/<name>.
+set -u
+BASE=/media/homestream
+OWN_UID=@UID@
+OWN_GID=@GID@
+MIN_BYTES=$((2 * 1024 * 1024 * 1024))
+SKIP=/run/homestream-automount.skip
+exec 9>/run/homestream-automount.lock
+flock 9
+mkdir -p "$BASE"
+
+# 1) drop mounts whose disk was unplugged, and leftover empty folders
+for d in "$BASE"/*/; do
+  d=${d%/}
+  [ -d "$d" ] || continue
+  if mountpoint -q "$d"; then
+    src=$(findmnt -no SOURCE --mountpoint "$d" 2>/dev/null)
+    case "$src" in /dev/*) [ -b "$src" ] || umount -l "$d" ;; esac
+  fi
+  mountpoint -q "$d" || rmdir "$d" 2>/dev/null
+done
+
+# 2) disks that hold the running system are never touched
+sys_disks=" "
+for mp in / /boot /boot/efi /home /var /usr; do
+  src=$(findmnt -no SOURCE --mountpoint "$mp" 2>/dev/null) || continue
+  case "$src" in /dev/*) ;; *) continue ;; esac
+  for parent in $(lsblk -nso NAME,TYPE -p "$src" 2>/dev/null | awk '$2=="disk"{print $1}'); do
+    sys_disks="$sys_disks$parent "
+  done
+done
+
+# 3) mount the rest
+lsblk -bPnpo NAME,TYPE,FSTYPE,SIZE,LABEL,UUID,PARTTYPE,PKNAME,MOUNTPOINT | while read -r line; do
+  NAME= TYPE= FSTYPE= SIZE=0 LABEL= UUID= PARTTYPE= PKNAME= MOUNTPOINT=
+  eval "$line"
+  [ "$TYPE" = part ] || [ "$TYPE" = disk ] || { [ -n "${HS_AUTOMOUNT_TEST:-}" ] && [ "$TYPE" = loop ]; } || continue
+  if [ -z "$FSTYPE" ]; then
+    FSTYPE=$(blkid -o value -s TYPE "$NAME" 2>/dev/null)
+    LABEL=$(blkid -o value -s LABEL "$NAME" 2>/dev/null)
+    UUID=$(blkid -o value -s UUID "$NAME" 2>/dev/null)
+  fi
+  [ -z "$MOUNTPOINT" ] || continue
+  case "$FSTYPE" in ntfs|exfat|vfat|ext4|ext3|ext2|btrfs|xfs) ;; *) continue ;; esac
+  [ "${SIZE:-0}" -ge "$MIN_BYTES" ] || continue
+  disk=${PKNAME:-$NAME}
+  case "$sys_disks" in *" $disk "*) continue ;; esac
+  case "${PARTTYPE,,}" in
+    c12a7328-f81f-11d2-ba4b-00a0c93ec93b|e3c9e316-0b5c-4db8-817d-f92df00215ae|de94bba4-06d1-4d40-a16a-bfd50179d6ac|0x27|0xef) continue ;;
+  esac
+  findmnt -rn -S "$NAME" >/dev/null 2>&1 && continue
+  grep -qsxF "$NAME:$UUID" "$SKIP" && continue
+  grep -qsE "^[[:space:]]*(UUID=$UUID|$NAME)[[:space:]]" /etc/fstab && [ -n "$UUID" ] && continue
+
+  name=${LABEL:-Disk-${UUID:0:8}}
+  name=$(printf '%s' "$name" | tr '/\\' '__' | sed 's/^\.*//')
+  [ -n "$name" ] || name=Disk
+  dir="$BASE/$name"; n=2
+  while mountpoint -q "$dir" || [ -n "$(ls -A "$dir" 2>/dev/null)" ]; do
+    dir="$BASE/$name-$n"; n=$((n + 1))
+  done
+  mkdir -p "$dir"
+  own="uid=$OWN_UID,gid=$OWN_GID,umask=022"
+  ok=1
+  case "$FSTYPE" in
+    ntfs)
+      mount -t ntfs3 -o "$own,noatime" "$NAME" "$dir" 2>/dev/null ||
+      mount -t ntfs3 -o "$own,noatime,force" "$NAME" "$dir" 2>/dev/null ||
+      mount -t ntfs-3g -o "$own,noatime" "$NAME" "$dir" 2>/dev/null ||
+      mount -t ntfs-3g -o "$own,ro" "$NAME" "$dir" 2>/dev/null || ok=0 ;;
+    exfat|vfat)
+      mount -o "$own,noatime" "$NAME" "$dir" 2>/dev/null || ok=0 ;;
+    *)
+      mount -o noatime "$NAME" "$dir" 2>/dev/null || ok=0 ;;
+  esac
+  # an operating system partition (old Linux/Windows install) is not a media disk
+  if [ "$ok" = 1 ] && { [ -e "$dir/etc/os-release" ] || [ -d "$dir/Windows/System32" ]; }; then
+    umount "$dir" 2>/dev/null; rmdir "$dir" 2>/dev/null
+    echo "$NAME:$UUID" >> "$SKIP"
+    logger -t homestream-automount "atlandı (işletim sistemi bölümü): $NAME"
+    continue
+  fi
+  if [ "$ok" = 1 ]; then
+    logger -t homestream-automount "$NAME ($FSTYPE) -> $dir"
+  else
+    rmdir "$dir" 2>/dev/null
+    echo "$NAME:$UUID" >> "$SKIP"
+    logger -t homestream-automount "bağlanamadı: $NAME ($FSTYPE)"
+  fi
+done
+exit 0
+AMEOF
+  $SUDO chmod 0755 "$AUTOMOUNT_BIN"
+  printf '%s\n' "[Unit]" "Description=Home Stream otomatik disk bağlama" "After=local-fs.target" "" \
+    "[Service]" "Type=oneshot" "ExecStartPre=/bin/sleep 2" "ExecStart=/usr/local/sbin/homestream-automount" "" \
+    "[Install]" "WantedBy=multi-user.target" | $SUDO tee "$AUTOMOUNT_UNIT" >/dev/null
+  printf '%s\n' "[Unit]" "Description=Home Stream otomatik disk bağlama (yedek kontrol)" "" \
+    "[Timer]" "OnBootSec=30" "OnUnitActiveSec=60" "" "[Install]" "WantedBy=timers.target" | $SUDO tee "$AUTOMOUNT_TIMER" >/dev/null
+  printf '%s\n' 'ACTION=="add|remove|change", SUBSYSTEM=="block", RUN+="/usr/bin/systemctl --no-block start homestream-automount.service"' | $SUDO tee "$AUTOMOUNT_RULE" >/dev/null
+  $SUDO systemctl daemon-reload
+  $SUDO systemctl enable homestream-automount.service homestream-automount.timer >/dev/null 2>&1 || true
+  $SUDO systemctl start homestream-automount.timer >/dev/null 2>&1 || true
+  $SUDO udevadm control --reload-rules 2>/dev/null || true
+  $SUDO systemctl start homestream-automount.service || warn "Disk bağlama çalıştırılamadı (journalctl -t homestream-automount)."
+}
+
+remove_automount() {
+  $SUDO systemctl disable --now homestream-automount.timer homestream-automount.service 2>/dev/null || true
+  $SUDO rm -f "$AUTOMOUNT_BIN" "$AUTOMOUNT_UNIT" "$AUTOMOUNT_TIMER" "$AUTOMOUNT_RULE"
+  $SUDO udevadm control --reload-rules 2>/dev/null || true
+}
+
 uninstall() {
   msg "Home Stream kaldırılıyor…"
   $SUDO systemctl disable --now "$SERVICE" 2>/dev/null || true
   $SUDO rm -f "$UNIT_FILE"
   $SUDO systemctl daemon-reload || true
   $SUDO rm -rf "$INSTALL_DIR"
+  remove_automount
   if ufw_active; then
     for net in $LAN_NETS; do
       $SUDO ufw delete allow from "$net" to any port "$PORT" proto tcp >/dev/null 2>&1 || true
@@ -194,6 +324,7 @@ Group=$RUN_GROUP
 Environment=\"HOMESTREAM_PORT=$PORT\"
 Environment=\"HOMESTREAM_DATA=$DATA_DIR\"
 Environment=\"HOMESTREAM_LIBRARY=$LIBRARY\"
+Environment=\"HOMESTREAM_DRIVES=$DRIVES_DIR\"
 ExecStart=$INSTALL_DIR/homestream-server
 Restart=always
 RestartSec=3
@@ -214,6 +345,10 @@ $SUDO systemctl daemon-reload
 $SUDO systemctl enable "$SERVICE" >/dev/null 2>&1
 msg "Servis (yeniden) başlatılıyor…"
 $SUDO systemctl restart "$SERVICE"
+
+if [ "${HOMESTREAM_AUTOMOUNT:-yes}" != "no" ]; then
+  setup_automount
+fi
 
 # ---- güvenlik duvarı ---------------------------------------------------------------
 if ufw_active; then
@@ -299,6 +434,7 @@ echo
 echo "  Sunucu adresi        : $IP"
 echo "  Uygulamada bağlanın  : http://$IP:$PORT"
 echo "  Film klasörü         : $LIBRARY"
+echo "  Takılan diskler      : $DRIVES_DIR altında otomatik bağlanır ve kütüphaneye eklenir"
 if [ "$SAMBA_OK" = 1 ]; then
   echo "  Windows Gezgini      : \\\\$IP\\HomeStream   (kullanıcı adı: $RUN_USER)"
 fi
