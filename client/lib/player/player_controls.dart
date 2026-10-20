@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../core/format.dart';
+import '../core/platform.dart';
 import '../ui/theme.dart';
+import '../ui/tv_focus.dart';
 import 'player_screen.dart';
 
 /// The overlay with title, seek bar and buttons. Kept deliberately light:
@@ -174,6 +176,7 @@ class _ControlsBody extends StatelessWidget {
                           : 'Oynat (Boşluk)',
                       onTap: player.playOrPause,
                       size: 38,
+                      focusNode: state.playFocus,
                     ),
                   ),
                   _IconBtn(
@@ -186,7 +189,7 @@ class _ControlsBody extends StatelessWidget {
                     tooltip: 'İleri sar (→)',
                     onTap: () => state.seekRelative(state.prefs.seekStep),
                   ),
-                  _VolumeControl(player: player),
+                  if (!AppPlatform.isTv) _VolumeControl(player: player),
                   const SizedBox(width: 10),
                   _TimeLabel(player: player),
                   const Spacer(),
@@ -205,16 +208,17 @@ class _ControlsBody extends StatelessWidget {
                     tooltip: 'Altyazı ve ses',
                     onTap: () => state.menuOpen.value = !state.menuOpen.value,
                   ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: state.fullscreen,
-                    builder: (context, fs, _) => _IconBtn(
-                      icon: fs
-                          ? Icons.fullscreen_exit_rounded
-                          : Icons.fullscreen_rounded,
-                      tooltip: 'Tam ekran (F)',
-                      onTap: state.toggleFullscreen,
+                  if (AppPlatform.isDesktop)
+                    ValueListenableBuilder<bool>(
+                      valueListenable: state.fullscreen,
+                      builder: (context, fs, _) => _IconBtn(
+                        icon: fs
+                            ? Icons.fullscreen_exit_rounded
+                            : Icons.fullscreen_rounded,
+                        tooltip: 'Tam ekran (F)',
+                        onTap: state.toggleFullscreen,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -254,11 +258,13 @@ class _IconBtn extends StatefulWidget {
   final String tooltip;
   final VoidCallback onTap;
   final double size;
+  final FocusNode? focusNode;
   const _IconBtn({
     required this.icon,
     required this.tooltip,
     required this.onTap,
     this.size = 30,
+    this.focusNode,
   });
   @override
   State<_IconBtn> createState() => _IconBtnState();
@@ -268,25 +274,35 @@ class _IconBtnState extends State<_IconBtn> {
   bool _hover = false;
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedScale(
-            scale: _hover ? 1.15 : 1,
+    final btn = MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Focusable(
+        focusNode: widget.focusNode,
+        onTap: widget.onTap,
+        builder: (context, focused) => AnimatedScale(
+          scale: _hover || focused ? 1.15 : 1,
+          duration: const Duration(milliseconds: 140),
+          child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(widget.icon, size: widget.size, color: Colors.white),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: focused ? Colors.white : Colors.transparent,
+            ),
+            child: Icon(
+              widget.icon,
+              size: widget.size,
+              color: focused ? Colors.black : Colors.white,
             ),
           ),
         ),
       ),
     );
+    // tooltips are hover hints; a remote has no hover
+    return AppPlatform.isTv
+        ? btn
+        : Tooltip(message: widget.tooltip, child: btn);
   }
 }
 
@@ -548,10 +564,17 @@ class TrackMenu extends StatefulWidget {
 class _TrackMenuState extends State<TrackMenu> {
   int _tab = 0;
   StreamSubscription? _sub;
+  final _firstTab = FocusNode(debugLabel: 'menu-tab');
 
   @override
   void initState() {
     super.initState();
+    if (AppPlatform.isTv) {
+      // with a remote, move into the menu as soon as it opens
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _firstTab.requestFocus();
+      });
+    }
     _sub = widget.state.player.stream.track.listen((_) {
       if (mounted) setState(() {});
     });
@@ -560,6 +583,7 @@ class _TrackMenuState extends State<TrackMenu> {
   @override
   void dispose() {
     _sub?.cancel();
+    _firstTab.dispose();
     super.dispose();
   }
 
@@ -576,14 +600,21 @@ class _TrackMenuState extends State<TrackMenu> {
         .where((t) => t.id != 'auto' && t.id != 'no')
         .toList();
 
-    Widget option(String label, bool selected, VoidCallback onTap) => InkWell(
-      borderRadius: BorderRadius.circular(8),
+    Widget option(String label, bool selected, VoidCallback onTap) => Focusable(
       onTap: () {
         onTap();
         setState(() {});
       },
-      child: Padding(
+      builder: (context, focused) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: focused ? const Color(0x26FFFFFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: focused ? Colors.white : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
         child: Row(
           children: [
             SizedBox(
@@ -597,7 +628,7 @@ class _TrackMenuState extends State<TrackMenu> {
                 label,
                 style: TextStyle(
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? Colors.white : AppColors.textDim,
+                  color: selected || focused ? Colors.white : AppColors.textDim,
                 ),
               ),
             ),
@@ -681,11 +712,12 @@ class _TrackMenuState extends State<TrackMenu> {
                 ),
               ],
             ),
-            TextButton.icon(
-              onPressed: s.loadSubtitleFile,
-              icon: const Icon(Icons.file_open_rounded, size: 18),
-              label: const Text('Bilgisayardan altyazı yükle'),
-            ),
+            if (!AppPlatform.isTv)
+              TextButton.icon(
+                onPressed: s.loadSubtitleFile,
+                icon: const Icon(Icons.file_open_rounded, size: 18),
+                label: const Text('Bilgisayardan altyazı yükle'),
+              ),
           ],
         );
       case 1:
@@ -757,28 +789,32 @@ class _TrackMenuState extends State<TrackMenu> {
                     (2, 'Hız'),
                   ])
                     Expanded(
-                      child: GestureDetector(
+                      child: Focusable(
+                        focusNode: i == 0 ? _firstTab : null,
                         onTap: () => setState(() => _tab = i),
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(
-                              color: _tab == i
-                                  ? AppColors.surface3
+                        builder: (context, focused) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: _tab == i
+                                ? AppColors.surface3
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: focused
+                                  ? Colors.white
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
+                              width: 2,
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _tab == i
-                                    ? Colors.white
-                                    : AppColors.textMuted,
-                              ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _tab == i
+                                  ? Colors.white
+                                  : AppColors.textMuted,
                             ),
                           ),
                         ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/format.dart';
 import '../../core/models.dart';
+import '../../core/platform.dart';
 import '../screens/detail_dialog.dart';
 import '../screens/play_launcher.dart';
 import '../theme.dart';
@@ -23,27 +24,32 @@ class _HeroBannerState extends State<HeroBanner>
     with SingleTickerProviderStateMixin {
   int _index = 0;
   Timer? _timer;
+  bool _focused = false;
+  // the slow "Ken Burns" zoom is skipped on TV boxes (weak GPUs)
   late final AnimationController _zoom = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 12),
-  )..forward();
+    value: AppPlatform.isTv ? 0 : null,
+  );
 
   @override
   void initState() {
     super.initState();
+    if (!AppPlatform.isTv) _zoom.forward();
     _restartTimer();
   }
 
   void _restartTimer() {
     _timer?.cancel();
-    if (widget.items.length < 2) return;
+    // don't rotate away from the buttons while they have focus
+    if (widget.items.length < 2 || _focused) return;
     _timer = Timer.periodic(const Duration(seconds: 9), (_) => _go(_index + 1));
   }
 
   void _go(int i) {
     if (!mounted || widget.items.isEmpty) return;
     setState(() => _index = i % widget.items.length);
-    _zoom.forward(from: 0);
+    if (!AppPlatform.isTv) _zoom.forward(from: 0);
   }
 
   @override
@@ -65,117 +71,127 @@ class _HeroBannerState extends State<HeroBanner>
     final size = MediaQuery.sizeOf(context);
     final height = (size.width * 0.5).clamp(380.0, size.height * 0.78);
     final item = widget.items[_index];
-    return SizedBox(
-      height: height,
-      child: ClipRect(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 900),
-              layoutBuilder: (current, previous) => Stack(
-                fit: StackFit.expand,
-                children: [...previous, ?current],
-              ),
-              child: AnimatedBuilder(
-                key: ValueKey(item.id),
-                animation: _zoom,
-                builder: (context, child) => Transform.scale(
-                  scale: 1.0 + 0.06 * Curves.easeOut.transform(_zoom.value),
-                  child: child,
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (f) {
+        _focused = f;
+        _restartTimer();
+      },
+      child: SizedBox(
+        height: height,
+        child: ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 900),
+                layoutBuilder: (current, previous) => Stack(
+                  fit: StackFit.expand,
+                  children: [...previous, ?current],
                 ),
-                child: NetImage(
-                  item.backdrop,
-                  width: 1920,
-                  alignment: Alignment.topCenter,
-                ),
-              ),
-            ),
-            // readability gradients
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Color(0xEE0A0A0F),
-                    Color(0x660A0A0F),
-                    Color(0x000A0A0F),
-                  ],
-                  stops: [0, 0.45, 0.8],
-                ),
-              ),
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0x880A0A0F),
-                    Color(0x000A0A0F),
-                    Color(0x000A0A0F),
-                    AppColors.bg,
-                  ],
-                  stops: [0, 0.2, 0.62, 1],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 48,
-              bottom: height * 0.16,
-              width: (size.width * 0.45).clamp(320, 640),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 600),
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: SlideTransition(
-                    position:
-                        Tween(
-                          begin: const Offset(0, 0.08),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: anim,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        ),
+                child: AnimatedBuilder(
+                  key: ValueKey(item.id),
+                  animation: _zoom,
+                  builder: (context, child) => Transform.scale(
+                    scale: 1.0 + 0.06 * Curves.easeOut.transform(_zoom.value),
                     child: child,
                   ),
+                  child: NetImage(
+                    item.backdrop,
+                    width: AppPlatform.isTv ? 1280 : 1920,
+                    alignment: Alignment.topCenter,
+                  ),
                 ),
-                child: _HeroInfo(key: ValueKey(item.id), item: item),
               ),
-            ),
-            if (widget.items.length > 1)
+              // readability gradients
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Color(0xEE0A0A0F),
+                      Color(0x660A0A0F),
+                      Color(0x000A0A0F),
+                    ],
+                    stops: [0, 0.45, 0.8],
+                  ),
+                ),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x880A0A0F),
+                      Color(0x000A0A0F),
+                      Color(0x000A0A0F),
+                      AppColors.bg,
+                    ],
+                    stops: [0, 0.2, 0.62, 1],
+                  ),
+                ),
+              ),
               Positioned(
-                right: 48,
+                left: 48,
                 bottom: height * 0.16,
-                child: Row(
-                  children: List.generate(widget.items.length, (i) {
-                    final sel = i == _index;
-                    return GestureDetector(
-                      onTap: () {
-                        _go(i);
-                        _restartTimer();
-                      },
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: sel ? 26 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: sel ? Colors.white : const Color(0x66FFFFFF),
-                            borderRadius: BorderRadius.circular(4),
+                width: (size.width * 0.45).clamp(320, 640),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position:
+                          Tween(
+                            begin: const Offset(0, 0.08),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: anim,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                      child: child,
+                    ),
+                  ),
+                  child: _HeroInfo(key: ValueKey(item.id), item: item),
+                ),
+              ),
+              if (widget.items.length > 1)
+                Positioned(
+                  right: 48,
+                  bottom: height * 0.16,
+                  child: Row(
+                    children: List.generate(widget.items.length, (i) {
+                      final sel = i == _index;
+                      return GestureDetector(
+                        onTap: () {
+                          _go(i);
+                          _restartTimer();
+                        },
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: sel ? 26 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? Colors.white
+                                  : const Color(0x66FFFFFF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -268,6 +284,7 @@ class _HeroInfo extends StatelessWidget {
           children: [
             PillButton(
               primary: true,
+              autofocus: AppPlatform.isTv,
               icon: Icons.play_arrow_rounded,
               label: item.inProgress ? 'Devam Et' : 'Oynat',
               onPressed: () => quickPlay(context, item),

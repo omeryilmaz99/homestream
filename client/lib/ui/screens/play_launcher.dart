@@ -7,14 +7,37 @@ import 'package:provider/provider.dart';
 import '../../core/api.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
+import '../../core/platform.dart';
 import '../../core/prefs.dart';
 import '../../player/player_screen.dart';
 import '../../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
+/// Android players are stored with an `android:<package>` path; an empty
+/// package means "let Android ask".
+const androidPrefix = 'android:';
+const androidChooser = ExternalPlayerConfig('Uygulama seç', androidPrefix);
+
+bool externalPlayerAvailable(ExternalPlayerConfig p) =>
+    p.path.startsWith(androidPrefix)
+    ? AppPlatform.isAndroid
+    : !AppPlatform.isAndroid && File(p.path).existsSync();
+
+/// Installed external players (all platforms).
+Future<List<ExternalPlayerConfig>> findExternalPlayers() async {
+  if (!AppPlatform.isAndroid) return detectExternalPlayers();
+  final apps = await AppPlatform.videoPlayers();
+  return [
+    for (final (label, pkg) in apps)
+      ExternalPlayerConfig(label, '$androidPrefix$pkg'),
+    androidChooser,
+  ];
+}
+
 /// Known external players on Windows (detected if installed).
 List<ExternalPlayerConfig> detectExternalPlayers() {
+  if (AppPlatform.isAndroid) return [];
   if (!Platform.isWindows) {
     final res = <ExternalPlayerConfig>[];
     for (final p in ['/usr/bin/vlc', '/usr/bin/mpv', '/snap/bin/vlc']) {
@@ -79,6 +102,18 @@ Future<void> launchExternal(
   final url = api.streamUrl(item);
   final subs =
       item.file?.externalSubtitles.map((s) => api.url(s.url)).toList() ?? [];
+  if (player.path.startsWith(androidPrefix)) {
+    final pkg = player.path.substring(androidPrefix.length);
+    final ok = await AppPlatform.openExternal(
+      url,
+      item.displayTitle,
+      package: pkg.isEmpty ? null : pkg,
+      startMs: (startAt * 1000).floor(),
+      subtitles: subs,
+    );
+    if (!ok) throw 'uygulama bulunamadı';
+    return;
+  }
   final exe = player.path.toLowerCase();
   final args = <String>[];
   final title = item.displayTitle;
@@ -147,7 +182,7 @@ Future<void> playItem(
   ExternalPlayerConfig? ext = prefs.externalPlayer;
   if (mode == PlayerMode.external &&
       ext != null &&
-      !File(ext.path).existsSync()) {
+      !externalPlayerAvailable(ext)) {
     mode = PlayerMode.ask;
   }
   if (mode == PlayerMode.ask || (mode == PlayerMode.external && ext == null)) {
@@ -219,17 +254,26 @@ class _PlayChoiceDialog extends StatefulWidget {
 
 class _PlayChoiceDialogState extends State<_PlayChoiceDialog> {
   bool _remember = false;
-  late List<ExternalPlayerConfig> _players;
+  List<ExternalPlayerConfig> _players = [];
   ExternalPlayerConfig? _selected;
 
   @override
   void initState() {
     super.initState();
-    _players = detectExternalPlayers();
+    _setPlayers(detectExternalPlayers());
+    if (AppPlatform.isAndroid) {
+      findExternalPlayers().then((l) {
+        if (mounted) setState(() => _setPlayers(l));
+      });
+    }
+  }
+
+  void _setPlayers(List<ExternalPlayerConfig> list) {
+    _players = list;
     final init = widget.initialExternal;
     if (init != null &&
         !_players.any((p) => p.path == init.path) &&
-        File(init.path).existsSync()) {
+        externalPlayerAvailable(init)) {
       _players.insert(0, init);
     }
     _selected = init != null
@@ -239,6 +283,7 @@ class _PlayChoiceDialogState extends State<_PlayChoiceDialog> {
   }
 
   Future<void> _pickExe() async {
+    if (AppPlatform.isAndroid) return;
     final res = await FilePicker.pickFile(
       dialogTitle: 'Video oynatıcı programını seç',
       type: FileType.custom,
@@ -320,10 +365,11 @@ class _PlayChoiceDialogState extends State<_PlayChoiceDialog> {
                     ..._players.map(
                       (p) => PopupMenuItem(value: p, child: Text(p.name)),
                     ),
-                    const PopupMenuItem(
-                      value: 'pick',
-                      child: Text('Başka bir program seç…'),
-                    ),
+                    if (!AppPlatform.isAndroid)
+                      const PopupMenuItem(
+                        value: 'pick',
+                        child: Text('Başka bir program seç…'),
+                      ),
                   ],
                 ),
               ),

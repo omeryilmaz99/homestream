@@ -1,7 +1,7 @@
 ; Inno Setup script for Home Stream (Windows)
 #define AppName "Home Stream"
 #ifndef AppVersion
-  #define AppVersion "1.0.3"
+  #define AppVersion "1.1.0"
 #endif
 
 [Setup]

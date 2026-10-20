@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/platform.dart';
+
 class AppColors {
   static const bg = Color(0xFF0A0A0F);
   static const surface = Color(0xFF14141C);
@@ -85,10 +87,30 @@ ThemeData buildTheme() {
       secondary: AppColors.accent2,
     ),
     scaffoldBackgroundColor: AppColors.bg,
-    splashFactory: InkSparkle.splashFactory,
+    // sparkle needs a shader warm-up that TV boxes stutter on
+    splashFactory: AppPlatform.isAndroid
+        ? InkRipple.splashFactory
+        : InkSparkle.splashFactory,
     visualDensity: VisualDensity.standard,
+    // keyboard / remote focus must be easy to see from the couch
+    focusColor: const Color(0x40FFFFFF),
+  );
+  final focusStyle = ButtonStyle(
+    overlayColor: WidgetStateProperty.resolveWith(
+      (s) => s.contains(WidgetState.focused) ? const Color(0x40FFFFFF) : null,
+    ),
+    side: WidgetStateProperty.resolveWith(
+      (s) => s.contains(WidgetState.focused)
+          ? const BorderSide(color: Colors.white, width: 2)
+          : null,
+    ),
   );
   return base.copyWith(
+    iconButtonTheme: IconButtonThemeData(style: focusStyle),
+    textButtonTheme: TextButtonThemeData(style: focusStyle),
+    filledButtonTheme: FilledButtonThemeData(style: focusStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: focusStyle),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: focusStyle),
     textTheme: base.textTheme.apply(
       bodyColor: AppColors.text,
       displayColor: AppColors.text,
@@ -136,6 +158,7 @@ ThemeData buildTheme() {
       thumbColor: Colors.white,
       inactiveTrackColor: const Color(0x33FFFFFF),
       overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+      overlayColor: const Color(0x55FFFFFF),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
@@ -147,6 +170,12 @@ ThemeData buildTheme() {
         (s) => s.contains(WidgetState.selected)
             ? AppColors.accent
             : AppColors.surface3,
+      ),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.focused) ? const Color(0x66FFFFFF) : null,
+      ),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.focused) ? Colors.white : null,
       ),
     ),
     scrollbarTheme: ScrollbarThemeData(

@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/models.dart';
 import '../theme.dart';
@@ -109,25 +110,30 @@ class _MediaRowState extends State<MediaRow> {
                         );
                       }
                     },
-                    child: ListView.separated(
-                      controller: _ctrl,
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      padding: EdgeInsets.fromLTRB(pad, 12, pad, 12),
-                      itemCount: widget.items.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 14),
-                      itemBuilder: (context, i) {
-                        final it = widget.items[i];
-                        return widget.wide
-                            ? WideCard(
-                                item: it,
-                                width: cardW,
-                                onTap: widget.onTap == null
-                                    ? null
-                                    : () => widget.onTap!(it),
-                              )
-                            : PosterCard(item: it, width: cardW);
-                      },
+                    child: Focus(
+                      canRequestFocus: false,
+                      skipTraversal: true,
+                      onKeyEvent: keepHorizontalFocusInside,
+                      child: ListView.separated(
+                        controller: _ctrl,
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        padding: EdgeInsets.fromLTRB(pad, 12, pad, 12),
+                        itemCount: widget.items.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 14),
+                        itemBuilder: (context, i) {
+                          final it = widget.items[i];
+                          return widget.wide
+                              ? WideCard(
+                                  item: it,
+                                  width: cardW,
+                                  onTap: widget.onTap == null
+                                      ? null
+                                      : () => widget.onTap!(it),
+                                )
+                              : PosterCard(item: it, width: cardW);
+                        },
+                      ),
                     ),
                   ),
                   _Arrow(
@@ -205,4 +211,38 @@ class _Arrow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Key handler for a horizontal list: left/right move between its items and
+/// never jump to another row (at either end the key is simply swallowed).
+KeyEventResult keepHorizontalFocusInside(FocusNode node, KeyEvent event) {
+  if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+    return KeyEventResult.ignored;
+  }
+  final bool right;
+  if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+    right = false;
+  } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+    right = true;
+  } else {
+    return KeyEventResult.ignored;
+  }
+  final current = FocusManager.instance.primaryFocus;
+  if (current == null || current.context == null) {
+    return KeyEventResult.ignored;
+  }
+  final cx = current.rect.center.dx;
+  FocusNode? best;
+  var bestDist = double.infinity;
+  for (final n in node.traversalDescendants) {
+    if (n == current || !n.canRequestFocus || n.context == null) continue;
+    final dx = n.rect.center.dx - cx;
+    if (right ? dx <= 1 : dx >= -1) continue;
+    if (dx.abs() < bestDist) {
+      bestDist = dx.abs();
+      best = n;
+    }
+  }
+  best?.requestFocus();
+  return KeyEventResult.handled;
 }

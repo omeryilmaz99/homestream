@@ -7,13 +7,14 @@ import 'package:provider/provider.dart';
 import '../../core/format.dart';
 import '../../core/image_cache.dart';
 import '../../core/models.dart';
+import '../../core/platform.dart';
 import '../../core/prefs.dart';
 import '../../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.0.3';
+const appVersion = '1.1.0';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -37,6 +38,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadServer();
     _players = detectExternalPlayers();
+    if (AppPlatform.isAndroid) {
+      findExternalPlayers().then((l) {
+        if (mounted) setState(() => _players = l);
+      });
+    }
     DiskCache.sizeBytes().then((v) {
       if (mounted) setState(() => _cacheBytes = v);
     });
@@ -176,7 +182,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         _Row(
           title: 'Harici oynatıcı',
-          subtitle: ext == null ? 'Seçilmedi' : ext.path,
+          subtitle: ext == null
+              ? 'Seçilmedi'
+              : (AppPlatform.isAndroid ? ext.name : ext.path),
           trailing: _Select<String>(
             value: ext?.path ?? '',
             items: {
@@ -184,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               for (final p in _players) p.path: p.name,
               if (ext != null && !_players.any((p) => p.path == ext.path))
                 ext.path: ext.name,
-              '__pick': 'Başka bir program…',
+              if (!AppPlatform.isAndroid) '__pick': 'Başka bir program…',
             },
             onChanged: (v) async {
               if (v == '__pick') {
@@ -216,11 +224,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: prefs.hardwareDecoding,
           onChanged: (v) => setState(() => prefs.hardwareDecoding = v),
         ),
-        _SwitchRow(
-          title: 'Tam ekranda başlat',
-          value: prefs.playerFullscreen,
-          onChanged: (v) => setState(() => prefs.playerFullscreen = v),
-        ),
+        if (AppPlatform.isDesktop)
+          _SwitchRow(
+            title: 'Tam ekranda başlat',
+            value: prefs.playerFullscreen,
+            onChanged: (v) => setState(() => prefs.playerFullscreen = v),
+          ),
         _SwitchRow(
           title: 'Sonraki bölümü otomatik oynat',
           subtitle: 'Bölüm bitince geri sayımla sıradakine geçer.',
@@ -785,6 +794,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _shortcutsSection() {
+    const remote = [
+      ('OK', 'Oynat / duraklat'),
+      ('◀ / ▶', 'Geri / ileri sar (basılı tut: hızlı)'),
+      ('▲ / ▼', 'Düğmeleri göster'),
+      ('Geri', 'Düğmeleri gizle / oynatıcıdan çık'),
+    ];
     const keys = [
       ('Boşluk / K', 'Oynat / duraklat'),
       ('← / →', 'Geri / ileri sar (Shift ile 1 dk)'),
@@ -800,14 +815,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ('Ctrl+F', 'Ara'),
     ];
     return _Section(
-      icon: Icons.keyboard_rounded,
-      title: 'Klavye kısayolları',
+      icon: AppPlatform.isTv
+          ? Icons.settings_remote_rounded
+          : Icons.keyboard_rounded,
+      title: AppPlatform.isTv ? 'Kumanda' : 'Klavye kısayolları',
       children: [
         Wrap(
           spacing: 12,
           runSpacing: 10,
           children: [
-            for (final (k, v) in keys)
+            for (final (k, v) in AppPlatform.isTv ? remote : keys)
               SizedBox(
                 width: 400,
                 child: Row(
@@ -1064,12 +1081,24 @@ class _Select<T> extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      child: Builder(builder: _build),
+    );
+  }
+
+  Widget _build(BuildContext context) {
+    final focused = Focus.of(context).hasFocus;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: focused ? Colors.white : AppColors.border,
+          width: focused ? 2 : 1,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(

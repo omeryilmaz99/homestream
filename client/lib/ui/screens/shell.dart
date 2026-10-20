@@ -221,15 +221,18 @@ class _NavItem extends StatefulWidget {
 
 class _NavItemState extends State<_NavItem> {
   bool _hover = false;
+  bool _focused = false;
   @override
   Widget build(BuildContext context) {
-    final color = widget.selected
+    final color = _focused
+        ? Colors.black
+        : widget.selected
         ? Colors.white
         : (_hover ? const Color(0xFFE5E5EA) : AppColors.textDim);
     return FocusableActionDetector(
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (v) => setState(() => _hover = v),
-      onShowFocusHighlight: (v) => setState(() => _hover = v),
+      onShowFocusHighlight: (v) => setState(() => _focused = v),
       actions: {
         ActivateIntent: CallbackAction<ActivateIntent>(
           onInvoke: (_) => widget.onTap(),
@@ -237,8 +240,14 @@ class _NavItemState extends State<_NavItem> {
       },
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          margin: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+          decoration: BoxDecoration(
+            color: _focused ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

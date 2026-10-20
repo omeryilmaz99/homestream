@@ -5,6 +5,7 @@ import '../../core/api.dart';
 import '../../core/discovery.dart';
 import '../../core/prefs.dart';
 import '../../state/app_state.dart';
+import '../../core/platform.dart';
 import '../theme.dart';
 
 /// First-run / "add server" screen: auto discovery + manual address.
@@ -129,8 +130,9 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                                 style: TextStyle(color: AppColors.textMuted),
                               ),
                             ),
-                          ..._found.map(
-                            (d) => _ServerTile(
+                          for (final (i, d) in _found.indexed)
+                            _ServerTile(
+                              autofocus: i == 0,
                               icon: Icons.dns_rounded,
                               title: d.name,
                               subtitle: d.url,
@@ -138,7 +140,6 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                                   ? null
                                   : () => _connectTo(d.name, d.url),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -157,7 +158,8 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                           const SizedBox(height: 12),
                           TextField(
                             controller: _address,
-                            autofocus: _found.isEmpty,
+                            // on TV this would pop the keyboard right away
+                            autofocus: _found.isEmpty && !AppPlatform.isTv,
                             decoration: const InputDecoration(
                               hintText: 'Örnek: 192.168.50.200',
                               prefixIcon: Icon(Icons.link_rounded),
@@ -300,7 +302,9 @@ class _ServerTile extends StatefulWidget {
   final String subtitle;
   final VoidCallback? onTap;
   final Widget? trailing;
+  final bool autofocus;
   const _ServerTile({
+    this.autofocus = false,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -313,12 +317,14 @@ class _ServerTile extends StatefulWidget {
 
 class _ServerTileState extends State<_ServerTile> {
   bool _hover = false;
+  bool _focused = false;
   @override
   Widget build(BuildContext context) {
     return FocusableActionDetector(
+      autofocus: widget.autofocus,
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (v) => setState(() => _hover = v),
-      onShowFocusHighlight: (v) => setState(() => _hover = v),
+      onShowFocusHighlight: (v) => setState(() => _focused = v),
       actions: {
         ActivateIntent: CallbackAction<ActivateIntent>(
           onInvoke: (_) => widget.onTap?.call(),
@@ -331,8 +337,12 @@ class _ServerTileState extends State<_ServerTile> {
           margin: const EdgeInsets.only(top: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: _hover ? AppColors.surface3 : AppColors.surface2,
+            color: _hover || _focused ? AppColors.surface3 : AppColors.surface2,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _focused ? Colors.white : Colors.transparent,
+              width: 2,
+            ),
           ),
           child: Row(
             children: [

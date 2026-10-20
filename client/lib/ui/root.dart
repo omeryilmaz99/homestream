@@ -89,6 +89,7 @@ class _ConnectError extends StatelessWidget {
           children: [
             PillButton(
               primary: true,
+              autofocus: true,
               icon: Icons.refresh_rounded,
               label: 'Tekrar dene',
               onPressed: s.retry,

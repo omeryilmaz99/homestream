@@ -12,6 +12,7 @@ import 'package:window_manager/window_manager.dart';
 import '../core/api.dart';
 import '../core/format.dart';
 import '../core/models.dart';
+import '../core/platform.dart';
 import '../core/prefs.dart';
 import '../state/app_state.dart';
 import '../ui/theme.dart';
@@ -50,6 +51,9 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   final ValueNotifier<bool> menuOpen = ValueNotifier(false);
 
   final FocusNode _focus = FocusNode(debugLabel: 'player');
+
+  /// The play/pause button; a remote's up/down lands here when controls appear.
+  final FocusNode playFocus = FocusNode(debugLabel: 'play');
   final List<StreamSubscription> _subs = [];
   Timer? _hideTimer;
   Timer? _progressTimer;
@@ -70,7 +74,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       configuration: PlayerConfiguration(
         title: 'Home Stream',
         libass: true,
-        bufferSize: 256 * 1024 * 1024,
+        bufferSize: (AppPlatform.isAndroid ? 64 : 256) * 1024 * 1024,
         logLevel: MPVLogLevel.warn,
       ),
     );
@@ -103,13 +107,16 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       const Duration(seconds: 10),
       (_) => _reportProgress(),
     );
-    windowManager.addListener(this);
+    controlsVisible.addListener(_onControlsVisibility);
+    menuOpen.addListener(_onMenu);
+    AppPlatform.keepScreenOn(true);
+    if (AppPlatform.isDesktop) windowManager.addListener(this);
     _initWindow();
     _configure().then((_) => _open(item, widget.startAt));
   }
 
   Future<void> _initWindow() async {
-    if (!(Platform.isWindows || Platform.isLinux || Platform.isMacOS)) return;
+    if (!AppPlatform.isDesktop) return;
     try {
       _wasFullscreen = await windowManager.isFullScreen();
       fullscreen.value = _wasFullscreen;
@@ -132,7 +139,11 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     await set('cache', 'yes');
     await set('cache-secs', '120');
     await set('demuxer-readahead-secs', '60');
-    await set('demuxer-max-back-bytes', '${64 * 1024 * 1024}');
+    // TV boxes have 1-2 GB of RAM: keep a smaller rewind cache there
+    await set(
+      'demuxer-max-back-bytes',
+      '${(AppPlatform.isAndroid ? 16 : 64) * 1024 * 1024}',
+    );
     await set('network-timeout', '30');
     await set('user-agent', 'HomeStream/1.0');
     await set('volume-max', '150');
@@ -192,6 +203,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   }
 
   void _setTitle() {
+    if (!AppPlatform.isDesktop) return;
     try {
       windowManager.setTitle('${item.displayTitle} · Home Stream');
     } catch (_) {}
@@ -349,12 +361,13 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     if (_closing) return;
     _closing = true;
     await _reportProgress(force: true);
-    try {
-      if (!_wasFullscreen && await windowManager.isFullScreen()) {
-        await windowManager.setFullScreen(false);
-      }
-      windowManager.setTitle('Home Stream');
-    } catch (_) {}
+    if (AppPlatform.isDesktop)
+      try {
+        if (!_wasFullscreen && await windowManager.isFullScreen()) {
+          await windowManager.setFullScreen(false);
+        }
+        windowManager.setTitle('Home Stream');
+      } catch (_) {}
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -364,7 +377,9 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     if (!controlsVisible.value) controlsVisible.value = true;
     _hideTimer?.cancel();
     if (autoHide && player.state.playing && !ended.value) {
-      _hideTimer = Timer(const Duration(milliseconds: 2800), () {
+      // give remote users more time while they move between buttons
+      final ms = _controlFocused ? 6000 : 2800;
+      _hideTimer = Timer(Duration(milliseconds: ms), () {
         if (!menuOpen.value && player.state.playing)
           controlsVisible.value = false;
       });
@@ -372,6 +387,35 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   }
 
   void onUserActivity() => _showControls(autoHide: true);
+
+  bool get _controlFocused {
+    final f = FocusManager.instance.primaryFocus;
+    return f != null && f != _focus && f.context != null;
+  }
+
+  // when the overlay hides, the remote goes back to seeking/pausing
+  void _onControlsVisibility() {
+    if (!controlsVisible.value && _controlFocused && !ended.value) {
+      _focus.requestFocus();
+    }
+  }
+
+  void _onMenu() {
+    if (!menuOpen.value && _controlFocused && !ended.value) {
+      // the menu's own buttons are gone; continue from the subtitle button
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controlsVisible.value) playFocus.requestFocus();
+      });
+    }
+  }
+
+  /// Shows the overlay and puts focus on the play button (remote control).
+  void focusControls() {
+    _showControls();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && playFocus.context != null) playFocus.requestFocus();
+    });
+  }
 
   void flashOsd(String text) {
     osd.value = text;
@@ -383,6 +427,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   }
 
   Future<void> toggleFullscreen() async {
+    if (!AppPlatform.isDesktop) return;
     try {
       final v = !(await windowManager.isFullScreen());
       await windowManager.setFullScreen(v);
@@ -395,14 +440,27 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   @override
   void onWindowLeaveFullScreen() => fullscreen.value = false;
 
+  Duration? _seekTarget;
+  DateTime _seekAt = DateTime.fromMillisecondsSinceEpoch(0);
+
   void seekRelative(int seconds) {
-    final pos = player.state.position + Duration(seconds: seconds);
+    // holding a remote key fires quickly; build on the last target instead of
+    // the position mpv hasn't reached yet
+    final now = DateTime.now();
+    final base =
+        _seekTarget != null &&
+            now.difference(_seekAt) < const Duration(milliseconds: 1200)
+        ? _seekTarget!
+        : player.state.position;
+    final pos = base + Duration(seconds: seconds);
     final dur = player.state.duration;
     var target = pos < Duration.zero ? Duration.zero : pos;
     if (dur > Duration.zero && target > dur)
       target = dur - const Duration(milliseconds: 500);
     player.seek(target);
-    flashOsd('${seconds > 0 ? '+' : ''}$seconds sn');
+    _seekTarget = target;
+    _seekAt = now;
+    flashOsd(formatDuration(target.inMilliseconds / 1000));
     onUserActivity();
   }
 
@@ -505,7 +563,61 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     final k = e.logicalKey;
     final step = prefs.seekStep;
     final shift = HardwareKeyboard.instance.isShiftPressed;
-    if (k == LogicalKeyboardKey.space ||
+    final isBack =
+        k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack;
+    final isOk =
+        k == LogicalKeyboardKey.select ||
+        k == LogicalKeyboardKey.enter ||
+        k == LogicalKeyboardKey.numpadEnter ||
+        k == LogicalKeyboardKey.gameButtonA;
+    final isArrow =
+        k == LogicalKeyboardKey.arrowLeft ||
+        k == LogicalKeyboardKey.arrowRight ||
+        k == LogicalKeyboardKey.arrowUp ||
+        k == LogicalKeyboardKey.arrowDown;
+    if (_controlFocused) {
+      // a button (or the menu) has focus: arrows move between buttons and
+      // OK presses them; back steps out to the video
+      if (isArrow || isOk || k == LogicalKeyboardKey.tab) {
+        onUserActivity();
+        return KeyEventResult.ignored;
+      }
+      if (isBack) {
+        if (menuOpen.value) {
+          menuOpen.value = false;
+        } else if (ended.value) {
+          close();
+        } else {
+          _focus.requestFocus();
+          if (player.state.playing) controlsVisible.value = false;
+        }
+        return KeyEventResult.handled;
+      }
+    }
+    if (ended.value && (isArrow || isOk)) return KeyEventResult.ignored;
+    if (isOk && AppPlatform.isTv) {
+      // remote OK: pause/resume and show where we are
+      player.playOrPause();
+      _showControls();
+      return KeyEventResult.handled;
+    }
+    if (AppPlatform.isTv &&
+        (k == LogicalKeyboardKey.arrowUp ||
+            k == LogicalKeyboardKey.arrowDown)) {
+      focusControls();
+      return KeyEventResult.handled;
+    }
+    if (k == LogicalKeyboardKey.mediaPlay) {
+      player.play();
+      onUserActivity();
+    } else if (k == LogicalKeyboardKey.mediaPause) {
+      player.pause();
+      _showControls();
+    } else if (k == LogicalKeyboardKey.mediaFastForward) {
+      seekRelative(step * 3);
+    } else if (k == LogicalKeyboardKey.mediaRewind) {
+      seekRelative(-step * 3);
+    } else if (k == LogicalKeyboardKey.space ||
         k == LogicalKeyboardKey.keyK ||
         k == LogicalKeyboardKey.mediaPlayPause) {
       if (ended.value) return KeyEventResult.ignored;
@@ -570,7 +682,8 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
+    AppPlatform.keepScreenOn(false);
+    if (AppPlatform.isDesktop) windowManager.removeListener(this);
     _hideTimer?.cancel();
     _progressTimer?.cancel();
     _osdTimer?.cancel();
@@ -587,13 +700,15 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
             .reportProgress(item.id, pos, dur)
             .catchError((_) => const UserData());
       }
-      try {
-        if (!_wasFullscreen) windowManager.setFullScreen(false);
-        windowManager.setTitle('Home Stream');
-      } catch (_) {}
+      if (AppPlatform.isDesktop)
+        try {
+          if (!_wasFullscreen) windowManager.setFullScreen(false);
+          windowManager.setTitle('Home Stream');
+        } catch (_) {}
     }
     player.dispose();
     _focus.dispose();
+    playFocus.dispose();
     super.dispose();
   }
 
@@ -609,6 +724,8 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
         body: Focus(
           focusNode: _focus,
           autofocus: true,
+          // never a target of arrow navigation, only focused in code
+          skipTraversal: true,
           onKeyEvent: _onKey,
           child: ValueListenableBuilder<bool>(
             valueListenable: controlsVisible,
