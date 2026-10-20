@@ -11,7 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        screen: [profile, home]
+        include:
+          - { name: profile-emoji, screen: profile, variant: anim, avatars: emoji, noimpeller: '0' }
+          - { name: profile-letters, screen: profile, variant: anim, avatars: letters, noimpeller: '0' }
+          - { name: profile-static, screen: profile, variant: static, avatars: emoji, noimpeller: '0' }
+          - { name: profile-noimpeller, screen: profile, variant: anim, avatars: emoji, noimpeller: '1' }
+          - { name: home, screen: home, variant: anim, avatars: emoji, noimpeller: '0' }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -41,8 +46,11 @@ jobs:
           Start-Process -FilePath "$env:RUNNER_TEMP\hs-server.exe" -ArgumentList "--port","8420","--data","$env:RUNNER_TEMP\data","--library","$lib","--name","CI" -RedirectStandardOutput "$env:RUNNER_TEMP\server.log" -RedirectStandardError "$env:RUNNER_TEMP\server.err"
           Start-Sleep 8
           Invoke-RestMethod http://127.0.0.1:8420/api/info | ConvertTo-Json
-          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body '{"name":"Omer","color":"#8B5CF6","avatar":"😎"}' -ContentType 'application/json; charset=utf-8'
-          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body '{"name":"Misafir","color":"#10B981","avatar":"🦊"}' -ContentType 'application/json; charset=utf-8'
+          if ("${{ matrix.avatars }}" -eq "emoji") { $a1 = "😎"; $a2 = "🦊" } else { $a1 = ""; $a2 = "" }
+          $b1 = [Text.Encoding]::UTF8.GetBytes((@{name="Omer";color="#8B5CF6";avatar=$a1} | ConvertTo-Json -Compress))
+          $b2 = [Text.Encoding]::UTF8.GetBytes((@{name="Misafir";color="#10B981";avatar=$a2} | ConvertTo-Json -Compress))
+          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body $b1 -ContentType 'application/json; charset=utf-8'
+          Invoke-RestMethod -Method Post http://127.0.0.1:8420/api/profiles -Body $b2 -ContentType 'application/json; charset=utf-8'
           Start-Sleep 5
           Invoke-RestMethod http://127.0.0.1:8420/api/info | ConvertTo-Json
 
@@ -50,7 +58,7 @@ jobs:
         working-directory: client
         run: |
           flutter pub get
-          flutter build windows --release --dart-define=HS_TEST_SERVER=http://127.0.0.1:8420 --dart-define=HS_TEST_SCREEN=${{ matrix.screen }}
+          flutter build windows --release --dart-define=HS_TEST_SERVER=http://127.0.0.1:8420 --dart-define=HS_TEST_SCREEN=${{ matrix.screen }} --dart-define=HS_TEST_VARIANT=${{ matrix.variant }} --dart-define=HS_TEST_FRAMELOG=$env:RUNNER_TEMP\\frames.txt
 
       - name: Run and sample memory
         shell: pwsh
@@ -64,22 +72,31 @@ jobs:
             New-Item -ItemType Directory -Force shots | Out-Null
             $bmp.Save("shots\$name.png")
           }
+          if ("${{ matrix.noimpeller }}" -eq "1") { $env:FLUTTER_ENGINE_SWITCHES = "1"; $env:FLUTTER_ENGINE_SWITCH_1 = "enable-impeller=false" }
+          $dll = "client\build\windows\x64\runner\Release\flutter_windows.dll"
+          "impeller strings in dll: " + ((Select-String -Path $dll -Pattern "enable-impeller|FLUTTER_ENGINE_SWITCHES" -AllMatches -Encoding ascii | ForEach-Object { $_.Matches.Value } | Sort-Object -Unique) -join ", ")
           $p = Start-Process -FilePath client\build\windows\x64\runner\Release\HomeStream.exe -PassThru
-          "sec,privateMB,workingSetMB" | Tee-Object -FilePath mem.csv
+          "sec,privateMB,workingSetMB,frames" | Tee-Object -FilePath mem.csv
           for ($i = 0; $i -le 300; $i += 10) {
             Start-Sleep 10
             $p.Refresh()
             if ($p.HasExited) { "exited with $($p.ExitCode)"; break }
-            "{0},{1:N0},{2:N0}" -f ($i + 10), ($p.PrivateMemorySize64 / 1MB), ($p.WorkingSet64 / 1MB) | Tee-Object -FilePath mem.csv -Append
+            $fr = Get-Content "$env:RUNNER_TEMP\frames.txt" -ErrorAction SilentlyContinue
+            "MEM {0},{1:N0},{2:N0},{3}" -f ($i + 10), ($p.PrivateMemorySize64 / 1MB), ($p.WorkingSet64 / 1MB), $fr | Tee-Object -FilePath mem.csv -Append
             if ($i -eq 20) { Shot "early" }
           }
           Shot "late"
+          $bmp = [System.Drawing.Bitmap]::FromFile("$PWD\shots\late.png")
+          $sum = 0; $n = 0
+          for ($x = 0; $x -lt $bmp.Width; $x += 40) { for ($y = 0; $y -lt $bmp.Height; $y += 40) { $c = $bmp.GetPixel($x, $y); $sum += $c.R + $c.G + $c.B; $n++ } }
+          "screenshot mean brightness: " + [math]::Round($sum / (3 * $n), 1)
+          Get-Process HomeStream -ErrorAction SilentlyContinue | Format-Table Id, MainWindowTitle, Responding
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: memtest-${{ matrix.screen }}
+          name: memtest-${{ matrix.name }}
           path: |
             mem.csv
             shots/*

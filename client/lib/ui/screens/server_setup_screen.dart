@@ -391,10 +391,17 @@ class AnimatedBackdrop extends StatefulWidget {
 /// a layer offset per frame instead of repainting full-screen gradients.
 class AnimatedBackdropState extends State<AnimatedBackdrop>
     with SingleTickerProviderStateMixin {
+  static const _variant = String.fromEnvironment('HS_TEST_VARIANT');
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 30),
-  )..repeat();
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (_variant != 'static') _c.repeat();
+  }
 
   @override
   void dispose() {

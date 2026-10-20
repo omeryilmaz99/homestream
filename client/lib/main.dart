@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -38,6 +40,18 @@ Future<void> main() async {
     ChangeNotifierProvider.value(value: state, child: const HomeStreamApp()),
   );
   state.start();
+  _startTestFrameLog();
+}
+
+/// CI memory test only: write the number of rendered frames to a file.
+void _startTestFrameLog() {
+  const path = String.fromEnvironment('HS_TEST_FRAMELOG');
+  if (path.isEmpty) return;
+  var frames = 0;
+  SchedulerBinding.instance.addTimingsCallback((t) => frames += t.length);
+  Timer.periodic(const Duration(seconds: 5), (_) {
+    File(path).writeAsStringSync('$frames');
+  });
 }
 
 class HomeStreamApp extends StatelessWidget {
