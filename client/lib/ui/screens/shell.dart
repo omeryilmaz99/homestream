@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import 'browse_screen.dart';
 import 'home_screen.dart';
@@ -42,26 +43,136 @@ class ShellState extends State<Shell> {
       SearchScreen(key: _searchKey),
       const SettingsScreen(),
     ];
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
-            go(4),
+    final compact = isCompact(context);
+    // phones: Android back returns to the home tab before leaving the app
+    return PopScope(
+      canPop: !compact || _index == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) go(0);
       },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: IndexedStack(
-                index: _index,
-                children: [
-                  for (var i = 0; i < pages.length; i++)
-                    TickerMode(enabled: i == _index, child: pages[i]),
-                ],
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+              go(4),
+        },
+        child: Scaffold(
+          extendBody: true,
+          bottomNavigationBar: compact ? _BottomNav(shell: this) : null,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: IndexedStack(
+                  index: _index,
+                  children: [
+                    for (var i = 0; i < pages.length; i++)
+                      TickerMode(enabled: i == _index, child: pages[i]),
+                  ],
+                ),
               ),
-            ),
-            Positioned(left: 0, right: 0, top: 0, child: _TopBar(shell: this)),
-          ],
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: compact
+                    ? _CompactTopBar(shell: this)
+                    : _TopBar(shell: this),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// Phone navigation: Home, Movies, Series, Folders, Search.
+class _BottomNav extends StatelessWidget {
+  final ShellState shell;
+  const _BottomNav({required this.shell});
+
+  @override
+  Widget build(BuildContext context) {
+    // settings (5) has no tab; keep the last tab highlighted from the top bar
+    final sel = shell._index > 4 ? 0 : shell._index;
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x000A0A0F), Color(0xF20A0A0F), Color(0xFF0A0A0F)],
+          stops: [0, 0.35, 1],
+        ),
+      ),
+      child: NavigationBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.accent.withValues(alpha: 0.25),
+        height: 64,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        selectedIndex: shell._index > 4 ? sel : shell._index,
+        onDestinationSelected: shell.go,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Ana Sayfa',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.movie_outlined),
+            selectedIcon: Icon(Icons.movie_rounded),
+            label: 'Filmler',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.live_tv_outlined),
+            selectedIcon: Icon(Icons.live_tv_rounded),
+            label: 'Diziler',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder_rounded),
+            label: 'Klasörler',
+          ),
+          NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Ara'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Phone top bar: logo, settings and the profile menu.
+class _CompactTopBar extends StatelessWidget {
+  final ShellState shell;
+  const _CompactTopBar({required this.shell});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
+    return Container(
+      height: top + 60,
+      padding: EdgeInsets.fromLTRB(16, top, 12, 0),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF00A0A0F), Color(0x000A0A0F)],
+        ),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => shell.go(0),
+            child: const BrandLogo(size: 20),
+          ),
+          const Spacer(),
+          _NavIcon(
+            icon: Icons.settings_rounded,
+            tooltip: 'Ayarlar',
+            selected: shell._index == 5,
+            onTap: () => shell.go(5),
+          ),
+          const SizedBox(width: 4),
+          _ProfileMenu(shell: shell, size: 34),
+        ],
       ),
     );
   }
@@ -73,8 +184,6 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
-    final p = state.profile;
     final wide = MediaQuery.sizeOf(context).width > 1100;
     return Container(
       height: 76,
@@ -124,78 +233,7 @@ class _TopBar extends StatelessWidget {
             onTap: () => shell.go(5),
           ),
           const SizedBox(width: 14),
-          PopupMenuButton<String>(
-            tooltip: 'Profil',
-            offset: const Offset(0, 52),
-            onSelected: (v) {
-              if (v == 'switch') state.switchProfile();
-              if (v == 'settings') shell.go(5);
-              if (v == 'server') state.showServerSetup();
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Text(
-                  p?.name ?? '',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'switch',
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.people_alt_rounded),
-                  title: Text('Profil değiştir'),
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'server',
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.dns_rounded),
-                  title: Text('Sunucu değiştir'),
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(Icons.settings_rounded),
-                  title: Text('Ayarlar'),
-                ),
-              ),
-            ],
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: LinearGradient(
-                  colors: [
-                    parseHexColor(p?.color ?? ''),
-                    Color.lerp(
-                      parseHexColor(p?.color ?? ''),
-                      Colors.black,
-                      0.45,
-                    )!,
-                  ],
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                p?.avatar.isNotEmpty == true
-                    ? p!.avatar
-                    : (p?.name.isNotEmpty == true
-                          ? p!.name.characters.first
-                          : '?'),
-                style: const TextStyle(fontSize: 20),
-              ),
-            ),
-          ),
+          _ProfileMenu(shell: shell),
         ],
       ),
     );
@@ -301,4 +339,82 @@ class _NavIcon extends StatelessWidget {
       size: 26,
     ),
   );
+}
+
+class _ProfileMenu extends StatelessWidget {
+  final ShellState shell;
+  final double size;
+  const _ProfileMenu({required this.shell, this.size = 40});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final p = state.profile;
+    return PopupMenuButton<String>(
+      tooltip: 'Profil',
+      offset: const Offset(0, 52),
+      onSelected: (v) {
+        if (v == 'switch') state.switchProfile();
+        if (v == 'settings') shell.go(5);
+        if (v == 'server') state.showServerSetup();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          enabled: false,
+          child: Text(
+            p?.name ?? '',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'switch',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.people_alt_rounded),
+            title: Text('Profil değiştir'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'server',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.dns_rounded),
+            title: Text('Sunucu değiştir'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'settings',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.settings_rounded),
+            title: Text('Ayarlar'),
+          ),
+        ),
+      ],
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            colors: [
+              parseHexColor(p?.color ?? ''),
+              Color.lerp(parseHexColor(p?.color ?? ''), Colors.black, 0.45)!,
+            ],
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          p?.avatar.isNotEmpty == true
+              ? p!.avatar
+              : (p?.name.isNotEmpty == true ? p!.name.characters.first : '?'),
+          style: TextStyle(fontSize: size / 2),
+        ),
+      ),
+    );
+  }
 }

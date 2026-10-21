@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/models.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/media_card.dart';
@@ -76,7 +77,12 @@ class SearchScreenState extends State<SearchScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(48, 100, 48, 24),
+            padding: EdgeInsets.fromLTRB(
+              pagePad(context),
+              pageTop(context),
+              pagePad(context),
+              24,
+            ),
             child: TextField(
               controller: _ctrl,
               focusNode: _focus,
@@ -115,7 +121,7 @@ class SearchScreenState extends State<SearchScreen> {
         if (_error != null)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48),
+              padding: EdgeInsets.symmetric(horizontal: pagePad(context)),
               child: Text(
                 _error!,
                 style: const TextStyle(color: AppColors.danger),
@@ -144,14 +150,14 @@ class SearchScreenState extends State<SearchScreen> {
         else ...[
           if (r.movies.isNotEmpty || r.series.isNotEmpty)
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
+              padding: EdgeInsets.fromLTRB(
+                pagePad(context),
+                0,
+                pagePad(context),
+                24,
+              ),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 190,
-                  childAspectRatio: 2 / 3,
-                  mainAxisSpacing: 22,
-                  crossAxisSpacing: 16,
-                ),
+                gridDelegate: posterGrid(context),
                 delegate: SliverChildBuilderDelegate((context, i) {
                   final all = [...r.series, ...r.movies];
                   return LayoutBuilder(
@@ -165,6 +171,7 @@ class SearchScreenState extends State<SearchScreen> {
             SliverToBoxAdapter(
               child: MediaRow(title: 'Bölümler', items: r.episodes, wide: true),
             ),
+          SliverToBoxAdapter(child: SizedBox(height: pageBottom(context))),
         ],
       ],
     );

@@ -122,36 +122,71 @@ class _ControlsBody extends StatelessWidget {
             ],
           ),
         ),
-        // center play/pause indicator (click target is the video itself)
-        Center(
-          child: StreamBuilder<bool>(
-            stream: player.stream.playing,
-            initialData: player.state.playing,
-            builder: (context, snap) {
-              final playing = snap.data ?? false;
-              return AnimatedOpacity(
-                opacity: playing ? 0 : 1,
-                duration: const Duration(milliseconds: 200),
-                child: IgnorePointer(
-                  ignoring: playing,
-                  child: GestureDetector(
-                    onTap: player.play,
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black.withValues(alpha: 0.45),
-                        border: Border.all(color: Colors.white70, width: 2),
-                      ),
-                      child: const Icon(Icons.play_arrow_rounded, size: 54),
-                    ),
+        if (AppPlatform.isPhone)
+          // touch: big rewind / play-pause / forward in the middle
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _RoundBtn(
+                  icon: Icons.replay_10_rounded,
+                  size: 56,
+                  onTap: () => state.seekRelative(-state.prefs.seekStep),
+                ),
+                const SizedBox(width: 36),
+                StreamBuilder<bool>(
+                  stream: player.stream.playing,
+                  initialData: player.state.playing,
+                  builder: (context, snap) => _RoundBtn(
+                    icon: (snap.data ?? false)
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    size: 76,
+                    onTap: () {
+                      player.playOrPause();
+                      state.onUserActivity();
+                    },
                   ),
                 ),
-              );
-            },
+                const SizedBox(width: 36),
+                _RoundBtn(
+                  icon: Icons.forward_10_rounded,
+                  size: 56,
+                  onTap: () => state.seekRelative(state.prefs.seekStep),
+                ),
+              ],
+            ),
+          )
+        else
+          Center(
+            child: StreamBuilder<bool>(
+              stream: player.stream.playing,
+              initialData: player.state.playing,
+              builder: (context, snap) {
+                final playing = snap.data ?? false;
+                return AnimatedOpacity(
+                  opacity: playing ? 0 : 1,
+                  duration: const Duration(milliseconds: 200),
+                  child: IgnorePointer(
+                    ignoring: playing,
+                    child: GestureDetector(
+                      onTap: player.play,
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withValues(alpha: 0.45),
+                          border: Border.all(color: Colors.white70, width: 2),
+                        ),
+                        child: const Icon(Icons.play_arrow_rounded, size: 54),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
         // bottom area
         Positioned(
           left: 24,
@@ -179,17 +214,21 @@ class _ControlsBody extends StatelessWidget {
                       focusNode: state.playFocus,
                     ),
                   ),
-                  _IconBtn(
-                    icon: Icons.replay_10_rounded,
-                    tooltip: 'Geri sar (←)',
-                    onTap: () => state.seekRelative(-state.prefs.seekStep),
-                  ),
-                  _IconBtn(
-                    icon: Icons.forward_10_rounded,
-                    tooltip: 'İleri sar (→)',
-                    onTap: () => state.seekRelative(state.prefs.seekStep),
-                  ),
-                  if (!AppPlatform.isTv) _VolumeControl(player: player),
+                  if (!AppPlatform.isPhone)
+                    _IconBtn(
+                      icon: Icons.replay_10_rounded,
+                      tooltip: 'Geri sar (←)',
+                      onTap: () => state.seekRelative(-state.prefs.seekStep),
+                    ),
+                  if (!AppPlatform.isPhone)
+                    _IconBtn(
+                      icon: Icons.forward_10_rounded,
+                      tooltip: 'İleri sar (→)',
+                      onTap: () => state.seekRelative(state.prefs.seekStep),
+                    ),
+                  // TV remotes and phones have their own volume buttons
+                  if (!AppPlatform.isTv && !AppPlatform.isPhone)
+                    _VolumeControl(player: player),
                   const SizedBox(width: 10),
                   _TimeLabel(player: player),
                   const Spacer(),
@@ -716,7 +755,11 @@ class _TrackMenuState extends State<TrackMenu> {
               TextButton.icon(
                 onPressed: s.loadSubtitleFile,
                 icon: const Icon(Icons.file_open_rounded, size: 18),
-                label: const Text('Bilgisayardan altyazı yükle'),
+                label: Text(
+                  AppPlatform.isPhone
+                      ? 'Telefondan altyazı yükle'
+                      : 'Bilgisayardan altyazı yükle',
+                ),
               ),
           ],
         );
@@ -883,6 +926,33 @@ class NextEpisodePill extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Round touch button used in the middle of the phone player.
+class _RoundBtn extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final VoidCallback onTap;
+  const _RoundBtn({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withValues(alpha: 0.4),
+        ),
+        child: Icon(icon, size: size * 0.6, color: Colors.white),
+      ),
     );
   }
 }

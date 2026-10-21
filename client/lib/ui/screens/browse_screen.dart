@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/net_image.dart';
@@ -110,7 +111,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(48, 100, 48, 6),
+          padding: EdgeInsets.fromLTRB(
+            pagePad(context),
+            pageTop(context),
+            pagePad(context),
+            6,
+          ),
           child: Row(
             children: [
               const Text(
@@ -132,7 +138,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(40, 4, 48, 12),
+          padding: EdgeInsets.fromLTRB(
+            pagePad(context) - 8,
+            4,
+            pagePad(context),
+            12,
+          ),
           child: Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
@@ -185,7 +196,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   duration: const Duration(milliseconds: 220),
                   child: ListView.builder(
                     key: ValueKey(r.path),
-                    padding: const EdgeInsets.fromLTRB(40, 0, 40, 40),
+                    padding: EdgeInsets.fromLTRB(
+                      pagePad(context) - 8,
+                      0,
+                      pagePad(context) - 8,
+                      pageBottom(context),
+                    ),
                     itemCount: r.entries.length,
                     itemBuilder: (context, i) {
                       final e = r.entries[i];

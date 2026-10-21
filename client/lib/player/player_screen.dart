@@ -110,6 +110,13 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     controlsVisible.addListener(_onControlsVisibility);
     menuOpen.addListener(_onMenu);
     AppPlatform.keepScreenOn(true);
+    if (AppPlatform.isPhone && AppPlatform.isAndroid) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
     if (AppPlatform.isDesktop) windowManager.addListener(this);
     _initWindow();
     _configure().then((_) => _open(item, widget.startAt));
@@ -539,7 +546,28 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     flashOsd('Ses: ${trackLabel(next)}');
   }
 
+  double _doubleTapX = 0;
+
+  void _onDoubleTap() {
+    if (ended.value) return;
+    final w = MediaQuery.sizeOf(context).width;
+    final step = prefs.seekStep;
+    seekRelative(_doubleTapX < w / 2 ? -step : step);
+  }
+
   void _onTap() {
+    if (AppPlatform.isPhone) {
+      // touch: a tap shows or hides the buttons, the buttons do the rest
+      if (menuOpen.value) {
+        menuOpen.value = false;
+      } else if (controlsVisible.value && player.state.playing) {
+        _hideTimer?.cancel();
+        controlsVisible.value = false;
+      } else {
+        _showControls();
+      }
+      return;
+    }
     final now = DateTime.now();
     final isDouble =
         now.difference(_lastTap) < const Duration(milliseconds: 300);
@@ -683,6 +711,10 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   @override
   void dispose() {
     AppPlatform.keepScreenOn(false);
+    if (AppPlatform.isPhone && AppPlatform.isAndroid) {
+      SystemChrome.setPreferredOrientations([]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     if (AppPlatform.isDesktop) windowManager.removeListener(this);
     _hideTimer?.cancel();
     _progressTimer?.cancel();
@@ -742,6 +774,11 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: _onTap,
+                  // phones: double tap on the left/right half seeks
+                  onDoubleTapDown: AppPlatform.isPhone
+                      ? (d) => _doubleTapX = d.localPosition.dx
+                      : null,
+                  onDoubleTap: AppPlatform.isPhone ? _onDoubleTap : null,
                   child: RepaintBoundary(
                     child: Video(
                       controller: controller,

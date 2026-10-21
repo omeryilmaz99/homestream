@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../screens/detail_dialog.dart';
+import '../layout.dart';
 import '../theme.dart';
 import 'common.dart';
 import 'net_image.dart';
@@ -165,7 +166,9 @@ class _GeneratedPosterOverlay extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
+        padding: isCompact(context)
+            ? const EdgeInsets.fromLTRB(8, 8, 8, 12)
+            : const EdgeInsets.fromLTRB(12, 12, 12, 18),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,11 +177,11 @@ class _GeneratedPosterOverlay extends StatelessWidget {
               item.title,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 17,
+              style: TextStyle(
+                fontSize: isCompact(context) ? 14 : 17,
                 fontWeight: FontWeight.w800,
                 height: 1.15,
-                shadows: [Shadow(blurRadius: 8, color: Colors.black)],
+                shadows: const [Shadow(blurRadius: 8, color: Colors.black)],
               ),
             ),
             if (item.year > 0 || item.isSeries) ...[

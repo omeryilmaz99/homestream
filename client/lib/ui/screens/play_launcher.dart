@@ -309,7 +309,7 @@ class _PlayChoiceDialogState extends State<_PlayChoiceDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(26),
           child: Column(
             mainAxisSize: MainAxisSize.min,

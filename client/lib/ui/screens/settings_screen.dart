@@ -10,11 +10,12 @@ import '../../core/models.dart';
 import '../../core/platform.dart';
 import '../../core/prefs.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.1.0';
+const appVersion = '1.2.0';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -100,7 +101,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(48, 100, 48, 48),
+      padding: EdgeInsets.fromLTRB(
+        pagePad(context),
+        pageTop(context),
+        pagePad(context),
+        pageBottom(context),
+      ),
       children: [
         const Text(
           'Ayarlar',
@@ -121,7 +127,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _playbackSection(),
                 _subtitleSection(),
                 _serversSection(),
-                _serverAdminSection(),
+                if (AppPlatform.canManageServer)
+                  _serverAdminSection()
+                else
+                  const _Section(
+                    icon: Icons.admin_panel_settings_rounded,
+                    title: 'Sunucu Yönetimi',
+                    subtitle:
+                        'Klasörler, tarama ve sunucu ayarları bilgisayardaki Home Stream uygulamasından yapılır.',
+                    children: [],
+                  ),
                 _otherSection(),
                 _shortcutsSection(),
               ],
@@ -800,6 +815,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ('▲ / ▼', 'Düğmeleri göster'),
       ('Geri', 'Düğmeleri gizle / oynatıcıdan çık'),
     ];
+    const touch = [
+      ('Dokun', 'Düğmeleri göster / gizle'),
+      ('Çift dokun', 'Sol yarı geri, sağ yarı ileri sarar'),
+      ('Çubuğu kaydır', 'İstediğin yere atla'),
+    ];
     const keys = [
       ('Boşluk / K', 'Oynat / duraklat'),
       ('← / →', 'Geri / ileri sar (Shift ile 1 dk)'),
@@ -817,16 +837,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _Section(
       icon: AppPlatform.isTv
           ? Icons.settings_remote_rounded
+          : AppPlatform.isPhone
+          ? Icons.touch_app_rounded
           : Icons.keyboard_rounded,
-      title: AppPlatform.isTv ? 'Kumanda' : 'Klavye kısayolları',
+      title: AppPlatform.isTv
+          ? 'Kumanda'
+          : AppPlatform.isPhone
+          ? 'Oynatıcıda dokunma'
+          : 'Klavye kısayolları',
       children: [
         Wrap(
           spacing: 12,
           runSpacing: 10,
           children: [
-            for (final (k, v) in AppPlatform.isTv ? remote : keys)
+            for (final (k, v)
+                in AppPlatform.isTv
+                    ? remote
+                    : AppPlatform.isPhone
+                    ? touch
+                    : keys)
               SizedBox(
-                width: 400,
+                width: isCompact(context) ? double.infinity : 400,
                 child: Row(
                   children: [
                     Container(
@@ -1014,7 +1045,9 @@ class _Row extends StatelessWidget {
   const _Row({this.leading, required this.title, this.subtitle, this.trailing});
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // phones: wide controls (menus, buttons) go under the text
+    final stack = isCompact(context) && trailing != null && trailing is! Switch;
+    final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         children: [
@@ -1044,9 +1077,23 @@ class _Row extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+          if (trailing != null && !stack) ...[
+            const SizedBox(width: 12),
+            trailing!,
+          ],
         ],
       ),
+    );
+    if (!stack) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row,
+        Padding(
+          padding: EdgeInsets.fromLTRB(leading != null ? 40 : 4, 0, 4, 8),
+          child: trailing!,
+        ),
+      ],
     );
   }
 }

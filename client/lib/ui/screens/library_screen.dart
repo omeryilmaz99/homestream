@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/models.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/media_card.dart';
@@ -80,7 +81,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(48, 100, 48, 8),
+            padding: EdgeInsets.fromLTRB(
+              pagePad(context),
+              pageTop(context),
+              pagePad(context),
+              8,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -110,7 +116,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(48, 8, 48, 18),
+            padding: EdgeInsets.fromLTRB(
+              pagePad(context),
+              8,
+              pagePad(context),
+              18,
+            ),
             child: Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -154,9 +165,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
           )
         else if (_items == null)
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
+            padding: EdgeInsets.symmetric(horizontal: pagePad(context)),
             sliver: SliverGrid(
-              gridDelegate: _grid,
+              gridDelegate: posterGrid(context),
               delegate: SliverChildBuilderDelegate(
                 (_, _) => const Shimmer(child: SkeletonBox()),
                 childCount: 18,
@@ -178,9 +189,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(48, 0, 48, 48),
+            padding: EdgeInsets.fromLTRB(
+              pagePad(context),
+              0,
+              pagePad(context),
+              pageBottom(context),
+            ),
             sliver: SliverGrid(
-              gridDelegate: _grid,
+              gridDelegate: posterGrid(context),
               delegate: SliverChildBuilderDelegate(
                 (context, i) => LayoutBuilder(
                   builder: (context, c) =>
@@ -193,13 +209,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ],
     );
   }
-
-  static const _grid = SliverGridDelegateWithMaxCrossAxisExtent(
-    maxCrossAxisExtent: 190,
-    childAspectRatio: 2 / 3,
-    mainAxisSpacing: 22,
-    crossAxisSpacing: 16,
-  );
 }
 
 class _Dropdown<T> extends StatelessWidget {

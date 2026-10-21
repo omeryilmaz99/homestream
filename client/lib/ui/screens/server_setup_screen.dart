@@ -159,7 +159,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
                           TextField(
                             controller: _address,
                             // on TV this would pop the keyboard right away
-                            autofocus: _found.isEmpty && !AppPlatform.isTv,
+                            autofocus: _found.isEmpty && AppPlatform.isDesktop && !AppPlatform.isPhone,
                             decoration: const InputDecoration(
                               hintText: 'Örnek: 192.168.50.200',
                               prefixIcon: Icon(Icons.link_rounded),

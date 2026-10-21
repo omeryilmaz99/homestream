@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/models.dart';
+import '../../core/platform.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/hero_banner.dart';
@@ -72,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final d = _data;
     if (d == null) {
       return ListView(
-        padding: const EdgeInsets.only(top: 100),
+        padding: EdgeInsets.only(top: pageTop(context)),
         children: const [
           Shimmer(child: SkeletonBox(height: 420, radius: 0)),
           SizedBox(height: 24),
@@ -89,13 +91,15 @@ class _HomeScreenState extends State<HomeScreen> {
         message:
             'Filmlerini ve dizilerini sunucudaki HomeStream klasörüne kopyala.\n'
             'Windows\'ta Dosya Gezgini\'nin adres çubuğuna  \\\\$host\\HomeStream  yazarak klasörü açabilirsin.\n'
-            'Kopyalama bitince aşağıdaki düğmeye bas.',
-        action: PillButton(
-          primary: true,
-          icon: _scanning ? null : Icons.sync_rounded,
-          label: _scanning ? 'Taranıyor…' : 'Kütüphaneyi tara',
-          onPressed: _scanning ? null : _scan,
-        ),
+            'Kopyalama bitince ${AppPlatform.canManageServer ? 'aşağıdaki düğmeye bas.' : 'bilgisayardaki Home Stream uygulamasından kütüphaneyi tarat.'}',
+        action: !AppPlatform.canManageServer
+            ? null
+            : PillButton(
+                primary: true,
+                icon: _scanning ? null : Icons.sync_rounded,
+                label: _scanning ? 'Taranıyor…' : 'Kütüphaneyi tara',
+                onPressed: _scanning ? null : _scan,
+              ),
       );
     }
     return RefreshIndicator(

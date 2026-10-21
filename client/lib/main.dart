@@ -25,16 +25,32 @@ Future<void> main() async {
         FocusHighlightStrategy.alwaysTraditional;
     installTvFocusFallback();
   }
-  if (AppPlatform.isAndroid) {
+  if (AppPlatform.isTv) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  } else if (AppPlatform.isAndroid) {
+    // phones keep the status bar; the player goes full screen on its own
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Color(0x00000000),
+        systemNavigationBarColor: Color(0x00000000),
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
   }
   if (AppPlatform.isDesktop) {
     await windowManager.ensureInitialized();
     // HS_FORCE_TV: a 960x540 window has the logical size of a 1080p TV
     final options = WindowOptions(
-      size: AppPlatform.isTv ? const Size(960, 540) : const Size(1440, 880),
+      size: AppPlatform.isTv
+          ? const Size(960, 540)
+          : AppPlatform.isPhone
+          ? const Size(412, 860)
+          : const Size(1440, 880),
       minimumSize: AppPlatform.isTv
           ? const Size(960, 540)
+          : AppPlatform.isPhone
+          ? const Size(320, 500)
           : const Size(960, 600),
       center: true,
       backgroundColor: AppColors.bg,

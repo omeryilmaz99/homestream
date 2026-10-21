@@ -15,6 +15,12 @@ class AppPlatform {
   /// `HS_FORCE_TV=1` simulates TV mode on desktop for testing.
   static bool isTv = false;
 
+  /// Android phone or tablet (touch screen). `HS_FORCE_PHONE=1` simulates it.
+  static bool isPhone = false;
+
+  /// Server changes (folders, scans) are only offered on the PC app.
+  static bool get canManageServer => isDesktop && !isPhone && !isTv;
+
   static Future<void> init() async {
     if (isAndroid) {
       try {
@@ -22,7 +28,10 @@ class AppPlatform {
       } catch (_) {}
     } else if (isDesktop && Platform.environment['HS_FORCE_TV'] == '1') {
       isTv = true;
+    } else if (isDesktop && Platform.environment['HS_FORCE_PHONE'] == '1') {
+      isPhone = true;
     }
+    if (isAndroid && !isTv) isPhone = true;
   }
 
   static Future<void> keepScreenOn(bool on) async {

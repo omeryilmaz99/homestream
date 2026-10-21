@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/platform.dart';
 import '../screens/detail_dialog.dart';
 import '../screens/play_launcher.dart';
+import '../layout.dart';
 import '../theme.dart';
 import 'common.dart';
 import 'net_image.dart';
@@ -69,7 +70,16 @@ class _HeroBannerState extends State<HeroBanner>
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox(height: 90);
     final size = MediaQuery.sizeOf(context);
-    final height = (size.width * 0.5).clamp(380.0, size.height * 0.78);
+    final compact = isCompact(context);
+    final portrait = isPortraitPhone(context);
+    final height = portrait
+        ? (size.height * 0.62).clamp(380.0, 560.0)
+        : compact
+        ? size.height * 0.9
+        : (size.width * 0.5).clamp(
+            380.0,
+            (size.height * 0.78).clamp(380.0, double.infinity),
+          );
     final item = widget.items[_index];
     return Focus(
       canRequestFocus: false,
@@ -98,9 +108,14 @@ class _HeroBannerState extends State<HeroBanner>
                     child: child,
                   ),
                   child: NetImage(
-                    item.backdrop,
-                    width: AppPlatform.isTv ? 1280 : 1920,
-                    alignment: Alignment.topCenter,
+                    // phones in portrait show the poster, it fits the shape
+                    portrait && item.poster.isNotEmpty
+                        ? item.poster
+                        : item.backdrop,
+                    width: AppPlatform.isTv || compact ? 1280 : 1920,
+                    alignment: portrait
+                        ? Alignment.center
+                        : Alignment.topCenter,
                   ),
                 ),
               ),
@@ -135,9 +150,10 @@ class _HeroBannerState extends State<HeroBanner>
                 ),
               ),
               Positioned(
-                left: 48,
-                bottom: height * 0.16,
-                width: (size.width * 0.45).clamp(320, 640),
+                left: compact ? 16 : 48,
+                right: compact ? 16 : null,
+                bottom: compact ? 34 : height * 0.16,
+                width: compact ? null : (size.width * 0.45).clamp(320, 640),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 600),
                   transitionBuilder: (child, anim) => FadeTransition(
@@ -161,9 +177,12 @@ class _HeroBannerState extends State<HeroBanner>
               ),
               if (widget.items.length > 1)
                 Positioned(
-                  right: 48,
-                  bottom: height * 0.16,
+                  right: compact ? null : 48,
+                  left: compact ? 0 : null,
+                  bottom: compact ? 12 : height * 0.16,
+                  width: compact ? size.width : null,
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(widget.items.length, (i) {
                       final sel = i == _index;
                       return GestureDetector(
@@ -204,6 +223,7 @@ class _HeroInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompact(context);
     final meta = <Widget>[
       if (item.rating > 0)
         Row(
@@ -251,12 +271,12 @@ class _HeroInfo extends StatelessWidget {
           item.title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 52,
+          style: TextStyle(
+            fontSize: compact ? 34 : 52,
             height: 1.02,
             fontWeight: FontWeight.w900,
             letterSpacing: -1.5,
-            shadows: [Shadow(blurRadius: 30, color: Colors.black54)],
+            shadows: const [Shadow(blurRadius: 30, color: Colors.black54)],
           ),
         ),
         const SizedBox(height: 14),
@@ -266,7 +286,7 @@ class _HeroInfo extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: meta,
         ),
-        if (item.overview.isNotEmpty) ...[
+        if (item.overview.isNotEmpty && !compact) ...[
           const SizedBox(height: 14),
           Text(
             item.overview,

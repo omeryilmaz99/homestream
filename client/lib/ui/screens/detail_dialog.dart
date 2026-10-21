@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/media_card.dart';
@@ -138,7 +139,9 @@ class _DetailDialogState extends State<DetailDialog> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final w = (size.width * 0.9).clamp(320.0, 980.0);
+    final compact = isCompact(context);
+    // phones: the detail page fills the screen
+    final w = compact ? size.width : (size.width * 0.9).clamp(320.0, 980.0);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
@@ -146,16 +149,17 @@ class _DetailDialogState extends State<DetailDialog> {
       },
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 28),
+          padding: EdgeInsets.symmetric(vertical: compact ? 0 : 28),
           child: Material(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(compact ? 0 : 18),
             clipBehavior: Clip.antiAlias,
             elevation: 24,
             child: SizedBox(
               width: w,
+              height: compact ? size.height : null,
               child: CustomScrollView(
-                shrinkWrap: true,
+                shrinkWrap: !compact,
                 slivers: [
                   SliverToBoxAdapter(child: _header(w)),
                   SliverToBoxAdapter(child: _body()),
@@ -163,7 +167,11 @@ class _DetailDialogState extends State<DetailDialog> {
                     ..._episodes(),
                   if (_related != null && _related!.recommended.isNotEmpty)
                     ..._recommended(w),
-                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 28 + MediaQuery.paddingOf(context).bottom,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -173,8 +181,17 @@ class _DetailDialogState extends State<DetailDialog> {
     );
   }
 
+  /// side margin inside the panel
+  double get _px => isCompact(context) ? 16 : 32;
+
   Widget _header(double w) {
-    final h = w * 0.5;
+    final compact = isCompact(context);
+    // sideways phones: keep the picture from filling the whole screen
+    final imgH = (w * 9 / 16)
+        .clamp(0.0, MediaQuery.sizeOf(context).height * 0.55)
+        .toDouble();
+    // phones: picture on top, title and buttons below it
+    final h = compact ? imgH + 150 : w * 0.5;
     final playTarget = _item.isSeries ? _item.nextUp : _item;
     final inProgress = playTarget?.inProgress ?? false;
     String playLabel;
@@ -195,33 +212,49 @@ class _DetailDialogState extends State<DetailDialog> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          NetImage(_item.backdrop, width: 1280, alignment: Alignment.topCenter),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x33000000),
-                  Color(0x00000000),
-                  AppColors.surface,
-                ],
-                stops: [0, 0.35, 1],
-              ),
-            ),
-          ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Color(0xCC14141C), Color(0x0014141C)],
-                stops: [0, 0.7],
-              ),
-            ),
-          ),
           Positioned(
-            top: 14,
+            left: 0,
+            right: 0,
+            top: 0,
+            height: compact ? imgH + 40 : h,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                NetImage(
+                  _item.backdrop,
+                  width: compact ? 780 : 1280,
+                  alignment: Alignment.topCenter,
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0x33000000),
+                        Color(0x00000000),
+                        AppColors.surface,
+                      ],
+                      stops: [0, 0.35, 1],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!compact)
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Color(0xCC14141C), Color(0x0014141C)],
+                  stops: [0, 0.7],
+                ),
+              ),
+            ),
+          Positioned(
+            top: 14 + (compact ? MediaQuery.paddingOf(context).top : 0),
             right: 14,
             child: CircleIconButton(
               icon: Icons.close_rounded,
@@ -231,9 +264,9 @@ class _DetailDialogState extends State<DetailDialog> {
             ),
           ),
           Positioned(
-            left: 32,
-            right: 32,
-            bottom: 18,
+            left: compact ? 16 : 32,
+            right: compact ? 16 : 32,
+            bottom: compact ? 8 : 18,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -422,7 +455,7 @@ class _DetailDialogState extends State<DetailDialog> {
     }.join(', ');
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
+      padding: EdgeInsets.fromLTRB(_px, 8, _px, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -517,7 +550,7 @@ class _DetailDialogState extends State<DetailDialog> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(32, 24, 32, 12),
+          padding: EdgeInsets.fromLTRB(_px, 24, _px, 12),
           child: Row(
             children: [
               const Text(
@@ -577,19 +610,19 @@ class _DetailDialogState extends State<DetailDialog> {
 
   List<Widget> _recommended(double w) {
     final items = _related!.recommended;
-    final cols = (w - 64) ~/ 150;
+    final cols = (w - 2 * _px) ~/ (isCompact(context) ? 110 : 150);
     return [
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(32, 28, 32, 14),
-          child: Text(
+          padding: EdgeInsets.fromLTRB(_px, 28, _px, 14),
+          child: const Text(
             'Benzer İçerikler',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: EdgeInsets.symmetric(horizontal: _px),
         sliver: SliverGrid(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: cols.clamp(2, 6),
@@ -658,6 +691,7 @@ class _EpisodeTileState extends State<_EpisodeTile> {
   @override
   Widget build(BuildContext context) {
     final e = widget.episode;
+    final compact = isCompact(context);
     return FocusableActionDetector(
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (v) => setState(() => _hover = v),
@@ -671,8 +705,11 @@ class _EpisodeTileState extends State<_EpisodeTile> {
         onTap: () => widget.onPlay(null),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-          padding: const EdgeInsets.all(12),
+          margin: EdgeInsets.symmetric(
+            horizontal: compact ? 6 : 20,
+            vertical: 3,
+          ),
+          padding: EdgeInsets.all(compact ? 8 : 12),
           decoration: BoxDecoration(
             color: _hover
                 ? AppColors.surface3
@@ -684,24 +721,25 @@ class _EpisodeTileState extends State<_EpisodeTile> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 34,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: Text(
-                    '${e.episode}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDim,
+              if (!compact)
+                SizedBox(
+                  width: 34,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Text(
+                      '${e.episode}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDim,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
+              if (!compact) const SizedBox(width: 10),
               SizedBox(
-                width: 170,
+                width: compact ? 128 : 170,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: AspectRatio(
@@ -743,7 +781,7 @@ class _EpisodeTileState extends State<_EpisodeTile> {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: compact ? 12 : 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -752,10 +790,12 @@ class _EpisodeTileState extends State<_EpisodeTile> {
                       children: [
                         Expanded(
                           child: Text(
-                            e.title.isNotEmpty
+                            compact
+                                ? '${e.episode}. ${e.title.isNotEmpty ? e.title : 'Bölüm'}'
+                                : e.title.isNotEmpty
                                 ? e.title
                                 : '${e.episode}. Bölüm',
-                            maxLines: 1,
+                            maxLines: compact ? 2 : 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,

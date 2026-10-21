@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/models.dart';
+import '../layout.dart';
 import '../theme.dart';
 import 'media_card.dart';
 
@@ -11,14 +12,14 @@ class MediaRow extends StatefulWidget {
   final String title;
   final List<MediaItem> items;
   final bool wide;
-  final double horizontalPadding;
+  final double? horizontalPadding;
   final void Function(MediaItem item)? onTap;
   const MediaRow({
     super.key,
     required this.title,
     required this.items,
     this.wide = false,
-    this.horizontalPadding = 48,
+    this.horizontalPadding,
     this.onTap,
   });
 
@@ -69,14 +70,17 @@ class _MediaRowState extends State<MediaRow> {
 
   @override
   Widget build(BuildContext context) {
-    final cardW = widget.wide ? 300.0 : 170.0;
+    final compact = isCompact(context);
+    final cardW = widget.wide
+        ? (compact ? 230.0 : 300.0)
+        : (compact ? 118.0 : 170.0);
     final cardH = widget.wide ? cardW * 9 / 16 + 52 : cardW * 1.5;
-    final pad = widget.horizontalPadding;
+    final pad = widget.horizontalPadding ?? pagePad(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 26),
+        padding: EdgeInsets.only(bottom: compact ? 14 : 26),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -84,8 +88,8 @@ class _MediaRowState extends State<MediaRow> {
               padding: EdgeInsets.fromLTRB(pad, 0, pad, 12),
               child: Text(
                 widget.title,
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: compact ? 17 : 20,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                 ),
@@ -120,7 +124,8 @@ class _MediaRowState extends State<MediaRow> {
                         clipBehavior: Clip.none,
                         padding: EdgeInsets.fromLTRB(pad, 12, pad, 12),
                         itemCount: widget.items.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 14),
+                        separatorBuilder: (_, _) =>
+                            SizedBox(width: compact ? 10 : 14),
                         itemBuilder: (context, i) {
                           final it = widget.items[i];
                           return widget.wide
@@ -136,18 +141,20 @@ class _MediaRowState extends State<MediaRow> {
                       ),
                     ),
                   ),
-                  _Arrow(
-                    left: true,
-                    visible: _hover && _canLeft,
-                    width: pad,
-                    onTap: () => _page(-1),
-                  ),
-                  _Arrow(
-                    left: false,
-                    visible: _hover && _canRight,
-                    width: pad,
-                    onTap: () => _page(1),
-                  ),
+                  if (!compact) ...[
+                    _Arrow(
+                      left: true,
+                      visible: _hover && _canLeft,
+                      width: pad,
+                      onTap: () => _page(-1),
+                    ),
+                    _Arrow(
+                      left: false,
+                      visible: _hover && _canRight,
+                      width: pad,
+                      onTap: () => _page(1),
+                    ),
+                  ],
                 ],
               ),
             ),
