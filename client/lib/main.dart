@@ -69,7 +69,14 @@ Future<void> main() async {
       ? 600
       : 2000;
 
-  final prefs = await Prefs.load();
+  final Prefs prefs;
+  try {
+    prefs = await Prefs.load();
+  } catch (e) {
+    // never sit on the splash screen: show what went wrong instead
+    runApp(_StartupError('$e'));
+    return;
+  }
   AppTheme.current = AppTheme.byId(prefs.theme);
   final state = AppState(prefs);
   runApp(
@@ -144,4 +151,28 @@ Widget _tvScale(BuildContext context, Widget? child) {
       ),
     ),
   );
+}
+
+/// Shown when the app cannot even load its settings.
+class _StartupError extends StatelessWidget {
+  final String message;
+  const _StartupError(this.message);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: buildTheme(),
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Home Stream başlatılamadı.\n\n$message',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
