@@ -42,6 +42,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            // R8 stripped plugin code (shared_preferences) and the app hung on
+            // its splash screen; the size saving isn't worth that risk
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
