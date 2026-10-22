@@ -90,6 +90,7 @@ func (d *dirInfo) find(name string) string {
 
 type walker struct {
 	ctx     context.Context
+	skip    func(string) bool
 	root    string
 	files   []walkedFile
 	dirs    map[string]*dirInfo
@@ -97,8 +98,8 @@ type walker struct {
 	errs    int
 }
 
-func walkFolder(ctx context.Context, root string) (*walker, error) {
-	w := &walker{ctx: ctx, root: root, dirs: map[string]*dirInfo{}, visited: map[fileKey]bool{}}
+func walkFolder(ctx context.Context, root string, skip func(string) bool) (*walker, error) {
+	w := &walker{ctx: ctx, root: root, skip: skip, dirs: map[string]*dirInfo{}, visited: map[fileKey]bool{}}
 	if k, ok := statKey(root); ok {
 		w.visited[k] = true
 	}
@@ -141,7 +142,7 @@ func (w *walker) walk(abs, rel string, depth int) {
 		}
 		switch {
 		case mode.IsDir():
-			if SkipDirName(name) {
+			if SkipDirName(name) || (w.skip != nil && w.skip(full)) {
 				continue
 			}
 			di.subdirs = append(di.subdirs, name)
@@ -256,7 +257,7 @@ func (l *Library) scan(ctx context.Context, refreshMeta bool) error {
 		if !avail {
 			continue
 		}
-		w, err := walkFolder(ctx, f.Path)
+		w, err := walkFolder(ctx, f.Path, l.SkipDir)
 		if err != nil {
 			return err
 		}

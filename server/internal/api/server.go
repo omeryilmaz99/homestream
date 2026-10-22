@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"homestream/internal/library"
+	"homestream/internal/music"
 	"homestream/internal/store"
 )
 
@@ -23,6 +25,15 @@ type Server struct {
 	DefaultName string
 	Port        int
 	ServerID    string
+	Music       *music.Library
+	Ctx         context.Context // lives as long as the server (background jobs)
+}
+
+func (s *Server) ctx() context.Context {
+	if s.Ctx != nil {
+		return s.Ctx
+	}
+	return context.Background()
 }
 
 // ServerName returns the configured server name.
@@ -64,6 +75,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/fs", s.handleFS)
 	mux.HandleFunc("POST /api/scan", s.handleScan)
 	mux.HandleFunc("GET /api/scan/status", s.handleScanStatus)
+	if s.Music != nil {
+		s.musicRoutes(mux)
+	}
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "Bulunamadı")
 	})
@@ -118,7 +132,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		start := time.Now()
 		h := w.Header()
 		h.Set("Access-Control-Allow-Origin", "*")
-		h.Set("Access-Control-Allow-Headers", "Content-Type, X-Profile, Range, If-None-Match, If-Range")
+		h.Set("Access-Control-Allow-Headers", "Content-Type, X-Profile, X-Admin-Password, Range, If-None-Match, If-Range")
 		h.Set("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, OPTIONS")
 		h.Set("Access-Control-Expose-Headers", "Content-Range, Content-Length, Accept-Ranges, ETag")
 		if r.Method == http.MethodOptions {
@@ -138,6 +152,8 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			}
 			p := r.URL.Path
 			quiet := strings.HasPrefix(p, "/api/images/") || strings.HasPrefix(p, "/api/stream/") ||
+				strings.HasPrefix(p, "/api/music/covers/") || strings.HasPrefix(p, "/api/music/stream/") ||
+				p == "/api/music/scan/status" || strings.HasSuffix(p, "/played") ||
 				p == "/api/scan/status" || strings.HasSuffix(p, "/progress") || r.Method == http.MethodHead
 			if !quiet || sw.status >= 500 {
 				log.Printf("%s %s %d %s", r.Method, r.URL.RequestURI(), sw.status, time.Since(start).Round(time.Millisecond))

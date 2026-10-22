@@ -49,6 +49,27 @@ HomeStream/
   videodan otomatik bir kare alınır.
 - Yeni dosyalar en geç 30 dakikada bir görünür; uygulamadan "Kütüphaneyi Tara" ile hemen taratabilirsiniz.
 
+## Müzikleri nereye koymalı?
+
+Home Müzik uygulaması `HomeStream/Müzik` klasörünü kullanır (kurulum oluşturur). Başka
+klasörler (ör. harici diskteki arşiv) uygulamanın Ayarlar > Sunucu ayarları bölümünden
+şifreyle eklenebilir. Bu klasörlerden yalnızca müzik dosyaları alınır.
+
+```
+HomeStream/Müzik/
+├── Tarkan/Karma (2001)/03 Kuzu Kuzu.mp3
+├── Pink Floyd/The Wall/CD1/01 In the Flesh.flac
+└── Klipler/Sezen Aksu - Gülümse.mp4        ← videonun yalnızca sesi çalınır
+```
+
+- Desteklenen biçimler: MP3, FLAC, ALAC/M4A, AAC, OGG, Opus, WAV, AIFF, APE, WavPack, WMA,
+  DSD (DSF/DFF) ve ses olarak MP4, MKV, WEBM, MOV gibi videolar.
+- Etiket yoksa ad, sanatçı, albüm ve parça numarası dosya/klasör adından çıkarılır
+  (`03 - Sanatçı - Şarkı.mp3`, `Sanatçı - Albüm (2001)/`). Bozuk Türkçe etiketler (Ý, Þ, Ð)
+  düzeltilir.
+- Kapak: klasördeki `cover.jpg`/`folder.jpg`, dosyaya gömülü kapak, videodan bir kare,
+  internet (Deezer/iTunes) ya da otomatik oluşturulan bir kapak — bu sırayla.
+
 **Harici disk:** Uygulamanın Ayarlar ekranından "Klasör Ekle" ile `/media/...` veya
 `/mnt/...` altındaki klasörü ekleyin. Disk takılı değilken içerikler gizlenir, silinmez;
 disk geri takılınca izleme geçmişiyle birlikte geri gelir.
