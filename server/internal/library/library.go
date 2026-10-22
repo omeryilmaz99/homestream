@@ -62,6 +62,10 @@ type Library struct {
 
 	bgMu     sync.Mutex
 	bgCancel context.CancelFunc
+
+	// SkipDir, when set, tells the scanner to stay out of a folder (the
+	// music folder inside the video library).
+	SkipDir func(abs string) bool
 }
 
 // New creates the library service.

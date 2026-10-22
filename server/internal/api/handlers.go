@@ -30,7 +30,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		"app": "homestream", "id": s.ServerID, "name": s.ServerName(), "version": s.Version,
 		"itemCount":  len(snap.Movies) + len(snap.Series),
 		"movieCount": len(snap.Movies), "seriesCount": len(snap.Series), "episodeCount": len(snap.Episodes),
-		"scanning": st.Running,
+		"scanning": st.Running, "music": s.Music != nil,
 	})
 }
 
@@ -128,6 +128,11 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	if err := s.St.DeleteProfile(id); err != nil {
 		writeError(w, http.StatusInternalServerError, "Profil silinemedi")
 		return
+	}
+	if s.Music != nil {
+		if err := s.Music.DeleteProfileData(id); err != nil {
+			log.Printf("profiles: music data of %s: %v", id, err)
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
@@ -444,7 +449,7 @@ func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if info.IsDir() {
-			if library.SkipDirName(name) {
+			if library.SkipDirName(name) || (s.Lib.SkipDir != nil && s.Lib.SkipDir(full)) {
 				continue
 			}
 			dirs = append(dirs, browseEntry{Name: names.DisplayString(name), Path: prefix + "/" + name, Type: "dir"})

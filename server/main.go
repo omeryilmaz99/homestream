@@ -18,6 +18,7 @@ import (
 
 	"homestream/internal/api"
 	"homestream/internal/library"
+	"homestream/internal/music"
 	"homestream/internal/store"
 )
 
@@ -95,10 +96,22 @@ func main() {
 		TMDBImageBase: os.Getenv("HOMESTREAM_TMDB_IMAGE_BASE"),
 	}, st)
 
-	srv := &api.Server{Lib: lib, St: st, Version: version, DefaultName: *name, Port: *port, ServerID: serverID}
+	mus, err := music.New(music.Config{
+		DataDir: *dataDir, DefaultFolder: filepath.Join(*libDir, "Müzik"),
+		FFprobe: ffprobe, FFmpeg: ffmpeg, Nice: nice,
+		ITunesURL: os.Getenv("HOMESTREAM_ITUNES_BASE"), DeezerURL: os.Getenv("HOMESTREAM_DEEZER_BASE"),
+		GetSetting: st.GetSetting,
+	}, st.DB)
+	if err != nil {
+		log.Fatalf("cannot open music library: %v", err)
+	}
+	// a music folder inside the video library is left to the music app
+	lib.SkipDir = mus.IsMusicDir
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	srv := &api.Server{Lib: lib, St: st, Version: version, DefaultName: *name, Port: *port, ServerID: serverID,
+		Music: mus, Ctx: ctx}
 
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
 	if err != nil {
@@ -113,6 +126,7 @@ func main() {
 	log.Printf("Home Stream %s: %q listening on :%d, library %s, data %s", version, srv.ServerName(), *port, *libDir, *dataDir)
 
 	go lib.Run(ctx)
+	go mus.Run(ctx)
 	go lib.WatchDrives(ctx, *drives)
 	go srv.RunDiscovery(ctx, *discPort)
 

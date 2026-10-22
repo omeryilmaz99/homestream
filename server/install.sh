@@ -309,6 +309,10 @@ if [ ! -d "$LIBRARY" ]; then
   msg "Film klasörü oluşturuluyor: $LIBRARY"
   as_user mkdir -p "$LIBRARY/Filmler" "$LIBRARY/Diziler"
 fi
+# music app: songs go to <library>/Müzik (also on updates of older installs)
+if [ ! -d "$LIBRARY/Müzik" ]; then
+  as_user mkdir -p "$LIBRARY/Müzik" || true
+fi
 
 # ---- systemd ---------------------------------------------------------------------
 UNIT_CONTENT="[Unit]
@@ -434,6 +438,7 @@ echo
 echo "  Sunucu adresi        : $IP"
 echo "  Uygulamada bağlanın  : http://$IP:$PORT"
 echo "  Film klasörü         : $LIBRARY"
+echo "  Müzik klasörü        : $LIBRARY/Müzik"
 echo "  Takılan diskler      : $DRIVES_DIR altında otomatik bağlanır ve kütüphaneye eklenir"
 if [ "$SAMBA_OK" = 1 ]; then
   echo "  Windows Gezgini      : \\\\$IP\\HomeStream   (kullanıcı adı: $RUN_USER)"
