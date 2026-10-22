@@ -102,6 +102,8 @@ var groupDirs = foldSet(
 	"1080p", "720p", "2160p", "4k", "hd", "uhd", "sd",
 	"extras", "ekstra", "ekstralar", "bonus", "featurettes", "behind the scenes", "kamera arkası",
 	"tamamlananlar", "devam edenler", "izlenecekler", "izlendi", "watched", "ongoing", "completed",
+	"türk", "turk", "türk diziler", "yabancı dizi", "yerli dizi",
+	"bölümler", "bolumler", "tüm bölümler", "tum bolumler", "episodes", "all episodes", "videolar", "videos",
 )
 
 // IsGroupDir reports whether a folder name only groups titles (dub, language, category…).

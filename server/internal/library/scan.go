@@ -296,6 +296,11 @@ func (l *Library) scan(ctx context.Context, refreshMeta bool) error {
 			if typ == "episode" {
 				key := names.Key(p.SeriesTitle)
 				r.SeriesID = HashID("series", key)
+				if f.Kind == store.FolderSeries && p.SeriesDir != "" {
+					// in a series folder every show folder is its own series, even
+					// when two folders have the same name in different places
+					r.SeriesID = HashID("series", "dir:"+filepath.ToSlash(filepath.Join(f.Path, filepath.FromSlash(p.SeriesDir))))
+				}
 				a := aggs[r.SeriesID]
 				if a == nil {
 					a = &seriesAgg{titles: map[string]int{}, years: map[int]int{}, dirs: map[string]int{}}

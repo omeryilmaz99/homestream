@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/models.dart';
 import '../../state/app_state.dart';
+import '../layout.dart';
+import '../settings_lock.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'server_setup_screen.dart';
@@ -66,83 +68,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final profiles = state.profiles;
+    final compact = isCompact(context);
     return Scaffold(
       body: Stack(
         children: [
           const Positioned.fill(child: AnimatedBackdrop()),
-          Positioned(top: 24, left: 32, child: const BrandLogo(size: 24)),
-          Positioned(
-            top: 18,
-            right: 24,
-            child: TextButton.icon(
-              onPressed: state.showServerSetup,
-              icon: const Icon(Icons.dns_rounded, size: 18),
-              label: Text(
-                state.server?.name.isNotEmpty == true
-                    ? state.server!.name
-                    : 'Sunucu',
-              ),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _manage
-                        ? 'Profilleri Yönet'
-                        : (profiles.isEmpty ? 'Hoş geldin!' : 'Kim izliyor?'),
-                    style: const TextStyle(
-                      fontSize: 44,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
+          // header and content in one column so they can never overlap
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 16 : 32,
+                    compact ? 8 : 18,
+                    compact ? 8 : 24,
+                    0,
                   ),
-                  if (profiles.isEmpty) ...[
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Başlamak için bir profil oluştur. Herkesin izleme geçmişi ve önerileri ayrı tutulur.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textDim, fontSize: 16),
-                    ),
-                  ],
-                  const SizedBox(height: 40),
-                  Wrap(
-                    spacing: 28,
-                    runSpacing: 28,
-                    alignment: WrapAlignment.center,
+                  child: Row(
                     children: [
-                      for (var i = 0; i < profiles.length; i++)
-                        _ProfileTile(
-                          autofocus: i == 0,
-                          name: profiles[i].name,
-                          color: parseHexColor(profiles[i].color),
-                          avatar: profiles[i].avatar,
-                          editing: _manage,
-                          onTap: () => _manage
-                              ? _edit(profiles[i])
-                              : state.selectProfile(profiles[i]),
+                      BrandLogo(size: compact ? 20 : 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              if (await SettingsLock.ensureUnlocked(
+                                context,
+                                state.prefs,
+                              )) {
+                                state.showServerSetup();
+                              }
+                            },
+                            icon: const Icon(Icons.dns_rounded, size: 18),
+                            label: Text(
+                              state.server?.name.isNotEmpty == true
+                                  ? state.server!.name
+                                  : 'Sunucu',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
-                      _ProfileTile(
-                        autofocus: profiles.isEmpty,
-                        name: 'Profil Ekle',
-                        color: AppColors.surface3,
-                        icon: Icons.add_rounded,
-                        onTap: () => _edit(null),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 48),
-                  if (profiles.isNotEmpty)
-                    PillButton(
-                      label: _manage ? 'Bitti' : 'Profilleri Yönet',
-                      icon: _manage ? Icons.check_rounded : Icons.edit_rounded,
-                      onPressed: () => setState(() => _manage = !_manage),
+                ),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(compact ? 16 : 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _manage
+                                ? 'Profilleri Yönet'
+                                : (profiles.isEmpty
+                                      ? 'Hoş geldin!'
+                                      : 'Kim izliyor?'),
+                            style: TextStyle(
+                              fontSize: compact ? 32 : 44,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          if (profiles.isEmpty) ...[
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Başlamak için bir profil oluştur. Herkesin izleme geçmişi ve önerileri ayrı tutulur.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.textDim,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: compact ? 28 : 40),
+                          Wrap(
+                            spacing: compact ? 16 : 28,
+                            runSpacing: compact ? 18 : 28,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              for (var i = 0; i < profiles.length; i++)
+                                _ProfileTile(
+                                  autofocus: i == 0,
+                                  name: profiles[i].name,
+                                  color: parseHexColor(profiles[i].color),
+                                  avatar: profiles[i].avatar,
+                                  editing: _manage,
+                                  onTap: () => _manage
+                                      ? _edit(profiles[i])
+                                      : state.selectProfile(profiles[i]),
+                                ),
+                              _ProfileTile(
+                                autofocus: profiles.isEmpty,
+                                name: 'Profil Ekle',
+                                color: AppColors.surface3,
+                                icon: Icons.add_rounded,
+                                onTap: () async {
+                                  if (await SettingsLock.ensureUnlocked(
+                                    context,
+                                    state.prefs,
+                                  )) {
+                                    _edit(null);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: compact ? 32 : 48),
+                          if (profiles.isNotEmpty)
+                            PillButton(
+                              label: _manage ? 'Bitti' : 'Profilleri Yönet',
+                              icon: _manage
+                                  ? Icons.check_rounded
+                                  : Icons.edit_rounded,
+                              onPressed: () =>
+                                  setState(() => _manage = !_manage),
+                            ),
+                        ],
+                      ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -188,6 +237,8 @@ class _ProfileTileState extends State<_ProfileTile> {
   }
 
   Widget _buildTile(BuildContext context) {
+    final c = isCompact(context);
+    final box = c ? 100.0 : 150.0;
     return FocusableActionDetector(
       autofocus: widget.autofocus,
       mouseCursor: SystemMouseCursors.click,
@@ -208,10 +259,10 @@ class _ProfileTileState extends State<_ProfileTile> {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 150,
-                height: 150,
+                width: box,
+                height: box,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(c ? 20 : 28),
                   gradient: widget.icon != null
                       ? null
                       : LinearGradient(
@@ -240,7 +291,11 @@ class _ProfileTileState extends State<_ProfileTile> {
                   alignment: Alignment.center,
                   children: [
                     if (widget.icon != null)
-                      Icon(widget.icon, size: 64, color: AppColors.textDim)
+                      Icon(
+                        widget.icon,
+                        size: c ? 44 : 64,
+                        color: AppColors.textDim,
+                      )
                     else
                       Text(
                         widget.avatar?.isNotEmpty == true
@@ -248,8 +303,8 @@ class _ProfileTileState extends State<_ProfileTile> {
                             : (widget.name.isNotEmpty
                                   ? widget.name.characters.first.toUpperCase()
                                   : '?'),
-                        style: const TextStyle(
-                          fontSize: 68,
+                        style: TextStyle(
+                          fontSize: c ? 46 : 68,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -257,7 +312,7 @@ class _ProfileTileState extends State<_ProfileTile> {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.black45,
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(c ? 18 : 26),
                         ),
                         child: const Center(
                           child: Icon(Icons.edit_rounded, size: 44),
@@ -266,16 +321,16 @@ class _ProfileTileState extends State<_ProfileTile> {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: c ? 8 : 14),
               SizedBox(
-                width: 160,
+                width: c ? 110 : 160,
                 child: Text(
                   widget.name,
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: c ? 15 : 18,
                     color: _active ? Colors.white : AppColors.textDim,
                     fontWeight: FontWeight.w600,
                   ),

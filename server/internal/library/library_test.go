@@ -278,3 +278,42 @@ func TestScanRules(t *testing.T) {
 		t.Error("addedAt changed on rescan")
 	}
 }
+
+// In a series folder every show folder is one series, however deep it is,
+// and two show folders with the same name stay separate.
+func TestSeriesFolderNesting(t *testing.T) {
+	l, lib := newTestLib(t, Config{})
+	root := filepath.Join(filepath.Dir(lib), "Diziler")
+	mk := func(rel string) { mkVideo(t, filepath.Join(root, filepath.FromSlash(rel))) }
+	mk("Yabancı/Breaking Bad/Season 1/Breaking.Bad.S01E01.mkv")
+	mk("Yabancı/Breaking Bad/Season 1/Breaking.Bad.S01E02.mkv")
+	mk("Türk/Örnek Klasör 1/01.mp4")
+	mk("Türk/Örnek Klasör 1/02.mp4")
+	mk("Türk/Örnek Klasör 2/Dizi 1/1.Bölüm.mp4")
+	mk("Türk/Örnek Klasör 2/Dizi 1/2.Bölüm.mp4")
+	mk("Türk/Örnek Klasör 2/Dizi 2/Bölümler/01.mkv")
+	mk("Türk/Örnek Klasör 2/Dizi 2/Bölümler/02.mkv")
+	mk("Türk/Örnek Klasör 2/Dizi 2/Bölümler/03.mkv")
+	mk("Arşiv A/Kayıp/01.mp4")
+	mk("Arşiv B/Kayıp/01.mp4")
+	if _, err := l.St.AddFolder(root, "Diziler", store.FolderSeries); err != nil {
+		t.Fatal(err)
+	}
+	if err := l.scan(context.Background(), false); err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]int{}
+	for _, s := range l.Snap().Series {
+		got[s.Title] += 1
+		t.Logf("%s: %d bölüm", s.Title, len(s.Episodes))
+	}
+	want := map[string]int{"Breaking Bad": 1, "Örnek Klasör 1": 1, "Dizi 1": 1, "Dizi 2": 1, "Kayıp": 2}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s: %d series, want %d (all: %v)", k, got[k], v, got)
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("series: %v", got)
+	}
+}

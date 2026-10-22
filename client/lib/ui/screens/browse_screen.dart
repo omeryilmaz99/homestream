@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/net_image.dart';
 import 'detail_dialog.dart';
+import 'play_launcher.dart';
 
 /// Plain folder browser over the server's library folders, for opening
 /// videos manually.
@@ -91,7 +92,64 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
     try {
       final item = await _state.api!.item(e.itemId);
-      if (mounted) openDetail(context, item);
+      if (!mounted) return;
+      final inProgress = e.userData.position > 0 && e.duration > 0;
+      if (!inProgress) {
+        openDetail(context, item);
+        return;
+      }
+      // half watched: ask where to start
+      final choice = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: AppColors.surface,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  e.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ListTile(
+                autofocus: true,
+                leading: const Icon(Icons.play_arrow_rounded),
+                title: Text(
+                  'Kaldığın yerden devam et (${formatDuration(e.userData.position)})',
+                ),
+                onTap: () => Navigator.pop(ctx, 'resume'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.replay_rounded),
+                title: const Text('Baştan başla'),
+                onTap: () => Navigator.pop(ctx, 'start'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline_rounded),
+                title: const Text('Detaylar'),
+                onTap: () => Navigator.pop(ctx, 'detail'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      );
+      if (!mounted || choice == null) return;
+      if (choice == 'detail') {
+        openDetail(context, item);
+      } else {
+        await playItem(
+          context,
+          item,
+          startAt: choice == 'start' ? 0 : e.userData.position,
+        );
+      }
     } catch (err) {
       if (mounted) showToast(context, err.toString(), error: true);
     }
@@ -231,8 +289,7 @@ class _EntryTileState extends State<_EntryTile> {
   @override
   Widget build(BuildContext context) {
     final e = widget.entry;
-    final progress =
-        e.duration > 0 && e.userData.position > 0 && !e.userData.played
+    final progress = e.duration > 0 && e.userData.position > 0
         ? e.userData.position / e.duration
         : 0.0;
     return FocusableActionDetector(
@@ -328,6 +385,23 @@ class _EntryTileState extends State<_EntryTile> {
                         ].join(' · '),
                         style: const TextStyle(
                           color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    if (!e.isDir && progress > 0)
+                      Text(
+                        'Kaldığın yer ${formatDuration(e.userData.position)} · ${formatRemaining(e.userData.position, e.duration)}',
+                        style: TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    else if (!e.isDir && e.userData.played)
+                      const Text(
+                        'İzlendi',
+                        style: TextStyle(
+                          color: AppColors.success,
                           fontSize: 13,
                         ),
                       ),

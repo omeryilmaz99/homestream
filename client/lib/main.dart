@@ -116,7 +116,11 @@ class HomeStreamApp extends StatelessWidget {
         const SingleActivator(LogicalKeyboardKey.gameButtonA):
             const ActivateIntent(),
       },
-      builder: AppPlatform.isTv ? _tvScale : null,
+      builder: AppPlatform.isTv
+          ? _tvScale
+          : (AppPlatform.isPhone && AppPlatform.isDesktop)
+          ? _fakePhoneInsets
+          : null,
       home: const Root(),
     );
   }
@@ -175,4 +179,14 @@ class _StartupError extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Phone simulation on desktop: pretend there is a status and gesture bar.
+Widget _fakePhoneInsets(BuildContext context, Widget? child) {
+  final mq = MediaQuery.of(context);
+  const pad = EdgeInsets.only(top: 32, bottom: 24);
+  return MediaQuery(
+    data: mq.copyWith(padding: pad, viewPadding: pad),
+    child: child ?? const SizedBox(),
+  );
 }

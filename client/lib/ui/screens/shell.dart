@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
 import '../layout.dart';
+import '../settings_lock.dart';
 import '../theme.dart';
 import 'browse_screen.dart';
 import 'home_screen.dart';
@@ -99,8 +100,7 @@ class _BottomNav extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x000A0A0F), Color(0xF20A0A0F), Color(0xFF0A0A0F)],
-          stops: [0, 0.35, 1],
+          colors: [Color(0xE60A0A0F), Color(0xFA0A0A0F)],
         ),
       ),
       child: NavigationBar(
@@ -356,7 +356,11 @@ class _ProfileMenu extends StatelessWidget {
       onSelected: (v) {
         if (v == 'switch') state.switchProfile();
         if (v == 'settings') shell.go(5);
-        if (v == 'server') state.showServerSetup();
+        if (v == 'server') {
+          SettingsLock.ensureUnlocked(context, state.prefs).then((ok) {
+            if (ok) state.showServerSetup();
+          });
+        }
       },
       itemBuilder: (_) => [
         PopupMenuItem(

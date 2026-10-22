@@ -110,6 +110,14 @@ class Prefs {
   set nextCountdown(int v) => _p.setInt('nextCountdown', v);
 
   /// Start the player in full screen.
+  /// Settings need the password on this device.
+  bool get settingsLocked => _p.getBool('settingsLocked') ?? false;
+  set settingsLocked(bool v) => _p.setBool('settingsLocked', v);
+
+  /// Phones: false = player locked to landscape, true = turns with the phone.
+  bool get playerAutoRotate => _p.getBool('playerAutoRotate') ?? false;
+  set playerAutoRotate(bool v) => _p.setBool('playerAutoRotate', v);
+
   bool get playerFullscreen => _p.getBool('playerFullscreen') ?? true;
   set playerFullscreen(bool v) => _p.setBool('playerFullscreen', v);
 

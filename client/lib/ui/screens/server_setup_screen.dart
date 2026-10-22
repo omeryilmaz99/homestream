@@ -75,172 +75,184 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
       body: Stack(
         children: [
           const Positioned.fill(child: AnimatedBackdrop()),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Center(child: BrandLogo(size: 36)),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Ev sunucundaki filmler ve diziler, tek yerde.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textDim, fontSize: 16),
-                    ),
-                    const SizedBox(height: 32),
-                    _Card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                'Ağdaki sunucular',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (_searching)
-                                const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(
+                  MediaQuery.sizeOf(context).shortestSide < 560 ? 16 : 32,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(child: BrandLogo(size: 36)),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Ev sunucundaki filmler ve diziler, tek yerde.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textDim,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _Card(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                const Text(
+                                  'Ağdaki sunucular',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                )
-                              else
-                                IconButton(
-                                  tooltip: 'Yeniden ara',
-                                  onPressed: _discover,
-                                  icon: const Icon(Icons.refresh_rounded),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          if (!_searching && _found.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                'Otomatik bulunamadı. Aşağıya sunucunun adresini yazabilirsin.',
-                                style: TextStyle(color: AppColors.textMuted),
-                              ),
-                            ),
-                          for (final (i, d) in _found.indexed)
-                            _ServerTile(
-                              autofocus: i == 0,
-                              icon: Icons.dns_rounded,
-                              title: d.name,
-                              subtitle: d.url,
-                              onTap: _testing
-                                  ? null
-                                  : () => _connectTo(d.name, d.url),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _Card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Adresle bağlan',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _address,
-                            // on TV this would pop the keyboard right away
-                            autofocus: _found.isEmpty && AppPlatform.isDesktop && !AppPlatform.isPhone,
-                            decoration: const InputDecoration(
-                              hintText: 'Örnek: 192.168.50.200',
-                              prefixIcon: Icon(Icons.link_rounded),
-                            ),
-                            onSubmitted: (_) =>
-                                _connectTo(_name.text.trim(), _address.text),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: _name,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'İsim (isteğe bağlı), örnek: Ev Sunucusu',
-                              prefixIcon: Icon(Icons.label_outline_rounded),
-                            ),
-                            onSubmitted: (_) =>
-                                _connectTo(_name.text.trim(), _address.text),
-                          ),
-                          if (_error != null) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              _error!,
-                              style: const TextStyle(color: AppColors.danger),
-                            ),
-                          ],
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: PillButton(
-                              primary: true,
-                              icon: _testing
-                                  ? null
-                                  : Icons.arrow_forward_rounded,
-                              label: _testing ? 'Bağlanıyor…' : 'Bağlan',
-                              onPressed: _testing
-                                  ? null
-                                  : () => _connectTo(
-                                      _name.text.trim(),
-                                      _address.text,
+                                const Spacer(),
+                                if (_searching)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
+                                  )
+                                else
+                                  IconButton(
+                                    tooltip: 'Yeniden ara',
+                                    onPressed: _discover,
+                                    icon: const Icon(Icons.refresh_rounded),
+                                  ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            if (!_searching && _found.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  'Otomatik bulunamadı. Aşağıya sunucunun adresini yazabilirsin.',
+                                  style: TextStyle(color: AppColors.textMuted),
+                                ),
+                              ),
+                            for (final (i, d) in _found.indexed)
+                              _ServerTile(
+                                autofocus: i == 0,
+                                icon: Icons.dns_rounded,
+                                title: d.name,
+                                subtitle: d.url,
+                                onTap: _testing
+                                    ? null
+                                    : () => _connectTo(d.name, d.url),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (saved.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _Card(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const Text(
-                              'Kayıtlı sunucular',
+                              'Adresle bağlan',
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            ...saved.map(
-                              (s) => _ServerTile(
-                                icon: Icons.bookmark_rounded,
-                                title: s.name.isNotEmpty ? s.name : s.url,
-                                subtitle: s.url,
-                                onTap: () =>
-                                    state.connect(s, forceProfilePicker: true),
-                                trailing: IconButton(
-                                  tooltip: 'Kaldır',
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: AppColors.textMuted,
-                                  ),
-                                  onPressed: () => _confirmRemove(s),
-                                ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _address,
+                              // on TV this would pop the keyboard right away
+                              autofocus:
+                                  _found.isEmpty &&
+                                  AppPlatform.isDesktop &&
+                                  !AppPlatform.isPhone,
+                              decoration: const InputDecoration(
+                                hintText: 'Örnek: 192.168.50.200',
+                                prefixIcon: Icon(Icons.link_rounded),
+                              ),
+                              onSubmitted: (_) =>
+                                  _connectTo(_name.text.trim(), _address.text),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _name,
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'İsim (isteğe bağlı), örnek: Ev Sunucusu',
+                                prefixIcon: Icon(Icons.label_outline_rounded),
+                              ),
+                              onSubmitted: (_) =>
+                                  _connectTo(_name.text.trim(), _address.text),
+                            ),
+                            if (_error != null) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                _error!,
+                                style: const TextStyle(color: AppColors.danger),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: PillButton(
+                                primary: true,
+                                icon: _testing
+                                    ? null
+                                    : Icons.arrow_forward_rounded,
+                                label: _testing ? 'Bağlanıyor…' : 'Bağlan',
+                                onPressed: _testing
+                                    ? null
+                                    : () => _connectTo(
+                                        _name.text.trim(),
+                                        _address.text,
+                                      ),
                               ),
                             ),
                           ],
                         ),
                       ),
+                      if (saved.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _Card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'Kayıtlı sunucular',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              ...saved.map(
+                                (s) => _ServerTile(
+                                  icon: Icons.bookmark_rounded,
+                                  title: s.name.isNotEmpty ? s.name : s.url,
+                                  subtitle: s.url,
+                                  onTap: () => state.connect(
+                                    s,
+                                    forceProfilePicker: true,
+                                  ),
+                                  trailing: IconButton(
+                                    tooltip: 'Kaldır',
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    onPressed: () => _confirmRemove(s),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -5,6 +5,7 @@ import '../state/app_state.dart';
 import 'screens/profile_screen.dart';
 import 'screens/server_setup_screen.dart';
 import 'screens/shell.dart';
+import 'settings_lock.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 
@@ -97,7 +98,11 @@ class _ConnectError extends StatelessWidget {
             PillButton(
               icon: Icons.dns_rounded,
               label: 'Sunucu ayarları',
-              onPressed: s.showServerSetup,
+              onPressed: () async {
+                if (await SettingsLock.ensureUnlocked(context, s.prefs)) {
+                  s.showServerSetup();
+                }
+              },
             ),
           ],
         ),

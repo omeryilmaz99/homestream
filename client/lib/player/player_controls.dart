@@ -119,6 +119,18 @@ class _ControlsBody extends StatelessWidget {
                   ],
                 ),
               ),
+              if (AppPlatform.isPhone)
+                ValueListenableBuilder<bool>(
+                  valueListenable: state.autoRotate,
+                  builder: (context, auto, _) => _IconBtn(
+                    icon: auto
+                        ? Icons.screen_rotation_rounded
+                        : Icons.screen_lock_landscape_rounded,
+                    tooltip: auto ? 'Otomatik döndür' : 'Yatay kilitli',
+                    onTap: state.toggleAutoRotate,
+                    size: 26,
+                  ),
+                ),
             ],
           ),
         ),

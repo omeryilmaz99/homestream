@@ -111,10 +111,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     menuOpen.addListener(_onMenu);
     AppPlatform.keepScreenOn(true);
     if (AppPlatform.isPhone && AppPlatform.isAndroid) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
+      _applyOrientation();
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     }
     if (AppPlatform.isDesktop) windowManager.addListener(this);
@@ -394,6 +391,38 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   }
 
   void onUserActivity() => _showControls(autoHide: true);
+
+  /// Phones: landscape only, or follow the phone (remembered on the device).
+  late final ValueNotifier<bool> autoRotate = ValueNotifier(
+    prefs.playerAutoRotate,
+  );
+
+  void _applyOrientation() {
+    autoRotate.value = prefs.playerAutoRotate;
+    SystemChrome.setPreferredOrientations(
+      autoRotate.value
+          ? DeviceOrientation.values
+          : const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
+  }
+
+  void toggleAutoRotate() {
+    prefs.playerAutoRotate = !prefs.playerAutoRotate;
+    if (AppPlatform.isAndroid) {
+      _applyOrientation();
+    } else {
+      autoRotate.value = prefs.playerAutoRotate;
+    }
+    flashOsd(
+      autoRotate.value
+          ? 'Ekran telefonla birlikte döner'
+          : 'Ekran yatay kilitli',
+    );
+    onUserActivity();
+  }
 
   bool get _controlFocused {
     final f = FocusManager.instance.primaryFocus;

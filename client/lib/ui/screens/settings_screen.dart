@@ -11,11 +11,12 @@ import '../../core/platform.dart';
 import '../../core/prefs.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
+import '../settings_lock.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.2.1';
+const appVersion = '1.3.0';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -100,6 +101,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: SettingsLock.changes,
+      builder: (context, _, _) =>
+          SettingsLock.isLocked(prefs) ? _lockedView() : _settingsList(),
+    );
+  }
+
+  Widget _lockedView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(pagePad(context)),
+        child: EmptyState(
+          icon: Icons.lock_rounded,
+          title: 'Ayarlar kilitli',
+          message:
+              'Bu cihazda ayarlar şifreyle korunuyor. Değişiklik yapmak için kilidi aç.',
+          action: PillButton(
+            primary: true,
+            autofocus: true,
+            icon: Icons.lock_open_rounded,
+            label: 'Kilidi aç',
+            onPressed: () => SettingsLock.ensureUnlocked(context, prefs),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _lockSection() {
+    return _Section(
+      icon: Icons.lock_rounded,
+      title: 'Ayar kilidi',
+      subtitle:
+          'Açıkken bu cihazda ayarlar, profil düzenleme ve sunucu değiştirme şifre ister.',
+      children: [
+        _SwitchRow(
+          title: 'Ayarları şifreyle kilitle',
+          value: prefs.settingsLocked,
+          onChanged: (v) => setState(() {
+            prefs.settingsLocked = v;
+            // Keep this session open until "Kilitle" or the next app start.
+            if (v) SettingsLock.unlockedThisRun = true;
+          }),
+        ),
+        if (prefs.settingsLocked)
+          _Row(
+            title: 'Şimdi kilitle',
+            subtitle:
+                'Uygulama yeniden açıldığında da kendiliğinden kilitlenir.',
+            trailing: TextButton.icon(
+              onPressed: () => SettingsLock.unlockedThisRun = false,
+              icon: const Icon(Icons.lock_rounded, size: 18),
+              label: const Text('Kilitle'),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _settingsList() {
     return ListView(
       padding: EdgeInsets.fromLTRB(
         pagePad(context),
@@ -123,6 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _lockSection(),
                 _appearanceSection(),
                 _playbackSection(),
                 _subtitleSection(),
@@ -373,7 +435,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.add_rounded,
               label: 'Sunucu ekle',
               height: 40,
-              onPressed: _state.showServerSetup,
+              onPressed: () async {
+                if (await SettingsLock.ensureUnlocked(context, prefs)) {
+                  _state.showServerSetup();
+                }
+              },
             ),
           ),
         ),
