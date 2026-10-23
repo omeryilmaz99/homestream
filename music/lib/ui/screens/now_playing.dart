@@ -16,6 +16,7 @@ import '../theme.dart';
 import '../track_menu.dart';
 import '../widgets/common.dart';
 import '../widgets/cover.dart';
+import '../widgets/track_tile.dart';
 import 'artist_screen.dart';
 
 void openNowPlaying(BuildContext context) {
@@ -148,8 +149,8 @@ class _Background extends StatelessWidget {
                 center: Alignment(0.6 * math.cos(t), -0.7 + 0.25 * math.sin(t)),
                 radius: 1.25,
                 colors: [
-                  col.withValues(alpha: 0.55),
-                  col.withValues(alpha: 0.12),
+                  col.withValues(alpha: 0.38),
+                  col.withValues(alpha: 0.08),
                   C.bg,
                 ],
                 stops: const [0, 0.55, 1],
@@ -191,7 +192,7 @@ class _Body extends StatelessWidget {
     final app = context.read<AppState>();
     final t = track;
     final size = MediaQuery.sizeOf(context);
-    final coverSize = math.min(size.width - 64, size.height * 0.42);
+    final coverSize = math.min(size.width - 56, size.height * 0.43);
     return Column(
       children: [
         // top bar
@@ -201,8 +202,9 @@ class _Body extends StatelessWidget {
             children: [
               NeuIconButton(
                 Icons.keyboard_arrow_down_rounded,
+                plain: true,
                 size: 44,
-                iconSize: 28,
+                iconSize: 30,
                 tooltip: 'Küçült',
                 onTap: () => Navigator.maybePop(context),
               ),
@@ -211,11 +213,12 @@ class _Body extends StatelessWidget {
                   valueListenable: player.contextName,
                   builder: (context, name, _) => Column(
                     children: [
-                      Text(
-                        'ÇALINIYOR',
-                        style: T.faint.copyWith(
-                          letterSpacing: 2,
+                      const Text(
+                        'Şu Anda Çalıyor',
+                        style: TextStyle(
+                          fontSize: 13.5,
                           fontWeight: FontWeight.w700,
+                          color: C.text,
                         ),
                       ),
                       if (name.isNotEmpty)
@@ -223,10 +226,7 @@ class _Body extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             name,
-                            style: T.dim.copyWith(
-                              color: C.text,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: T.faint,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -237,7 +237,9 @@ class _Body extends StatelessWidget {
               ),
               NeuIconButton(
                 Icons.more_horiz_rounded,
+                plain: true,
                 size: 44,
+                iconSize: 26,
                 tooltip: 'Seçenekler',
                 onTap: () => showTrackMenu(context, t, fromPlayer: true),
               ),
@@ -262,7 +264,7 @@ class _Body extends StatelessWidget {
                       child: Text(
                         t.title,
                         key: ValueKey(t.id),
-                        style: T.h2.copyWith(fontSize: 22),
+                        style: T.h2.copyWith(fontSize: 23),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -288,12 +290,26 @@ class _Body extends StatelessWidget {
                 valueListenable: app.liked,
                 builder: (context, liked, _) {
                   final on = liked.contains(t.id);
-                  return NeuIconButton(
-                    on ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                    size: 48,
-                    active: on,
+                  return NeuButton(
+                    width: 46,
+                    height: 46,
+                    radius: 14,
+                    color: on ? C.accent.withValues(alpha: 0.22) : C.surfaceHi,
                     tooltip: on ? 'Beğenilenlerden çıkar' : 'Beğen',
                     onTap: () => app.toggleLike(t),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      transitionBuilder: (c, a) =>
+                          ScaleTransition(scale: a, child: c),
+                      child: Icon(
+                        on
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        key: ValueKey(on),
+                        color: on ? C.accentHi : C.text,
+                        size: 24,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -354,10 +370,17 @@ class _SwipeCoverState extends State<_SwipeCover> {
           transform: Matrix4.translationValues(_dx * 0.6, 0, 0)
             ..rotateZ(_dx / 3000),
           transformAlignment: Alignment.center,
-          child: NeuBox(
-            radius: 28,
-            depth: 1.6,
-            padding: const EdgeInsets.all(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 28,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
             child: SizedBox(
               width: widget.size,
               height: widget.size,
@@ -378,7 +401,7 @@ class _SwipeCoverState extends State<_SwipeCover> {
                     CoverImage(
                       cover: t.cover,
                       coverId: t.coverId,
-                      radius: 20,
+                      radius: 22,
                       width: 900,
                     ),
                     if (t.isVideo)
@@ -459,7 +482,7 @@ class _Pill extends StatelessWidget {
   const _Pill(this.text, {this.accent = false, this.icon});
   @override
   Widget build(BuildContext context) {
-    final color = accent ? C.accent : C.textDim;
+    final color = accent ? C.accentHi : C.textDim;
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -568,25 +591,24 @@ class _Controls extends StatelessWidget {
   Widget build(BuildContext context) {
     final player = context.read<MusicHandler>();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 22),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           ValueListenableBuilder<bool>(
             valueListenable: player.shuffle,
-            builder: (context, on, _) => NeuIconButton(
-              Icons.shuffle_rounded,
-              size: 46,
-              iconSize: 20,
-              active: on,
+            builder: (context, on, _) => _Toggle(
+              icon: Icons.shuffle_rounded,
+              on: on,
               tooltip: on ? 'Karışık: açık' : 'Karışık: kapalı',
               onTap: () => player.setShuffle(!on),
             ),
           ),
           NeuIconButton(
             Icons.skip_previous_rounded,
-            size: 58,
-            iconSize: 30,
+            plain: true,
+            size: 56,
+            iconSize: 38,
             tooltip: 'Önceki',
             onTap: player.skipToPrevious,
           ),
@@ -594,10 +616,9 @@ class _Controls extends StatelessWidget {
             valueListenable: player.playing,
             builder: (context, playing, _) => NeuButton(
               circle: true,
-              width: 80,
-              height: 80,
-              color: C.accent,
-              depth: 1.3,
+              width: 74,
+              height: 74,
+              color: Colors.white,
               tooltip: playing ? 'Duraklat' : 'Çal',
               onTap: player.togglePlay,
               child: AnimatedSwitcher(
@@ -607,34 +628,79 @@ class _Controls extends StatelessWidget {
                 child: Icon(
                   playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   key: ValueKey(playing),
-                  size: 42,
-                  color: Colors.black,
+                  size: 40,
+                  color: C.bg,
                 ),
               ),
             ),
           ),
           NeuIconButton(
             Icons.skip_next_rounded,
-            size: 58,
-            iconSize: 30,
+            plain: true,
+            size: 56,
+            iconSize: 38,
             tooltip: 'Sonraki',
             onTap: player.skipToNext,
           ),
           ValueListenableBuilder<AudioServiceRepeatMode>(
             valueListenable: player.repeat,
-            builder: (context, r, _) => NeuIconButton(
-              r == AudioServiceRepeatMode.one
+            builder: (context, r, _) => _Toggle(
+              icon: r == AudioServiceRepeatMode.one
                   ? Icons.repeat_one_rounded
                   : Icons.repeat_rounded,
-              size: 46,
-              iconSize: 20,
-              active: r != AudioServiceRepeatMode.none,
+              on: r != AudioServiceRepeatMode.none,
               tooltip: switch (r) {
                 AudioServiceRepeatMode.none => 'Tekrar: kapalı',
                 AudioServiceRepeatMode.one => 'Tekrar: bu şarkı',
                 _ => 'Tekrar: liste',
               },
               onTap: player.cycleRepeat,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shuffle / repeat: purple with a dot under it when on.
+class _Toggle extends StatelessWidget {
+  final IconData icon;
+  final bool on;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _Toggle({
+    required this.icon,
+    required this.on,
+    required this.tooltip,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 50,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          IconButton(
+            tooltip: tooltip,
+            onPressed: onTap,
+            icon: Icon(icon, size: 24, color: on ? C.accentHi : C.textDim),
+          ),
+          Positioned(
+            bottom: 2,
+            child: AnimatedOpacity(
+              opacity: on ? 1 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: const BoxDecoration(
+                  color: C.accentHi,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
           ),
         ],
@@ -661,10 +727,10 @@ class _BottomRow extends StatelessWidget {
                 final on = at != null || eot;
                 return TextButton.icon(
                   style: TextButton.styleFrom(
-                    foregroundColor: on ? C.accent : C.textDim,
+                    foregroundColor: on ? C.accentHi : C.textDim,
                   ),
                   onPressed: () => showSleepTimer(context),
-                  icon: const Icon(Icons.bedtime_outlined, size: 20),
+                  icon: const Icon(Icons.bedtime_outlined, size: 22),
                   label: on
                       ? _SleepLeft(at: at, endOfTrack: eot)
                       : const Text('Uyku'),
@@ -702,8 +768,8 @@ class _BottomRow extends StatelessWidget {
           TextButton.icon(
             style: TextButton.styleFrom(foregroundColor: C.textDim),
             onPressed: () => showQueue(context),
-            icon: const Icon(Icons.queue_music_rounded, size: 22),
-            label: const Text('Sıradakiler'),
+            icon: const Icon(Icons.format_list_bulleted_rounded, size: 22),
+            label: const Text('Sıradaki'),
           ),
         ],
       ),
@@ -811,40 +877,78 @@ void showSleepTimer(BuildContext context) {
 }
 
 void showQueue(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    builder: (ctx) => SizedBox(
-      height: MediaQuery.sizeOf(ctx).height * 0.8,
-      child: const _QueueSheet(),
+  Navigator.of(context, rootNavigator: true).push(
+    PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 340),
+      reverseTransitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (_, _, _) => const QueueScreen(),
+      transitionsBuilder: (context, a, _, child) {
+        final c = CurvedAnimation(
+          parent: a,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(c),
+          child: child,
+        );
+      },
     ),
   );
 }
 
-class _QueueSheet extends StatelessWidget {
-  const _QueueSheet();
+/// "Sıradaki": the song that is playing and the ones that come next.
+class QueueScreen extends StatefulWidget {
+  const QueueScreen({super.key});
+  @override
+  State<QueueScreen> createState() => _QueueScreenState();
+}
+
+class _QueueScreenState extends State<QueueScreen> {
+  bool _edit = false;
+
   @override
   Widget build(BuildContext context) {
     final player = context.read<MusicHandler>();
-    return ValueListenableBuilder<List<Track>>(
-      valueListenable: player.queueList,
-      builder: (context, q, _) => ValueListenableBuilder<int>(
-        valueListenable: player.index,
-        builder: (context, cur, _) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 0, 12, 6),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text('Sıradakiler (${q.length})', style: T.h3),
-                    ),
-                    TextButton(
-                      onPressed: q.isEmpty
-                          ? null
-                          : () async {
+    return Scaffold(
+      body: SafeArea(
+        child: ValueListenableBuilder<List<Track>>(
+          valueListenable: player.queueList,
+          builder: (context, q, _) => ValueListenableBuilder<int>(
+            valueListenable: player.index,
+            builder: (context, cur, _) {
+              final current = cur >= 0 && cur < q.length ? q[cur] : null;
+              final next = cur + 1 < q.length
+                  ? q.sublist(cur + 1)
+                  : const <Track>[];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 6, 8, 0),
+                    child: Row(
+                      children: [
+                        NeuIconButton(
+                          Icons.keyboard_arrow_down_rounded,
+                          plain: true,
+                          size: 44,
+                          iconSize: 30,
+                          tooltip: 'Kapat',
+                          onTap: () => Navigator.maybePop(context),
+                        ),
+                        const SizedBox(width: 4),
+                        const Expanded(child: Text('Sıradaki', style: T.h2)),
+                        if (q.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Sırayı temizle',
+                            icon: const Icon(
+                              Icons.clear_all_rounded,
+                              color: C.textDim,
+                            ),
+                            onPressed: () async {
                               if (await confirm(
                                 context,
                                 title: 'Çalma sırası temizlensin mi?',
@@ -854,115 +958,185 @@ class _QueueSheet extends StatelessWidget {
                                 if (context.mounted) Navigator.pop(context);
                               }
                             },
-                      child: const Text(
-                        'Temizle',
-                        style: TextStyle(color: C.textDim),
-                      ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ReorderableListView.builder(
-                  buildDefaultDragHandles: false,
-                  padding: const EdgeInsets.only(bottom: 30),
-                  itemCount: q.length,
-                  scrollController: ScrollController(
-                    initialScrollOffset: math.max(0, (cur - 1) * 64.0),
                   ),
-                  onReorderItem: (from, to) {
-                    player.moveQueueItem(from, to);
-                  },
-                  itemBuilder: (context, i) {
-                    final t = q[i];
-                    final isCur = i == cur;
-                    return Dismissible(
-                      key: ValueKey('q-${t.id}-$i'),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: C.danger.withValues(alpha: 0.25),
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 24),
-                        child: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: C.danger,
-                        ),
-                      ),
-                      onDismissed: (_) => player.removeFromQueue(i),
-                      child: SizedBox(
-                        height: 64,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.only(
-                            left: 18,
-                            right: 4,
-                          ),
-                          leading: SizedBox(
-                            width: 46,
-                            height: 46,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                CoverImage(
-                                  cover: t.cover,
-                                  coverId: t.coverId,
-                                  radius: 6,
-                                  width: 140,
-                                ),
-                                if (isCur)
-                                  DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Center(
-                                      child: ValueListenableBuilder<bool>(
-                                        valueListenable: player.playing,
-                                        builder: (_, p, _) =>
-                                            PlayingBars(animate: p, size: 16),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          title: Text(
-                            t.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: T.body.copyWith(
-                              color: isCur
-                                  ? C.accent
-                                  : (i < cur ? C.textFaint : C.text),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            t.artist,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: T.dim,
-                          ),
-                          onTap: () => player.skipToQueueItem(i),
-                          trailing: ReorderableDragStartListener(
-                            index: i,
-                            child: const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.drag_handle_rounded,
-                                color: C.textFaint,
+                  if (current != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                      child: NeuBox(
+                        radius: 16,
+                        color: C.surfaceHi,
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 54,
+                              height: 54,
+                              child: CoverImage(
+                                cover: current.cover,
+                                coverId: current.coverId,
+                                radius: 10,
+                                width: 160,
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    current.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: T.body.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    current.artist,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: T.dim,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: player.playing,
+                              builder: (_, p, _) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                child: PlayingBars(
+                                  animate: p,
+                                  size: 18,
+                                  color: C.accentHi,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 8, 6),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text('Sıradaki Şarkılar', style: T.h3),
+                        ),
+                        if (next.isNotEmpty)
+                          TextButton(
+                            onPressed: () => setState(() => _edit = !_edit),
+                            child: Text(
+                              _edit ? 'Bitti' : 'Düzenle',
+                              style: T.link,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: next.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(32),
+                            child: Text(
+                              'Sırada başka şarkı yok.',
+                              style: T.dim,
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        : _edit
+                        ? _editList(player, next, cur)
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 30),
+                            itemCount: next.length,
+                            itemBuilder: (context, i) => TrackTile(
+                              key: ValueKey('q-${next[i].id}-$i'),
+                              track: next[i],
+                              rank: i + 1,
+                              onTap: () => player.skipToQueueItem(cur + 1 + i),
+                            ),
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _editList(MusicHandler player, List<Track> next, int cur) {
+    return ReorderableListView.builder(
+      buildDefaultDragHandles: false,
+      padding: const EdgeInsets.only(bottom: 30),
+      itemCount: next.length,
+      onReorderItem: (from, to) =>
+          player.moveQueueItem(cur + 1 + from, cur + 1 + to),
+      itemBuilder: (context, i) {
+        final t = next[i];
+        return Material(
+          key: ValueKey('qe-${t.id}-$i'),
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 6, 4),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Sıradan çıkar',
+                  icon: const Icon(
+                    Icons.remove_circle_rounded,
+                    color: C.danger,
+                  ),
+                  onPressed: () => player.removeFromQueue(cur + 1 + i),
+                ),
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: CoverImage(
+                    cover: t.cover,
+                    coverId: t.coverId,
+                    radius: 8,
+                    width: 140,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: T.body.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        t.artist,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: T.dim,
+                      ),
+                    ],
+                  ),
+                ),
+                ReorderableDragStartListener(
+                  index: i,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Icon(Icons.drag_handle_rounded, color: C.textDim),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

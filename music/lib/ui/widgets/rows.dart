@@ -15,7 +15,7 @@ import 'common.dart';
 import 'cover.dart';
 import 'track_tile.dart';
 
-/// Square card: neumorphic frame, cover, two lines of text.
+/// Square card: rounded cover, two lines of text.
 class MediaCard extends StatelessWidget {
   final Widget cover;
   final String title;
@@ -31,7 +31,7 @@ class MediaCard extends StatelessWidget {
     this.subtitle = '',
     this.onTap,
     this.onLongPress,
-    this.width = 150,
+    this.width = 132,
     this.round = false,
   });
 
@@ -39,42 +39,48 @@ class MediaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      child: Column(
-        crossAxisAlignment: round
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
-        children: [
-          NeuButton(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            circle: round,
-            radius: 18,
-            padding: const EdgeInsets.all(7),
-            child: SizedBox(
-              width: width - 14,
-              height: width - 14,
+      child: PressScale(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Column(
+          crossAxisAlignment: round
+              ? CrossAxisAlignment.center
+              : CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: width,
+              height: width,
+              decoration: BoxDecoration(
+                shape: round ? BoxShape.circle : BoxShape.rectangle,
+                borderRadius: round ? null : BorderRadius.circular(12),
+                boxShadow: neuShadows(depth: 0.5),
+              ),
               child: cover,
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: round ? TextAlign.center : TextAlign.start,
-            style: T.body.copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 8),
             Text(
-              subtitle,
+              title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: round ? TextAlign.center : TextAlign.start,
-              style: T.faint,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: C.text,
+              ),
             ),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: round ? TextAlign.center : TextAlign.start,
+                style: T.faint,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -92,7 +98,7 @@ class HorizontalRow extends StatelessWidget {
     required this.title,
     required this.count,
     required this.itemBuilder,
-    this.height = 210,
+    this.height = 186,
     this.action,
     this.onAction,
   });
@@ -110,7 +116,7 @@ class HorizontalRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             clipBehavior: Clip.none,
             itemCount: count,
-            separatorBuilder: (_, _) => const SizedBox(width: 18),
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, i) =>
                 FadeSlideIn(index: i, child: itemBuilder(context, i)),
           ),
@@ -137,7 +143,7 @@ class AlbumRow extends StatelessWidget {
 class AlbumCard extends StatelessWidget {
   final Album album;
   final double width;
-  const AlbumCard({super.key, required this.album, this.width = 150});
+  const AlbumCard({super.key, required this.album, this.width = 132});
   @override
   Widget build(BuildContext context) {
     return MediaCard(
@@ -156,7 +162,13 @@ class AlbumCard extends StatelessWidget {
 class ArtistCard extends StatelessWidget {
   final Artist artist;
   final double width;
-  const ArtistCard({super.key, required this.artist, this.width = 140});
+  final String subtitle;
+  const ArtistCard({
+    super.key,
+    required this.artist,
+    this.width = 112,
+    this.subtitle = 'Sanatçı',
+  });
   @override
   Widget build(BuildContext context) {
     return MediaCard(
@@ -168,7 +180,7 @@ class ArtistCard extends StatelessWidget {
         placeholderIcon: Icons.person_rounded,
       ),
       title: artist.name,
-      subtitle: 'Sanatçı',
+      subtitle: subtitle,
       onTap: () =>
           ShellNav.push(ArtistScreen(id: artist.id, name: artist.name)),
     );
@@ -178,7 +190,7 @@ class ArtistCard extends StatelessWidget {
 class PlaylistCard extends StatelessWidget {
   final Playlist playlist;
   final double width;
-  const PlaylistCard({super.key, required this.playlist, this.width = 150});
+  const PlaylistCard({super.key, required this.playlist, this.width = 132});
   @override
   Widget build(BuildContext context) {
     return MediaCard(
@@ -256,11 +268,13 @@ class HomeCardTile extends StatelessWidget {
   final HomeCard card;
   final List<HomeCard> siblings;
   final String rowTitle;
+  final double width;
   const HomeCardTile({
     super.key,
     required this.card,
     this.siblings = const [],
     this.rowTitle = '',
+    this.width = 132,
   });
   @override
   Widget build(BuildContext context) {
@@ -293,6 +307,7 @@ class HomeCardTile extends StatelessWidget {
       );
     }
     return MediaCard(
+      width: width,
       round: card.type == 'artist',
       cover: cover,
       title: card.title,

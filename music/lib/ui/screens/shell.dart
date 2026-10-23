@@ -11,10 +11,9 @@ import '../nav.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/mini_player.dart';
-import 'folders_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
-import 'liked_screen.dart';
+import 'profile_screen.dart';
 import 'search_screen.dart';
 
 class _TabInfo {
@@ -29,8 +28,8 @@ const _tabs = [
   _TabInfo(Icons.home_outlined, Icons.home_rounded, 'Ana Sayfa', HomeScreen()),
   _TabInfo(
     Icons.search_rounded,
-    Icons.manage_search_rounded,
-    'Ara',
+    Icons.search_rounded,
+    'Keşfet',
     SearchScreen(),
   ),
   _TabInfo(
@@ -40,16 +39,10 @@ const _tabs = [
     LibraryScreen(),
   ),
   _TabInfo(
-    Icons.favorite_border_rounded,
-    Icons.favorite_rounded,
-    'Beğenilenler',
-    LikedScreen(),
-  ),
-  _TabInfo(
-    Icons.folder_outlined,
-    Icons.folder_rounded,
-    'Klasörler',
-    FoldersScreen(),
+    Icons.person_outline_rounded,
+    Icons.person_rounded,
+    'Profil',
+    ProfileScreen(),
   ),
 ];
 
@@ -168,11 +161,7 @@ class _ShellState extends State<Shell> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const OfflineBanner(),
-            Container(
-              color: C.bg,
-              padding: const EdgeInsets.only(top: 8),
-              child: const MiniPlayer(),
-            ),
+            const ColoredBox(color: C.bg, child: MiniPlayer()),
             _NavBar(tab: tab),
           ],
         ),
@@ -188,16 +177,10 @@ class _NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(8, 6, 8, bottom + 6),
-      decoration: BoxDecoration(
+      padding: EdgeInsets.fromLTRB(8, 8, 8, bottom + 6),
+      decoration: const BoxDecoration(
         color: C.bg,
-        boxShadow: [
-          BoxShadow(
-            color: C.dark.withValues(alpha: 0.7),
-            blurRadius: 14,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: Border(top: BorderSide(color: C.divider)),
       ),
       child: Row(
         children: [
@@ -226,6 +209,7 @@ class _NavItem extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final color = active ? C.accentHi : C.textFaint;
     return Semantics(
       button: true,
       selected: active,
@@ -236,45 +220,25 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              width: 50,
-              height: 34,
-              decoration: active
-                  ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF16181B), Color(0xFF24272C)],
-                      ),
-                      border: Border.all(
-                        color: const Color(0x0DFFFFFF),
-                        width: 0.8,
-                      ),
-                    )
-                  : const BoxDecoration(),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  active ? info.activeIcon : info.icon,
-                  key: ValueKey(active),
-                  color: active ? C.accent : C.textDim,
-                  size: 24,
-                ),
+            AnimatedScale(
+              scale: active ? 1.08 : 1,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                active ? info.activeIcon : info.icon,
+                color: color,
+                size: 25,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               info.label,
               maxLines: 1,
               overflow: TextOverflow.fade,
               softWrap: false,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                color: active ? C.text : C.textDim,
+                color: color,
               ),
             ),
           ],

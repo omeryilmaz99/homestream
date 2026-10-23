@@ -10,7 +10,7 @@ import '../widgets/collection.dart';
 import '../widgets/common.dart';
 import '../widgets/cover.dart';
 
-/// "Beğenilen Şarkılar" (also a tab).
+/// "Beğenilen Şarkılar" (opened from the library and the profile).
 class LikedScreen extends StatelessWidget {
   const LikedScreen({super.key});
 

@@ -385,6 +385,58 @@ class HomeRow {
   );
 }
 
+class ProfileStats {
+  final int plays;
+  final int minutes;
+  final int liked;
+  final int playlists;
+  final List<Artist> topArtists;
+  final List<Track> recent;
+  ProfileStats({
+    this.plays = 0,
+    this.minutes = 0,
+    this.liked = 0,
+    this.playlists = 0,
+    this.topArtists = const [],
+    this.recent = const [],
+  });
+  factory ProfileStats.fromJson(Map<String, dynamic> j) => ProfileStats(
+    plays: _i(j['plays']),
+    minutes: _i(j['minutes']),
+    liked: _i(j['liked']),
+    playlists: _i(j['playlists']),
+    topArtists: _list(j['topArtists'], Artist.fromJson),
+    recent: _list(j['recent'], Track.fromJson),
+  );
+
+  /// [tracks] sorted by last play, newest first.
+  factory ProfileStats.fromTracks(List<Track> tracks) {
+    var plays = 0;
+    var secs = 0.0;
+    final byArtist = <String, int>{};
+    final names = <String, Track>{};
+    for (final t in tracks) {
+      if (t.playCount == 0) continue;
+      plays += t.playCount;
+      secs += t.playCount * t.duration;
+      byArtist[t.artistId] = (byArtist[t.artistId] ?? 0) + t.playCount;
+      names.putIfAbsent(t.artistId, () => t);
+    }
+    final ids = byArtist.keys.toList()
+      ..sort((a, b) => byArtist[b]!.compareTo(byArtist[a]!));
+    return ProfileStats(
+      plays: plays,
+      minutes: secs ~/ 60,
+      liked: tracks.where((t) => t.liked).length,
+      topArtists: [
+        for (final id in ids.take(12))
+          Artist(id: id, name: names[id]!.artist, cover: names[id]!.cover),
+      ],
+      recent: tracks.where((t) => t.lastPlayedAt > 0).take(20).toList(),
+    );
+  }
+}
+
 class HomeData {
   final List<HomeCard> quick;
   final List<HomeRow> rows;

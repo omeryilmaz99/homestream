@@ -40,7 +40,7 @@ class DownloadMark extends StatelessWidget {
         child: Icon(
           Icons.arrow_downward_rounded,
           size: size * 0.75,
-          color: Colors.black,
+          color: Colors.white,
         ),
       );
     } else if (st.$2 == null) {
@@ -55,7 +55,7 @@ class DownloadMark extends StatelessWidget {
           strokeWidth: 2,
           value: st.$2 == DlState.running && st.$3 > 0 ? st.$3 / 20 : null,
           color: C.accent,
-          backgroundColor: C.bgDeep,
+          backgroundColor: C.surfaceHi,
         ),
       );
     }
@@ -77,6 +77,8 @@ class TrackTile extends StatelessWidget {
   final Playlist? playlist; // menu: "remove from this playlist"
   final VoidCallback? onRemoved;
   final bool showAlbum;
+  final int? rank; // shown before the cover (popular songs, queue)
+  final bool showDuration;
   const TrackTile({
     super.key,
     required this.track,
@@ -87,6 +89,8 @@ class TrackTile extends StatelessWidget {
     this.playlist,
     this.onRemoved,
     this.showAlbum = false,
+    this.rank,
+    this.showDuration = true,
   });
 
   @override
@@ -115,9 +119,20 @@ class TrackTile extends StatelessWidget {
               onRemoved: onRemoved,
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 7, 4, 7),
+              padding: const EdgeInsets.fromLTRB(18, 6, 0, 6),
               child: Row(
                 children: [
+                  if (rank != null)
+                    SizedBox(
+                      width: 24,
+                      child: Text(
+                        '$rank',
+                        style: T.dim.copyWith(
+                          color: isCur ? C.accentHi : C.textDim,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
                   if (number != null)
                     SizedBox(
                       width: 30,
@@ -142,8 +157,8 @@ class TrackTile extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(right: 14),
                       child: SizedBox(
-                        width: 50,
-                        height: 50,
+                        width: 46,
+                        height: 46,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -181,7 +196,7 @@ class TrackTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: T.body.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: isCur ? C.accent : C.text,
+                            color: isCur ? C.accentHi : C.text,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -208,9 +223,23 @@ class TrackTile extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (showDuration && sub.isNotEmpty && track.duration > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        formatDuration(track.duration),
+                        style: T.faint.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
                   ?trailing,
                   IconButton(
-                    icon: const Icon(Icons.more_vert_rounded, color: C.textDim),
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      color: C.textFaint,
+                      size: 20,
+                    ),
                     tooltip: 'Seçenekler',
                     onPressed: () => showTrackMenu(
                       context,

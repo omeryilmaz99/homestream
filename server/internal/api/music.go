@@ -10,6 +10,7 @@ import (
 	"errors"
 	"hash/fnv"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -31,6 +32,8 @@ const adminPasswordHash = "2e5bac908bd740b5ddded3371ed1975f89e06d550f0db2c8e0fd9
 func (s *Server) musicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/music/info", s.mInfo)
 	mux.HandleFunc("GET /api/music/home", s.mHome)
+	mux.HandleFunc("GET /api/music/mix", s.mMix)
+	mux.HandleFunc("GET /api/music/stats", s.mStats)
 	mux.HandleFunc("GET /api/music/tracks", s.mTracks)
 	mux.HandleFunc("POST /api/music/tracks/batch", s.mTracksBatch)
 	mux.HandleFunc("POST /api/music/tracks/{id}/played", s.mPlayed)
@@ -315,6 +318,138 @@ func daySeed(extra string) int64 {
 	return int64(h.Sum64() >> 1)
 }
 
+// taste scores the genres and artists a profile listens to (plays, likes).
+func (v *mView) taste() (genre, artist map[string]float64) {
+	genre = map[string]float64{}
+	artist = map[string]float64{}
+	for id, p := range v.ud.Plays {
+		if t := v.snap.Tracks[id]; t != nil {
+			genre[names.Key(t.Genre)] += float64(p.Count)
+			artist[t.ArtistID] += float64(p.Count)
+		}
+	}
+	for id := range v.ud.Likes {
+		if t := v.snap.Tracks[id]; t != nil {
+			genre[names.Key(t.Genre)] += 3
+			artist[t.ArtistID] += 3
+		}
+	}
+	return genre, artist
+}
+
+// mMix is "Sana Özel Mix": songs from the artists and genres the profile
+// likes, mixed with a few it has not heard yet. New every call.
+func (s *Server) mMix(w http.ResponseWriter, r *http.Request) {
+	v := s.mView(r)
+	n, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	if n <= 0 || n > 200 {
+		n = 50
+	}
+	genreScore, artistScore := v.taste()
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	type scored struct {
+		t *music.Track
+		s float64
+	}
+	sc := make([]scored, 0, len(v.snap.All))
+	for _, t := range v.snap.All {
+		x := rnd.Float64() * 4
+		x += math.Log1p(genreScore[names.Key(t.Genre)]) * 1.2
+		x += math.Log1p(artistScore[t.ArtistID]) * 1.5
+		if _, ok := v.ud.Likes[t.ID]; ok {
+			x += 1.5
+		}
+		sc = append(sc, scored{t, x})
+	}
+	sort.Slice(sc, func(i, j int) bool { return sc[i].s > sc[j].s })
+	// at most 3 songs of one artist, so the mix stays varied
+	perArtist := map[string]int{}
+	var out []*music.Track
+	for _, x := range sc {
+		if len(out) >= n {
+			break
+		}
+		if perArtist[x.t.ArtistID] >= 3 {
+			continue
+		}
+		perArtist[x.t.ArtistID]++
+		out = append(out, x.t)
+	}
+	rnd.Shuffle(len(out), func(i, j int) { out[i], out[j] = out[j], out[i] })
+	writeJSONz(w, r, http.StatusOK, v.tracks(out))
+}
+
+// mStats is the profile page: listening totals, favourite artists and the
+// last songs played.
+func (s *Server) mStats(w http.ResponseWriter, r *http.Request) {
+	v := s.mView(r)
+	var plays int
+	var seconds float64
+	artistPlays := map[string]int{}
+	type played struct {
+		t    *music.Track
+		last int64
+	}
+	var recent []played
+	for id, p := range v.ud.Plays {
+		t := v.snap.Tracks[id]
+		if t == nil {
+			continue
+		}
+		plays += p.Count
+		seconds += float64(p.Count) * t.Duration
+		artistPlays[t.ArtistID] += p.Count
+		recent = append(recent, played{t, p.Last})
+	}
+	liked := 0
+	for id := range v.ud.Likes {
+		if v.snap.Tracks[id] != nil {
+			liked++
+		}
+	}
+	arts := make([]*music.Artist, 0, len(artistPlays))
+	for _, a := range v.snap.ArtistList {
+		if artistPlays[a.ID] > 0 && a.Name != music.UnknownArtist {
+			arts = append(arts, a)
+		}
+	}
+	sort.SliceStable(arts, func(i, j int) bool { return artistPlays[arts[i].ID] > artistPlays[arts[j].ID] })
+	if len(arts) > 12 {
+		arts = arts[:12]
+	}
+	sort.Slice(recent, func(i, j int) bool { return recent[i].last > recent[j].last })
+	if len(recent) > 20 {
+		recent = recent[:20]
+	}
+	rt := make([]*music.Track, 0, len(recent))
+	for _, p := range recent {
+		rt = append(rt, p.t)
+	}
+	ja := make([]mArtistJSON, 0, len(arts))
+	for _, a := range arts {
+		ja = append(ja, v.artist(a))
+	}
+	writeJSONz(w, r, http.StatusOK, map[string]any{
+		"plays":      plays,
+		"minutes":    int(seconds / 60),
+		"liked":      liked,
+		"playlists":  v.playlistCount(),
+		"topArtists": ja,
+		"recent":     v.tracks(rt),
+	})
+}
+
+func (v *mView) playlistCount() int {
+	if v.pid == "" {
+		return 0
+	}
+	pls, err := v.s.Music.Playlists(v.pid)
+	if err != nil {
+		return 0
+	}
+	return len(pls)
+}
+
 func (s *Server) mHome(w http.ResponseWriter, r *http.Request) {
 	v := s.mView(r)
 	snap := v.snap
@@ -402,24 +537,11 @@ func (s *Server) mHome(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(recent) > 0 {
-		rows = append(rows, row{"recent", "Son Çalınanlar", "round", recent})
+		rows = append(rows, row{"recent", "Son Dinlediklerin", "round", recent})
 	}
 
 	// mix: albums from the genres and artists the profile listens to
-	genreScore := map[string]float64{}
-	artistScore := map[string]float64{}
-	for id, p := range v.ud.Plays {
-		if t := snap.Tracks[id]; t != nil {
-			genreScore[names.Key(t.Genre)] += float64(p.Count)
-			artistScore[t.ArtistID] += float64(p.Count)
-		}
-	}
-	for id := range v.ud.Likes {
-		if t := snap.Tracks[id]; t != nil {
-			genreScore[names.Key(t.Genre)] += 3
-			artistScore[t.ArtistID] += 3
-		}
-	}
+	genreScore, artistScore := v.taste()
 	rnd := rand.New(rand.NewSource(daySeed("mix" + v.pid)))
 	type scored struct {
 		a *music.Album
@@ -441,7 +563,7 @@ func (s *Server) mHome(w http.ResponseWriter, r *http.Request) {
 		mix = append(mix, v.albumCard(x.a))
 	}
 	if len(mix) > 0 {
-		rows = append(rows, row{"mix", "Senin İçin Karışık", "square", mix})
+		rows = append(rows, row{"mix", "Senin İçin Hazırlandı", "square", mix})
 	}
 
 	// recently added albums / singles

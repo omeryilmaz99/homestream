@@ -174,7 +174,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
               child: _connecting
                   ? const LoadingView()
                   : AccentPill(
-                      'BAĞLAN',
+                      'Bağlan',
                       icon: Icons.link_rounded,
                       onTap: () => _connect(_url.text),
                     ),

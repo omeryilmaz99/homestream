@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// opened from the player or a sheet land in the current tab.
 class ShellNav {
   static final rootKey = GlobalKey<NavigatorState>();
-  static final tabKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
+  static final tabKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
   static final tab = ValueNotifier<int>(0);
 
   static NavigatorState? get current => tabKeys[tab.value].currentState;

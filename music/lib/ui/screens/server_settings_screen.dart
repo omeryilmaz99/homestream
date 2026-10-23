@@ -273,7 +273,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
                       icon: Icons.error_outline_rounded,
                       title: 'Yüklenemedi',
                       message: _error,
-                      action: AccentPill('TEKRAR DENE', onTap: _load),
+                      action: AccentPill('Tekrar dene', onTap: _load),
                     )
                   : const LoadingView())
             : RefreshIndicator(

@@ -16,16 +16,23 @@ import 'downloads_screen.dart';
 
 /// "Klasörler" tab: the music folders as they are on the disk.
 class FoldersScreen extends StatelessWidget {
-  const FoldersScreen({super.key});
+  final bool embedded; // inside the library tab: no page title
+  const FoldersScreen({super.key, this.embedded = false});
   @override
   Widget build(BuildContext context) =>
-      const FolderScreen(path: '', title: 'Klasörler');
+      FolderScreen(path: '', title: 'Klasörler', embedded: embedded);
 }
 
 class FolderScreen extends StatefulWidget {
   final String path;
   final String title;
-  const FolderScreen({super.key, required this.path, required this.title});
+  final bool embedded;
+  const FolderScreen({
+    super.key,
+    required this.path,
+    required this.title,
+    this.embedded = false,
+  });
 
   @override
   State<FolderScreen> createState() => _FolderScreenState();
@@ -94,10 +101,10 @@ class _FolderScreenState extends State<FolderScreen> {
           }
           return r;
         },
-        offline: const _OfflineFolders(),
+        offline: _OfflineFolders(embedded: widget.embedded),
         builder: (context, b, reload) {
           final title = b.name.isNotEmpty ? b.name : widget.title;
-          final header = root
+          final header = root && !widget.embedded
               ? PageTitle(
                   'Klasörler',
                   actions: [
@@ -271,14 +278,15 @@ class _FolderDownloadIcon extends StatelessWidget {
 
 /// Offline: downloaded folders and the rest of the downloads.
 class _OfflineFolders extends StatelessWidget {
-  const _OfflineFolders();
+  final bool embedded;
+  const _OfflineFolders({this.embedded = false});
   @override
   Widget build(BuildContext context) {
     final dl = context.watch<Downloads>();
     final folders = dl.collections.where((c) => c.type == 'folder').toList();
     return CustomScrollView(
       slivers: [
-        const SliverToBoxAdapter(child: PageTitle('Klasörler')),
+        if (!embedded) const SliverToBoxAdapter(child: PageTitle('Klasörler')),
         if (folders.isEmpty)
           SliverToBoxAdapter(
             child: EmptyState(
@@ -286,7 +294,7 @@ class _OfflineFolders extends StatelessWidget {
               title: 'Klasörler çevrimdışı açılamıyor',
               message: 'İndirdiğin klasörler burada görünür.',
               action: AccentPill(
-                'İNDİRİLENLER',
+                'İndirilenler',
                 onTap: () => ShellNav.push(const DownloadsScreen()),
               ),
             ),

@@ -49,7 +49,10 @@ class _ArtistBody extends StatelessWidget {
         placeholderIcon: Icons.person_rounded,
       ),
       subtitle: a.albumCount > 0
-          ? Text('${a.albumCount} albüm', style: T.dim)
+          ? Text(
+              a.albumCount == 1 ? '1 albüm' : '${a.albumCount} albüm',
+              style: T.dim,
+            )
           : null,
       // play / shuffle use every song of the artist
       tracks: const [],
@@ -76,35 +79,26 @@ class _ArtistBody extends StatelessWidget {
         ),
       ],
       headerExtra: [
-        if (top.isNotEmpty) const SectionHeader('Popüler'),
+        if (top.isNotEmpty)
+          SectionHeader(
+            'Popüler Şarkılar',
+            action: d.tracks.length > top.length
+                ? 'Tümünü Gör (${d.tracks.length})'
+                : null,
+            onAction: () => ShellNav.push(
+              TracksScreen(
+                title: a.name,
+                preset: d.tracks,
+                contextName: a.name,
+              ),
+            ),
+          ),
         for (var i = 0; i < top.length; i++)
           TrackTile(
             track: top[i],
+            rank: i + 1,
             showAlbum: true,
             onTap: () => playList(context, d.top, index: i, name: a.name),
-          ),
-        if (d.tracks.length > top.length)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => ShellNav.push(
-                  TracksScreen(
-                    title: a.name,
-                    preset: d.tracks,
-                    contextName: a.name,
-                  ),
-                ),
-                child: Text(
-                  'Tüm şarkılar (${d.tracks.length})',
-                  style: const TextStyle(
-                    color: C.textDim,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
           ),
       ],
       slivers: [
