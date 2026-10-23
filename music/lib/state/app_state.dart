@@ -494,6 +494,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeRecentSearch(String q) {
+    prefs.recentSearches = prefs.recentSearches.where((e) => e != q).toList();
+    notifyListeners();
+  }
+
   /// Settings password for this run (server settings).
   String? adminPassword;
 

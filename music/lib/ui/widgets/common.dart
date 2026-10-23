@@ -26,7 +26,7 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 12, 12),
+      padding: const EdgeInsets.fromLTRB(20, 24, 8, 10),
       child: Row(
         children: [
           Expanded(
@@ -39,16 +39,61 @@ class SectionHeader extends StatelessWidget {
           ),
           if (action != null)
             TextButton(
-              onPressed: onAction,
-              child: Text(
-                action!,
-                style: const TextStyle(
-                  color: C.textDim,
-                  fontWeight: FontWeight.w600,
-                ),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-            ),
+              onPressed: onAction,
+              child: Text(action!, style: T.link),
+            )
+          else
+            const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+}
+
+/// Shrinks its child a little while pressed (cards, tiles).
+class PressScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  const PressScale({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.onLongPress,
+  });
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _down = false;
+  void _set(bool v) {
+    if (_down != v) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null || widget.onLongPress != null;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: enabled ? (_) => _set(true) : null,
+      onTapUp: enabled ? (_) => _set(false) : null,
+      onTapCancel: enabled ? () => _set(false) : null,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: AnimatedScale(
+        scale: _down ? 0.96 : 1,
+        duration: const Duration(milliseconds: 120),
+        child: AnimatedOpacity(
+          opacity: _down ? 0.85 : 1,
+          duration: const Duration(milliseconds: 120),
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -347,7 +392,7 @@ class _DataViewState<D> extends State<DataView<D>> {
       message: online
           ? _error
           : 'İndirdiğin şarkıları Kitaplık > İndirilenler bölümünden dinleyebilirsin.',
-      action: AccentPill('TEKRAR DENE', onTap: _load),
+      action: AccentPill('Tekrar dene', onTap: _load),
     );
   }
 }

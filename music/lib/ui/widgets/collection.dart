@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -61,7 +63,7 @@ class _CollectionViewState extends State<CollectionView> {
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      _bar.value = ((_scroll.offset - 200) / 80).clamp(0.0, 1.0);
+      _bar.value = ((_scroll.offset - 160) / 80).clamp(0.0, 1.0);
     });
   }
 
@@ -80,7 +82,6 @@ class _CollectionViewState extends State<CollectionView> {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
-    final player = context.read<MusicHandler>();
     final tracks = widget.tracks;
     final all = widget.playable ?? tracks;
     final total = all.fold<double>(0, (a, t) => a + t.duration);
@@ -118,6 +119,11 @@ class _CollectionViewState extends State<CollectionView> {
       );
     }
 
+    final width = MediaQuery.sizeOf(context).width;
+    final header = widget.roundCover
+        ? _roundHeader(context, top, all, total)
+        : _wideHeader(context, top, width, all, total);
+
     return Stack(
       children: [
         CustomScrollView(
@@ -126,118 +132,47 @@ class _CollectionViewState extends State<CollectionView> {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
+            SliverToBoxAdapter(child: header),
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(24, top + 58, 24, 0),
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
                   children: [
-                    FadeSlideIn(
-                      offset: 24,
-                      child: Center(
-                        child: NeuBox(
-                          circle: widget.roundCover,
-                          radius: 22,
-                          padding: const EdgeInsets.all(10),
-                          depth: 1.4,
-                          child: SizedBox(
-                            width: MediaQuery.sizeOf(context).width * 0.58,
-                            height: MediaQuery.sizeOf(context).width * 0.58,
-                            child: widget.cover,
-                          ),
-                        ),
-                      ),
+                    Expanded(
+                      child: _PlayButton(all: all, name: widget.title),
                     ),
-                    const SizedBox(height: 22),
-                    if (widget.kicker != null)
-                      Text(
-                        widget.kicker!,
-                        style: T.faint.copyWith(
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.title,
-                      style: T.h1.copyWith(fontSize: 25),
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.subtitle != null) ...[
-                      const SizedBox(height: 6),
-                      widget.subtitle!,
-                    ],
-                    const SizedBox(height: 6),
-                    Text(
-                      all.isEmpty
-                          ? ''
-                          : '${songCount(all.length)} • ${formatTotal(total)}',
-                      style: T.faint,
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        ...widget.actions,
-                        const Spacer(),
-                        NeuIconButton(
-                          Icons.shuffle_rounded,
-                          size: 48,
-                          tooltip: 'Karışık çal',
-                          onTap: all.isEmpty
-                              ? null
-                              : () => playList(
-                                  context,
-                                  all,
-                                  index: -1,
-                                  shuffle: true,
-                                  name: widget.title,
-                                ),
-                        ),
-                        const SizedBox(width: 16),
-                        ValueListenableBuilder<String>(
-                          valueListenable: player.contextName,
-                          builder: (context, ctxName, _) =>
-                              ValueListenableBuilder<bool>(
-                                valueListenable: player.playing,
-                                builder: (context, playing, _) {
-                                  final mine =
-                                      ctxName == widget.title &&
-                                      all.any(
-                                        (t) => t.id == player.current.value?.id,
-                                      );
-                                  return NeuIconButton(
-                                    mine && playing
-                                        ? Icons.pause_rounded
-                                        : Icons.play_arrow_rounded,
-                                    size: 62,
-                                    iconSize: 34,
-                                    accent: true,
-                                    tooltip: 'Çal',
-                                    onTap: all.isEmpty
-                                        ? null
-                                        : () {
-                                            if (mine) {
-                                              player.togglePlay();
-                                            } else {
-                                              playList(
-                                                context,
-                                                all,
-                                                name: widget.title,
-                                              );
-                                            }
-                                          },
-                                  );
-                                },
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _PillButton(
+                        icon: Icons.shuffle_rounded,
+                        label: 'Karıştır',
+                        onTap: all.isEmpty
+                            ? null
+                            : () => playList(
+                                context,
+                                all,
+                                index: -1,
+                                shuffle: true,
+                                name: widget.title,
                               ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
                   ],
                 ),
               ),
             ),
+            if (widget.actions.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+                  child: IconTheme.merge(
+                    data: const IconThemeData(size: 24),
+                    child: Row(children: widget.actions),
+                  ),
+                ),
+              )
+            else
+              const SliverToBoxAdapter(child: SizedBox(height: 10)),
             ...widget.headerExtra.map((w) => SliverToBoxAdapter(child: w)),
             if (tracks.isEmpty && widget.empty != null)
               SliverToBoxAdapter(child: widget.empty!)
@@ -258,28 +193,21 @@ class _CollectionViewState extends State<CollectionView> {
             padding: EdgeInsets.only(top: top),
             decoration: BoxDecoration(
               color: C.bg.withValues(alpha: v),
-              boxShadow: v > 0.5
-                  ? [
-                      BoxShadow(
-                        color: C.dark.withValues(alpha: 0.6),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
+              border: v > 0.9
+                  ? const Border(bottom: BorderSide(color: C.divider))
                   : null,
             ),
             child: Row(
               children: [
                 const SizedBox(width: 8),
                 if (Navigator.of(context).canPop()) ...[
-                  NeuIconButton(
-                    Icons.arrow_back_rounded,
-                    size: 40,
-                    iconSize: 20,
+                  _BarButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
                     tooltip: 'Geri',
+                    solid: v < 0.5,
                     onTap: () => Navigator.maybePop(context),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                 ] else
                   const SizedBox(width: 12),
                 Expanded(
@@ -300,6 +228,254 @@ class _CollectionViewState extends State<CollectionView> {
           ),
         ),
       ],
+    );
+  }
+
+  String _info(List<Track> all, double total) =>
+      all.isEmpty ? '' : '${songCount(all.length)} • ${formatTotal(total)}';
+
+  /// Full-width picture fading into the page, title on top of it.
+  Widget _wideHeader(
+    BuildContext context,
+    double top,
+    double width,
+    List<Track> all,
+    double total,
+  ) {
+    final h = (math.min(width * 0.82, 420.0) + top * 0.5).roundToDouble();
+    final side = math.max(width, h) + 48;
+    return SizedBox(
+      height: h,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // oversized so the cover's own rounded corners stay outside
+          ClipRect(
+            child: OverflowBox(
+              maxWidth: side,
+              maxHeight: side,
+              child: SizedBox(width: side, height: side, child: widget.cover),
+            ),
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x55000000), Color(0x000F0F13), C.bg],
+                stops: [0, 0.35, 0.97],
+              ),
+            ),
+          ),
+          // hides the picture's last pixel row
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: -1,
+            height: 3,
+            child: ColoredBox(color: C.bg),
+          ),
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 0,
+            child: FadeSlideIn(
+              offset: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.kicker != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        widget.kicker!,
+                        style: T.faint.copyWith(
+                          letterSpacing: 1.6,
+                          fontWeight: FontWeight.w700,
+                          color: C.textDim,
+                        ),
+                      ),
+                    ),
+                  Text(
+                    widget.title,
+                    style: T.h1.copyWith(fontSize: 28, height: 1.15),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (widget.subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    DefaultTextStyle.merge(
+                      textAlign: TextAlign.start,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: widget.subtitle!,
+                      ),
+                    ),
+                  ],
+                  if (all.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(_info(all, total), style: T.dim),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Artist page: round picture in the middle.
+  Widget _roundHeader(
+    BuildContext context,
+    double top,
+    List<Track> all,
+    double total,
+  ) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, top + 52, 24, 0),
+      child: Column(
+        children: [
+          FadeSlideIn(
+            offset: 20,
+            child: Container(
+              width: 136,
+              height: 136,
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: accentGradient,
+              ),
+              child: widget.cover,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.title,
+            style: T.h1.copyWith(fontSize: 26),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (widget.subtitle != null) ...[
+            const SizedBox(height: 4),
+            widget.subtitle!,
+          ],
+          if (all.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(_info(all, total), style: T.dim),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "Oyna" (or "Duraklat" while this list is playing).
+class _PlayButton extends StatelessWidget {
+  final List<Track> all;
+  final String name;
+  const _PlayButton({required this.all, required this.name});
+  @override
+  Widget build(BuildContext context) {
+    final player = context.read<MusicHandler>();
+    return ValueListenableBuilder<String>(
+      valueListenable: player.contextName,
+      builder: (context, ctxName, _) => ValueListenableBuilder<bool>(
+        valueListenable: player.playing,
+        builder: (context, playing, _) {
+          final mine =
+              ctxName == name &&
+              all.any((t) => t.id == player.current.value?.id);
+          return _PillButton(
+            icon: mine && playing
+                ? Icons.pause_rounded
+                : Icons.play_arrow_rounded,
+            label: mine && playing ? 'Duraklat' : 'Oyna',
+            accent: true,
+            onTap: all.isEmpty
+                ? null
+                : () {
+                    if (mine) {
+                      player.togglePlay();
+                    } else {
+                      playList(context, all, name: name);
+                    }
+                  },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PillButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool accent;
+  final VoidCallback? onTap;
+  const _PillButton({
+    required this.icon,
+    required this.label,
+    this.accent = false,
+    this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return NeuButton(
+      radius: 24,
+      height: 46,
+      color: accent ? C.accent : C.surfaceHi,
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 22, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Back button of the pages: a dark round button while over a picture.
+class _BarButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool solid;
+  final VoidCallback onTap;
+  const _BarButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.solid = false,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: solid
+            ? Colors.black.withValues(alpha: 0.35)
+            : Colors.transparent,
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        onPressed: onTap,
+        icon: Icon(icon, size: 18, color: C.text),
+      ),
     );
   }
 }
@@ -326,14 +502,12 @@ class SubPage extends StatelessWidget {
           child: Row(
             children: [
               if (Navigator.of(context).canPop()) ...[
-                NeuIconButton(
-                  Icons.arrow_back_rounded,
-                  size: 40,
-                  iconSize: 20,
+                _BarButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
                   tooltip: 'Geri',
                   onTap: () => Navigator.maybePop(context),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
               ] else
                 const SizedBox(width: 12),
               Expanded(

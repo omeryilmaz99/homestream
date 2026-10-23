@@ -166,6 +166,30 @@ class ApiClient {
   Future<HomeData> home() async =>
       HomeData.fromJson(await _get('/api/music/home') as Map<String, dynamic>);
 
+  /// "Sana Özel Mix". Older servers have no mix: shuffle the library.
+  Future<List<Track>> mix({int n = 50}) async {
+    try {
+      return _list(await _get('/api/music/mix', {'n': '$n'}), Track.fromJson);
+    } on ApiException catch (e) {
+      if (e.status != 404) rethrow;
+      final all = await tracks()
+        ..shuffle();
+      return all.take(n).toList();
+    }
+  }
+
+  /// Profile page numbers. Older servers: worked out from the song list.
+  Future<ProfileStats> stats() async {
+    try {
+      return ProfileStats.fromJson(
+        await _get('/api/music/stats') as Map<String, dynamic>,
+      );
+    } on ApiException catch (e) {
+      if (e.status != 404) rethrow;
+      return ProfileStats.fromTracks(await tracks(sort: 'recent'));
+    }
+  }
+
   Future<List<Track>> tracks({String sort = 'title', String? genre}) async =>
       _list(
         await _get('/api/music/tracks', {'sort': sort, 'genre': ?genre}),

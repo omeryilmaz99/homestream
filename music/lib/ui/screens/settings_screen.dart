@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // ---- profile ----
             NeuBox(
-              radius: 20,
+              radius: 16,
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -118,66 +118,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             // ---- playback ----
-            const _Header('Çalma'),
+            const _Header('Ses ve Oynatma'),
             _Card(
               children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Şarkılar arası yumuşak geçiş',
-                    style: T.body,
-                  ),
-                  subtitle: Text(
-                    s.crossfade == 0 ? 'Kapalı' : '${s.crossfade} saniye',
-                    style: T.faint,
-                  ),
-                ),
-                Slider(
-                  value: s.crossfade.toDouble(),
-                  min: 0,
-                  max: 12,
-                  divisions: 12,
-                  label: s.crossfade == 0 ? 'Kapalı' : '${s.crossfade} sn',
+                _Switch(
+                  title: 'Yumuşak geçiş (crossfade)',
+                  subtitle: 'Şarkılar arasında sesi yavaşça geçirir',
+                  value: s.crossfade > 0,
                   onChanged: (v) {
-                    s.crossfade = v.round();
+                    s.crossfade = v ? 5 : 0;
+                    app.applyPlayerSettings();
                     setState(() {});
                   },
-                  onChangeEnd: (_) => app.applyPlayerSettings(),
                 ),
-                _Switch(
-                  title: 'Akıllı geçiş',
-                  subtitle:
-                      'Aynı albümün şarkıları arasında geçiş yapılmaz (canlı albümler, kesintisiz kayıtlar)',
-                  value: s.smartCrossfade,
-                  onChanged: s.crossfade == 0
-                      ? null
-                      : (v) {
-                          s.smartCrossfade = v;
-                          app.applyPlayerSettings();
-                        },
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Ses seviyesini eşitle', style: T.body),
-                  subtitle: const Text(
-                    'Dosyadaki ReplayGain bilgisini kullanır',
-                    style: T.faint,
-                  ),
-                  trailing: DropdownButton<String>(
-                    value: s.replayGain,
-                    underline: const SizedBox.shrink(),
-                    dropdownColor: C.raisedTop,
-                    items: const [
-                      DropdownMenuItem(value: 'off', child: Text('Kapalı')),
-                      DropdownMenuItem(value: 'track', child: Text('Şarkı')),
-                      DropdownMenuItem(value: 'album', child: Text('Albüm')),
-                    ],
-                    onChanged: (v) {
-                      if (v == null) return;
-                      s.replayGain = v;
-                      app.applyPlayerSettings();
-                    },
-                  ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  child: s.crossfade == 0
+                      ? const SizedBox(width: double.infinity)
+                      : Column(
+                          children: [
+                            Row(
+                              children: [
+                                const Text('1 sn', style: T.faint),
+                                Expanded(
+                                  child: Slider(
+                                    value: s.crossfade.toDouble(),
+                                    min: 1,
+                                    max: 12,
+                                    divisions: 11,
+                                    label: '${s.crossfade} sn',
+                                    onChanged: (v) {
+                                      s.crossfade = v.round();
+                                      setState(() {});
+                                    },
+                                    onChangeEnd: (_) =>
+                                        app.applyPlayerSettings(),
+                                  ),
+                                ),
+                                Text(
+                                  '${s.crossfade} sn',
+                                  style: T.dim.copyWith(color: C.accentHi),
+                                ),
+                              ],
+                            ),
+                            _Switch(
+                              title: 'Akıllı geçiş',
+                              subtitle:
+                                  'Aynı albümün şarkıları arasında geçiş yapılmaz (canlı albümler, kesintisiz kayıtlar)',
+                              value: s.smartCrossfade,
+                              onChanged: (v) {
+                                s.smartCrossfade = v;
+                                app.applyPlayerSettings();
+                              },
+                            ),
+                          ],
+                        ),
                 ),
                 _Switch(
                   title: 'Yüksek kaliteli ses çıkışı',
@@ -199,6 +194,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     app.applyPlayerSettings();
                   },
                 ),
+              ],
+            ),
+            const _Header('Ses Seviyesi Eşitleme'),
+            _Card(
+              children: [
+                for (final o in const [
+                  ('off', 'Kapalı', 'Dosyalar olduğu gibi çalınır'),
+                  ('track', 'Şarkıya göre', 'Her şarkı aynı seviyede'),
+                  ('album', 'Albüme göre', 'Albüm içindeki farklar korunur'),
+                ])
+                  _Radio(
+                    title: o.$2,
+                    subtitle: o.$3,
+                    selected: s.replayGain == o.$1,
+                    onTap: () {
+                      s.replayGain = o.$1;
+                      app.applyPlayerSettings();
+                      setState(() {});
+                    },
+                  ),
               ],
             ),
 
@@ -379,11 +394,8 @@ class _Header extends StatelessWidget {
   const _Header(this.text);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(6, 26, 6, 10),
-    child: Text(
-      text.toUpperCase(),
-      style: T.faint.copyWith(letterSpacing: 1.6, fontWeight: FontWeight.w800),
-    ),
+    padding: const EdgeInsets.fromLTRB(4, 26, 4, 10),
+    child: Text(text, style: T.h3),
   );
 }
 
@@ -392,8 +404,7 @@ class _Card extends StatelessWidget {
   const _Card({required this.children});
   @override
   Widget build(BuildContext context) => NeuBox(
-    radius: 20,
-    depth: 0.8,
+    radius: 16,
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
     child: Column(children: children),
   );
@@ -418,4 +429,67 @@ class _Switch extends StatelessWidget {
     value: value,
     onChanged: onChanged,
   );
+}
+
+/// One choice of a group, with a purple check circle on the right.
+class _Radio extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  const _Radio({
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: T.body.copyWith(
+                      color: selected ? C.text : C.textDim,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  Text(subtitle, style: T.faint),
+                ],
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: selected ? C.accent : Colors.transparent,
+                border: Border.all(
+                  color: selected ? C.accent : C.textFaint,
+                  width: 1.6,
+                ),
+              ),
+              child: selected
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

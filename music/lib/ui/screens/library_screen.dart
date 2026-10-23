@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,7 +8,6 @@ import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../state/app_state.dart';
 import '../nav.dart';
-import '../neu.dart';
 import '../theme.dart';
 import '../track_menu.dart';
 import '../widgets/common.dart';
@@ -15,12 +16,12 @@ import '../widgets/rows.dart';
 import 'album_screen.dart';
 import 'artist_screen.dart';
 import 'downloads_screen.dart';
+import 'folders_screen.dart';
 import 'liked_screen.dart';
 import 'playlist_screen.dart';
-import 'settings_screen.dart';
 import 'tracks_screen.dart';
 
-/// "Kitaplık": playlists, albums, artists, songs and downloads.
+/// "Kitaplık": playlists, artists, albums, downloads and folders.
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
   @override
@@ -31,9 +32,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   int _tab = 0;
   static const _tabs = [
     'Çalma Listeleri',
-    'Albümler',
     'Sanatçılar',
+    'Albümler',
     'İndirilenler',
+    'Klasörler',
   ];
 
   @override
@@ -42,11 +44,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Widget body;
     switch (_tab) {
       case 1:
-        body = const _Albums();
-      case 2:
         body = const _Artists();
+      case 2:
+        body = const _Albums();
       case 3:
         body = const _DownloadsList();
+      case 4:
+        body = const FoldersScreen(embedded: true);
       default:
         body = const _Playlists();
     }
@@ -54,50 +58,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
       body: Column(
         children: [
           PageTitle(
-            'Kitaplık',
+            'Kitaplığım',
             actions: [
               IconButton(
                 tooltip: 'Tüm şarkılar',
-                icon: const Icon(Icons.library_music_rounded),
+                icon: const Icon(Icons.queue_music_rounded),
                 onPressed: () =>
                     ShellNav.push(const TracksScreen(title: 'Tüm şarkılar')),
               ),
-              IconButton(
-                tooltip: 'Ayarlar',
-                icon: const Icon(Icons.settings_rounded),
-                onPressed: () => ShellNav.push(const SettingsScreen()),
-              ),
+              if (online)
+                IconButton(
+                  tooltip: 'Yeni çalma listesi',
+                  icon: const Icon(Icons.add_rounded, size: 28),
+                  onPressed: () => newPlaylist(context),
+                ),
             ],
           ),
-          SizedBox(
-            height: 54,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              clipBehavior: Clip.none,
-              itemCount: _tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, i) => NeuButton(
-                active: _tab == i,
-                radius: 20,
-                depth: 0.6,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                onTap: () => setState(() => _tab = i),
-                child: Text(
-                  _tabs[i],
-                  style: TextStyle(
-                    color: _tab == i ? C.accent : C.text,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
+          UnderlineTabs(
+            tabs: _tabs,
+            index: _tab,
+            onChanged: (i) => setState(() => _tab = i),
           ),
-          const SizedBox(height: 4),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
@@ -105,6 +86,81 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Asks for a name, creates the playlist and opens it.
+Future<void> newPlaylist(BuildContext context) async {
+  final app = context.read<AppState>();
+  final name = await askText(
+    context,
+    title: 'Yeni çalma listesi',
+    hint: 'Liste adı',
+    ok: 'Oluştur',
+  );
+  if (name == null) return;
+  final p = await app.createPlaylist(name);
+  if (p != null) {
+    ShellNav.push(PlaylistScreen(id: p.id, name: p.name));
+  }
+}
+
+/// Text tabs with a purple line under the selected one.
+class UnderlineTabs extends StatelessWidget {
+  final List<String> tabs;
+  final int index;
+  final ValueChanged<int> onChanged;
+  const UnderlineTabs({
+    super.key,
+    required this.tabs,
+    required this.index,
+    required this.onChanged,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: C.divider)),
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: tabs.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 22),
+        itemBuilder: (context, i) {
+          final on = i == index;
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onChanged(i),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  tabs[i],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: on ? FontWeight.w700 : FontWeight.w500,
+                    color: on ? C.text : C.textFaint,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  height: 2.5,
+                  width: on ? 28 : 0,
+                  decoration: BoxDecoration(
+                    color: C.accent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -124,6 +180,8 @@ class _Playlists extends StatelessWidget {
         final offlineLists = online
             ? const <DownloadCollection>[]
             : dl.collections.where((c) => c.type == 'playlist').toList();
+        final recent = [...lists]
+          ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         return RefreshIndicator(
           color: C.accent,
           onRefresh: app.refreshUserData,
@@ -131,41 +189,22 @@ class _Playlists extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 140),
             children: [
+              if (online && recent.length >= 2)
+                HorizontalRow(
+                  title: 'Son Eklenenler',
+                  count: math.min(recent.length, 8),
+                  itemBuilder: (context, i) =>
+                      PlaylistCard(playlist: recent[i]),
+                ),
+              SectionHeader(
+                online ? 'Tüm Çalma Listeleri' : 'İndirilen Çalma Listeleri',
+              ),
               _LibTile(
                 leading: const LikedCover(radius: 8),
                 title: 'Beğenilen Şarkılar',
-                subtitle:
-                    'Çalma listesi • ${songCount(app.liked.value.length)}',
+                subtitle: songCount(app.liked.value.length),
                 onTap: () => ShellNav.push(const LikedScreen()),
               ),
-              if (online)
-                _LibTile(
-                  leading: Container(
-                    decoration: BoxDecoration(
-                      color: C.bgDeep,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: C.accent,
-                      size: 30,
-                    ),
-                  ),
-                  title: 'Yeni çalma listesi',
-                  onTap: () async {
-                    final name = await askText(
-                      context,
-                      title: 'Yeni çalma listesi',
-                      hint: 'Liste adı',
-                      ok: 'Oluştur',
-                    );
-                    if (name == null) return;
-                    final p = await app.createPlaylist(name);
-                    if (p != null) {
-                      ShellNav.push(PlaylistScreen(id: p.id, name: p.name));
-                    }
-                  },
-                ),
               for (var i = 0; i < lists.length && online; i++)
                 FadeSlideIn(
                   index: i,
@@ -177,14 +216,30 @@ class _Playlists extends StatelessWidget {
                       width: 160,
                     ),
                     title: lists[i].name,
-                    subtitle:
-                        'Çalma listesi • ${songCount(lists[i].trackCount)}',
+                    subtitle: songCount(lists[i].trackCount),
                     downloaded:
                         dl.collection('playlist:${lists[i].id}') != null,
                     onTap: () => ShellNav.push(
                       PlaylistScreen(id: lists[i].id, name: lists[i].name),
                     ),
                   ),
+                ),
+              if (online)
+                _LibTile(
+                  leading: Container(
+                    decoration: BoxDecoration(
+                      color: C.surfaceHi,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: C.accentHi,
+                      size: 28,
+                    ),
+                  ),
+                  title: 'Yeni çalma listesi',
+                  chevron: false,
+                  onTap: () => newPlaylist(context),
                 ),
               for (final c in offlineLists)
                 _LibTile(
@@ -224,22 +279,24 @@ class _LibTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final bool downloaded;
+  final bool chevron;
   const _LibTile({
     required this.leading,
     required this.title,
     this.subtitle = '',
     required this.onTap,
     this.downloaded = false,
+    this.chevron = true,
   });
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(20, 7, 12, 7),
         child: Row(
           children: [
-            SizedBox(width: 60, height: 60, child: leading),
+            SizedBox(width: 52, height: 52, child: leading),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -278,6 +335,8 @@ class _LibTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (chevron)
+              const Icon(Icons.chevron_right_rounded, color: C.textFaint),
           ],
         ),
       ),
@@ -316,7 +375,6 @@ class _AlbumsState extends State<_Albums> {
                 children: [
                   Expanded(child: Text('${albums.length} albüm', style: T.dim)),
                   PopupMenuButton<String>(
-                    color: C.raisedTop,
                     initialValue: _sort,
                     onSelected: (v) => setState(() => _sort = v),
                     itemBuilder: (_) => [
@@ -428,12 +486,12 @@ class _DownloadsList extends StatelessWidget {
         _LibTile(
           leading: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [C.accentLo, C.accent]),
+              gradient: accentGradient,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
               Icons.download_done_rounded,
-              color: Colors.black,
+              color: Colors.white,
               size: 30,
             ),
           ),

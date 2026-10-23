@@ -46,6 +46,7 @@ class _AlbumBody extends StatelessWidget {
       title: a.title,
       cover: CoverImage(cover: a.cover, radius: 14, width: 640),
       subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: a.artistId.isEmpty
@@ -53,7 +54,13 @@ class _AlbumBody extends StatelessWidget {
                 : () => ShellNav.push(
                     ArtistScreen(id: a.artistId, name: a.artist),
                   ),
-            child: Text(a.artist, style: T.h3.copyWith(color: C.textDim)),
+            child: Text(
+              a.artist,
+              style: T.body.copyWith(
+                color: C.accentHi,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           if (sub.isNotEmpty) ...[
             const SizedBox(height: 4),

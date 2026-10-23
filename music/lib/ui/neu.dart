@@ -3,21 +3,21 @@ import 'package:flutter/services.dart';
 
 import 'theme.dart';
 
+// Surface primitives. The names come from the first (neumorphic) design;
+// they now draw flat dark cards with a hairline edge.
+
 enum NeuStyle { raised, flat, inset }
 
-/// Soft "extruded" shadows: light from the top-left, depth to the bottom-right.
-List<BoxShadow> neuShadows({double depth = 1}) => [
-  BoxShadow(
-    color: C.dark.withValues(alpha: 0.9),
-    offset: Offset(5 * depth, 5 * depth),
-    blurRadius: 12 * depth,
-  ),
-  BoxShadow(
-    color: C.light.withValues(alpha: 0.75),
-    offset: Offset(-4 * depth, -4 * depth),
-    blurRadius: 10 * depth,
-  ),
-];
+/// Soft drop shadow for floating elements (covers, mini player).
+List<BoxShadow> neuShadows({double depth = 1}) => depth <= 0
+    ? const []
+    : [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.35),
+          offset: Offset(0, 6 * depth),
+          blurRadius: 18 * depth,
+        ),
+      ];
 
 BoxDecoration neuDecoration({
   NeuStyle style = NeuStyle.raised,
@@ -27,35 +27,22 @@ BoxDecoration neuDecoration({
   Color? color,
 }) {
   final shape = circle ? BoxShape.circle : BoxShape.rectangle;
-  final r = circle ? null : (radius ?? BorderRadius.circular(18));
+  final r = circle ? null : (radius ?? BorderRadius.circular(16));
   switch (style) {
     case NeuStyle.raised:
       return BoxDecoration(
         shape: shape,
         borderRadius: r,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: color == null
-              ? const [C.raisedTop, C.raisedBottom]
-              : [Color.lerp(color, Colors.white, 0.08)!, color],
-        ),
-        boxShadow: neuShadows(depth: depth),
+        color: color ?? C.surface,
+        border: color == null ? Border.all(color: C.border, width: 0.8) : null,
       );
     case NeuStyle.flat:
       return BoxDecoration(shape: shape, borderRadius: r, color: color ?? C.bg);
     case NeuStyle.inset:
-      // Flutter has no inner shadows: a dark-to-light gradient and a hairline
-      // edge read as a pressed-in surface.
       return BoxDecoration(
         shape: shape,
         borderRadius: r,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF16181B), Color(0xFF22252A)],
-        ),
-        border: Border.all(color: const Color(0x0DFFFFFF), width: 0.8),
+        color: color ?? C.surfaceHi,
       );
   }
 }
@@ -96,12 +83,15 @@ class NeuBox extends StatelessWidget {
         depth: depth,
         color: color,
       ),
-      child: child,
+      // own Material so list tiles and ink splashes inside stay visible
+      child: child == null
+          ? null
+          : Material(type: MaterialType.transparency, child: child),
     );
   }
 }
 
-/// A raised surface that sinks in while pressed.
+/// A card-like button that shrinks a little while pressed.
 class NeuButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -140,27 +130,35 @@ class _NeuButtonState extends State<NeuButton> {
 
   @override
   Widget build(BuildContext context) {
-    final pressed = _down || widget.active;
     final enabled = widget.onTap != null || widget.onLongPress != null;
+    final base = widget.color ?? (widget.active ? null : C.surface);
     Widget box = AnimatedContainer(
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOut,
       width: widget.width,
       height: widget.height,
       padding: widget.padding,
-      decoration: neuDecoration(
-        style: pressed && widget.color == null
-            ? NeuStyle.inset
-            : NeuStyle.raised,
-        radius: BorderRadius.circular(widget.radius),
-        circle: widget.circle,
-        depth: pressed ? 0.35 : widget.depth,
-        color: widget.color,
+      decoration: BoxDecoration(
+        shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: widget.circle
+            ? null
+            : BorderRadius.circular(widget.radius),
+        color: base == null
+            ? C.accent.withValues(alpha: 0.16)
+            : (_down ? Color.lerp(base, Colors.white, 0.06) : base),
+        border: widget.color == null
+            ? Border.all(
+                color: widget.active
+                    ? C.accent.withValues(alpha: 0.45)
+                    : C.border,
+                width: 0.8,
+              )
+            : null,
       ),
       child: Center(widthFactor: 1, heightFactor: 1, child: widget.child),
     );
     box = AnimatedScale(
-      scale: _down ? 0.95 : 1,
+      scale: _down ? 0.96 : 1,
       duration: const Duration(milliseconds: 120),
       child: box,
     );
@@ -185,14 +183,15 @@ class _NeuButtonState extends State<NeuButton> {
   }
 }
 
-/// Round neumorphic icon button.
+/// Round icon button.
 class NeuIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final double size;
   final double iconSize;
-  final bool accent; // green filled (play buttons)
-  final bool active; // pressed in, green icon
+  final bool accent; // purple filled (play buttons)
+  final bool active; // purple icon
+  final bool plain; // no background (top bars)
   final Color? iconColor;
   final String? tooltip;
   const NeuIconButton(
@@ -205,10 +204,30 @@ class NeuIconButton extends StatelessWidget {
     this.active = false,
     this.iconColor,
     this.tooltip,
+    this.plain = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color =
+        iconColor ??
+        (accent
+            ? Colors.white
+            : active
+            ? C.accentHi
+            : C.text);
+    if (plain) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onTap,
+          padding: EdgeInsets.zero,
+          icon: Icon(icon, size: iconSize, color: color),
+        ),
+      );
+    }
     return NeuButton(
       circle: true,
       width: size,
@@ -217,22 +236,12 @@ class NeuIconButton extends StatelessWidget {
       active: active,
       tooltip: tooltip,
       color: accent ? C.accent : null,
-      child: Icon(
-        icon,
-        size: iconSize,
-        color:
-            iconColor ??
-            (accent
-                ? Colors.black
-                : active
-                ? C.accent
-                : C.text),
-      ),
+      child: Icon(icon, size: iconSize, color: color),
     );
   }
 }
 
-/// Green pill button ("ÇAL").
+/// Purple pill button ("Oyna").
 class AccentPill extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -250,15 +259,14 @@ class AccentPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, color: Colors.black, size: 22),
+            Icon(icon, color: Colors.white, size: 20),
             const SizedBox(width: 6),
           ],
           Text(
             label,
             style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
           ),
@@ -268,7 +276,7 @@ class AccentPill extends StatelessWidget {
   }
 }
 
-/// Neumorphic seek bar: an inset groove with a green fill and a raised knob.
+/// Thin seek bar: grey track, purple fill, white knob.
 class NeuSeekBar extends StatefulWidget {
   final double value; // 0..1
   final double buffered; // 0..1
@@ -281,7 +289,7 @@ class NeuSeekBar extends StatefulWidget {
     this.buffered = 0,
     this.onChanged,
     this.onChangeEnd,
-    this.height = 8,
+    this.height = 4,
   });
 
   @override
@@ -329,9 +337,9 @@ class _NeuSeekBarState extends State<NeuSeekBar> {
               children: [
                 Container(
                   height: widget.height,
-                  decoration: neuDecoration(
-                    style: NeuStyle.inset,
-                    radius: BorderRadius.circular(widget.height),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(widget.height),
                   ),
                 ),
                 if (widget.buffered > 0)
@@ -351,28 +359,24 @@ class _NeuSeekBarState extends State<NeuSeekBar> {
                       colors: [C.accentLo, C.accent, C.accentHi],
                     ),
                     borderRadius: BorderRadius.circular(widget.height),
-                    boxShadow: [
-                      BoxShadow(
-                        color: C.accent.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                      ),
-                    ],
                   ),
                 ),
                 Positioned(
-                  left: (w * v - (dragging ? 11 : 9)).clamp(-2, w - 16),
+                  left: (w * v - (dragging ? 9 : 7)).clamp(-2, w - 12),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 120),
-                    width: dragging ? 22 : 18,
-                    height: dragging ? 22 : 18,
+                    width: dragging ? 18 : 14,
+                    height: dragging ? 18 : 14,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFFF4F6F8), Color(0xFFB8BEC6)],
-                      ),
-                      boxShadow: neuShadows(depth: 0.5),
+                      color: Colors.white,
+                      border: Border.all(color: C.accent, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: C.accent.withValues(alpha: 0.45),
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -11,6 +11,7 @@ import '../../state/app_state.dart';
 import '../nav.dart';
 import '../neu.dart';
 import '../theme.dart';
+import '../widgets/collection.dart';
 import '../widgets/common.dart';
 import '../widgets/cover.dart';
 import '../widgets/rows.dart';
@@ -117,14 +118,13 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: EdgeInsets.fromLTRB(20, top + 14, 20, 6),
             child: const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Ara', style: T.h1),
+              child: Text('Keşfet', style: T.h1),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 6, 18, 8),
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
             child: NeuBox(
-              style: NeuStyle.inset,
-              radius: 18,
+              radius: 14,
               child: TextField(
                 controller: _ctrl,
                 focusNode: _focus,
@@ -136,11 +136,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 textInputAction: TextInputAction.search,
                 style: T.body,
                 decoration: InputDecoration(
-                  hintText: 'Şarkı, sanatçı, albüm, klasör…',
+                  hintText: 'Sanatçı, şarkı, albüm veya klasör ara…',
+                  hintStyle: T.dim.copyWith(color: C.textFaint),
                   filled: false,
                   prefixIcon: const Icon(
                     Icons.search_rounded,
                     color: C.textDim,
+                    size: 22,
                   ),
                   suffixIcon: _ctrl.text.isEmpty
                       ? null
@@ -153,7 +155,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                   border: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
                 ),
               ),
             ),
@@ -300,7 +302,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-/// Before typing: recent searches and genres.
+/// Before typing: genres and recent searches.
 class _Browse extends StatelessWidget {
   final ValueChanged<String> onRecent;
   const _Browse({super.key, required this.onRecent});
@@ -312,44 +314,6 @@ class _Browse extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 150),
       children: [
-        if (recent.isNotEmpty) ...[
-          SectionHeader(
-            'Son aramalar',
-            action: 'Temizle',
-            onAction: app.clearRecentSearches,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final q in recent)
-                  NeuButton(
-                    radius: 16,
-                    depth: 0.5,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    onTap: () => onRecent(q),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.history_rounded,
-                          size: 16,
-                          color: C.textDim,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(q, style: T.dim.copyWith(color: C.text)),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
         if (app.online)
           DataView<List<Genre>>(
             load: (api) => api.genres(),
@@ -358,26 +322,13 @@ class _Browse extends StatelessWidget {
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionHeader('Türlere göz at'),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 220,
-                                mainAxisSpacing: 14,
-                                crossAxisSpacing: 14,
-                                childAspectRatio: 1.75,
-                              ),
-                          itemCount: genres.length,
-                          itemBuilder: (context, i) => FadeSlideIn(
-                            index: i,
-                            child: _GenreTile(genre: genres[i], index: i),
-                          ),
-                        ),
+                      SectionHeader(
+                        'Müzik Türleri',
+                        action: genres.length > 6 ? 'Tümünü Gör' : null,
+                        onAction: () =>
+                            ShellNav.push(GenresScreen(genres: genres)),
                       ),
+                      GenreGrid(genres: genres.take(6).toList()),
                     ],
                   ),
           )
@@ -390,7 +341,104 @@ class _Browse extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+        if (recent.isNotEmpty) ...[
+          SectionHeader(
+            'Son Aramalar',
+            action: 'Temizle',
+            onAction: app.clearRecentSearches,
+          ),
+          for (final q in recent)
+            InkWell(
+              onTap: () => onRecent(q),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 2, 8, 2),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.history_rounded,
+                      size: 20,
+                      color: C.textDim,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        q,
+                        style: T.body,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Kaldır',
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: C.textFaint,
+                      ),
+                      onPressed: () => app.removeRecentSearch(q),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ],
+    );
+  }
+}
+
+/// Bright colours of the genre tiles.
+const _genreColors = [
+  [Color(0xFFFF5E9C), Color(0xFFD9386F)],
+  [Color(0xFF5865F2), Color(0xFF5B3FD6)],
+  [Color(0xFF9B4DEB), Color(0xFF6C2BC9)],
+  [Color(0xFFF2803E), Color(0xFFDA4B3A)],
+  [Color(0xFF22A88F), Color(0xFF117263)],
+  [Color(0xFFB096F7), Color(0xFF8063E6)],
+  [Color(0xFF3A9BEF), Color(0xFF2E5FD1)],
+  [Color(0xFFE5508C), Color(0xFF9B3FC4)],
+];
+
+class GenreGrid extends StatelessWidget {
+  final List<Genre> genres;
+  const GenreGrid({super.key, required this.genres});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: GridView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: genres.length,
+        itemBuilder: (context, i) => FadeSlideIn(
+          index: i,
+          child: _GenreTile(genre: genres[i], index: i),
+        ),
+      ),
+    );
+  }
+}
+
+class GenresScreen extends StatelessWidget {
+  final List<Genre> genres;
+  const GenresScreen({super.key, required this.genres});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SubPage(
+        title: 'Müzik Türleri',
+        child: ListView(
+          padding: const EdgeInsets.only(top: 6, bottom: 150),
+          children: [GenreGrid(genres: genres)],
+        ),
+      ),
     );
   }
 }
@@ -401,10 +449,8 @@ class _GenreTile extends StatelessWidget {
   const _GenreTile({required this.genre, required this.index});
   @override
   Widget build(BuildContext context) {
-    final p = coverPalettes[index % coverPalettes.length];
-    return NeuButton(
-      radius: 16,
-      depth: 0.7,
+    final p = _genreColors[index % _genreColors.length];
+    return PressScale(
       onTap: () => ShellNav.push(
         TracksScreen(
           title: genre.name,
@@ -412,64 +458,55 @@ class _GenreTile extends StatelessWidget {
           contextName: genre.name,
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox.expand(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [p[0], p[1]],
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: p,
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(10, 8, 8, 9),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -2,
+              top: 0,
+              child: Icon(
+                Icons.graphic_eq_rounded,
+                size: 22,
+                color: Colors.white.withValues(alpha: 0.35),
               ),
             ),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -14,
-                  bottom: -8,
-                  child: Transform.rotate(
-                    angle: 0.42,
-                    child: SizedBox(
-                      width: 62,
-                      height: 62,
-                      child: CoverImage(
-                        cover: genre.cover,
-                        radius: 6,
-                        width: 160,
-                      ),
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    genre.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                      color: Colors.white,
+                      height: 1.15,
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        genre.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        songCount(genre.trackCount),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    songCount(genre.trackCount),
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xCCFFFFFF),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

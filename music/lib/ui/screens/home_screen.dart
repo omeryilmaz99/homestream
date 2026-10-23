@@ -8,6 +8,8 @@ import '../../state/app_state.dart';
 import '../nav.dart';
 import '../neu.dart';
 import '../theme.dart';
+import '../widgets/art.dart';
+import '../widgets/collection.dart';
 import '../widgets/common.dart';
 import '../widgets/rows.dart';
 import '../widgets/track_tile.dart';
@@ -39,7 +41,6 @@ class ProfileAvatar extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [c, Color.lerp(c, Colors.black, 0.45)!],
         ),
-        boxShadow: neuShadows(depth: 0.5),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -67,32 +68,50 @@ class HomeScreen extends StatelessWidget {
     final header = Padding(
       padding: EdgeInsets.fromLTRB(
         20,
-        MediaQuery.paddingOf(context).top + 14,
-        16,
-        4,
+        MediaQuery.paddingOf(context).top + 10,
+        12,
+        0,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(greeting(), style: T.h1),
-                if (app.profile != null) Text(app.profile!.name, style: T.dim),
-              ],
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'HOME MÜZİK',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2.4,
+                    color: C.text,
+                  ),
+                ),
+              ),
+              NeuIconButton(
+                Icons.settings_outlined,
+                plain: true,
+                size: 40,
+                iconSize: 22,
+                tooltip: 'Ayarlar',
+                onTap: () => ShellNav.push(const SettingsScreen()),
+              ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => ShellNav.select(3),
+                child: ProfileAvatar(profile: app.profile, size: 30),
+              ),
+              const SizedBox(width: 6),
+            ],
           ),
-          NeuIconButton(
-            Icons.settings_rounded,
-            size: 42,
-            iconSize: 20,
-            tooltip: 'Ayarlar',
-            onTap: () => ShellNav.push(const SettingsScreen()),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () => ShellNav.push(const SettingsScreen()),
-            child: ProfileAvatar(profile: app.profile, size: 42),
+          const SizedBox(height: 16),
+          Text(greeting(), style: T.h1),
+          const SizedBox(height: 2),
+          Text(
+            app.profile == null
+                ? 'Bugün senin için seçtiklerimiz'
+                : '${app.profile!.name}, bugün senin için seçtiklerimiz',
+            style: T.dim,
           ),
         ],
       ),
@@ -124,13 +143,14 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 150),
             children: [
               header,
-              if (d.quick.isNotEmpty) _QuickGrid(cards: d.quick),
+              const FadeSlideIn(child: MixHero()),
               for (final r in d.rows)
                 if (r.items.isNotEmpty)
                   HorizontalRow(
                     title: r.title,
                     count: r.items.length,
-                    height: 212,
+                    action: r.items.length > 3 ? 'Tümünü Gör' : null,
+                    onAction: () => ShellNav.push(HomeRowScreen(row: r)),
                     itemBuilder: (context, i) => HomeCardTile(
                       card: r.items[i],
                       siblings: r.items,
@@ -145,71 +165,143 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// The 2-column shortcut tiles at the top (like Spotify).
-class _QuickGrid extends StatelessWidget {
-  final List<HomeCard> cards;
-  const _QuickGrid({required this.cards});
+/// "Sana Özel Mix": big card that plays a fresh mix from the server.
+class MixHero extends StatefulWidget {
+  const MixHero({super.key});
+  @override
+  State<MixHero> createState() => _MixHeroState();
+}
+
+class _MixHeroState extends State<MixHero> {
+  bool _busy = false;
+
+  Future<void> _play() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final app = context.read<AppState>();
+    final tracks = await app.call((a) => a.mix());
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (tracks == null || tracks.isEmpty) return;
+    await playList(context, tracks, name: 'Sana Özel Mix');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final list = cards.take(8).toList();
+    final seed = 'mix${DateTime.now().day}';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final w = (c.maxWidth - 14) / 2;
-          return Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            children: [
-              for (var i = 0; i < list.length; i++)
-                FadeSlideIn(
-                  index: i,
-                  child: SizedBox(
-                    width: w,
-                    height: 58,
-                    child: NeuButton(
-                      radius: 12,
-                      depth: 0.7,
-                      onTap: () =>
-                          openHomeCard(context, list[i], siblings: list),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 58,
-                            height: 58,
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.horizontal(
-                                left: Radius.circular(12),
-                              ),
-                              child: homeCardCover(
-                                list[i],
-                                radius: 0,
-                                width: 160,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              list[i].title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: C.text,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                      ),
-                    ),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      child: PressScale(
+        onTap: _play,
+        child: AspectRatio(
+          aspectRatio: 1.9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: GradientArt(
+              seed,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.55),
+                    ],
+                    stops: const [0.35, 1],
                   ),
                 ),
-            ],
-          );
-        },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sana Özel Mix',
+                              style: TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Sevdiğin sanatçılardan ve türlerden, her seferinde yeni bir karışım.',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xDDFFFFFF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: _busy
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.4,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.play_arrow_rounded,
+                                color: C.accent,
+                                size: 30,
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Tümünü Gör" of a home row: every card in a grid.
+class HomeRowScreen extends StatelessWidget {
+  final HomeRow row;
+  const HomeRowScreen({super.key, required this.row});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SubPage(
+        title: row.title,
+        child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 150),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 180,
+            mainAxisSpacing: 18,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.74,
+          ),
+          itemCount: row.items.length,
+          itemBuilder: (context, i) => LayoutBuilder(
+            builder: (context, c) => HomeCardTile(
+              card: row.items[i],
+              siblings: row.items,
+              rowTitle: row.title,
+              width: c.maxWidth,
+            ),
+          ),
+        ),
       ),
     );
   }

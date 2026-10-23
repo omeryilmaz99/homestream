@@ -1,12 +1,15 @@
 # Home Müzik
 
 Evdeki Home Stream sunucusundaki müzikler için Spotify tarzı Android uygulaması
-(Flutter + mpv). Koyu, neumorphic tasarım.
+(Flutter + mpv). Koyu, düz yüzeyli, mor vurgulu tasarım.
 
 ## Özellikler
 
-- **Ana Sayfa, Ara, Kitaplık, Beğenilenler, Klasörler** sekmeleri; albüm, sanatçı, tür ve
-  çalma listesi sayfaları. Klasörler sekmesi sunucudaki klasör yapısını olduğu gibi açar.
+- **Ana Sayfa, Keşfet, Kitaplık, Profil** sekmeleri; albüm, sanatçı, tür ve çalma listesi
+  sayfaları. Ana sayfada her seferinde yeni bir "Sana Özel Mix". Kitaplık: çalma listeleri
+  (Beğenilen Şarkılar dahil), sanatçılar, albümler, indirilenler ve sunucudaki klasör yapısını
+  olduğu gibi açan Klasörler. Profil: dinleme sayıları, en çok dinlenen sanatçılar, son
+  dinlenenler.
 - **Profiller şifresiz**; "Beni hatırla" açıksa uygulama her açılışta profil sormaz.
 - **Arka planda çalma**: bildirim ve kilit ekranı kontrolleri, kulaklık tuşları, telefon
   gelince durup sonra devam etme, kulaklık çıkınca duraklatma.

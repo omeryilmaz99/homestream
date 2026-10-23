@@ -285,11 +285,18 @@ func (c *Covers) sourceFor(s *Snapshot, id string) (coverSrc, bool) {
 	return coverSrc{}, false
 }
 
+// placeholderVersion changes when the generated cover design changes, so
+// apps and the disk cache pick up the new pictures.
+const placeholderVersion = "art3"
+
 // Version is a short token that changes when the cover of id changes.
 func (c *Covers) Version(s *Snapshot, id string) string {
 	src, ok := c.sourceFor(s, id)
 	if !ok {
 		return "0"
+	}
+	if src.kind == srcPlaceholder {
+		return hashID("v", src.key+"|"+placeholderVersion)[:6]
 	}
 	return hashID("v", src.key+"|v2")[:6]
 }
@@ -414,7 +421,7 @@ func (c *Covers) Serve(w http.ResponseWriter, r *http.Request, id string, width 
 			}
 		}
 	}
-	key := hashID("ph", src.key+"|"+strconv.Itoa(width)+"|v2")
+	key := hashID("ph", src.key+"|"+strconv.Itoa(width)+"|"+placeholderVersion)
 	if file != "" {
 		if st, err := os.Stat(file); err == nil {
 			key = hashID("img", fmt.Sprintf("%s|%d|%d|%d", file, st.Size(), st.ModTime().UnixNano(), width))
@@ -534,18 +541,17 @@ func renderCover(src, seed string, width int) ([]byte, error) {
 
 // ---------- placeholder art ----------
 
-type palette struct{ a, b, accent color.RGBA }
-
-// The same palettes are used by the app for covers it cannot load.
-var palettes = []palette{
-	{rgb(0x1D, 0xB9, 0x54), rgb(0x0B, 0x2E, 0x1A), rgb(0xB8, 0xF5, 0xCD)},
-	{rgb(0x7B, 0x2F, 0xF7), rgb(0x1E, 0x0B, 0x45), rgb(0xD9, 0xC4, 0xFF)},
-	{rgb(0xFF, 0x4E, 0x8A), rgb(0x4A, 0x0D, 0x2B), rgb(0xFF, 0xC9, 0xDB)},
-	{rgb(0xFF, 0x8A, 0x3D), rgb(0x4D, 0x21, 0x08), rgb(0xFF, 0xD9, 0xBF)},
-	{rgb(0x18, 0xC6, 0xC1), rgb(0x08, 0x33, 0x3A), rgb(0xB9, 0xF7, 0xF4)},
-	{rgb(0x3D, 0x7B, 0xFF), rgb(0x0C, 0x18, 0x4D), rgb(0xC6, 0xD8, 0xFF)},
-	{rgb(0xF5, 0xC5, 0x18), rgb(0x4A, 0x37, 0x05), rgb(0xFF, 0xF0, 0xB8)},
-	{rgb(0xFF, 0x4D, 0x4D), rgb(0x42, 0x0A, 0x0A), rgb(0xFF, 0xCC, 0xCC)},
+// Sky top, middle and horizon glow. The app uses the same list for covers
+// it cannot load, so both draw the same pictures.
+var palettes = [][3]color.RGBA{
+	{rgb(0x1B, 0x1A, 0x4A), rgb(0x6A, 0x4F, 0xD8), rgb(0xF0, 0x8B, 0xC0)},
+	{rgb(0x0F, 0x1C, 0x4D), rgb(0x3B, 0x5B, 0xDB), rgb(0xB7, 0x8C, 0xF5)},
+	{rgb(0x2A, 0x10, 0x36), rgb(0x9B, 0x3F, 0xA8), rgb(0xFF, 0x9A, 0x7A)},
+	{rgb(0x0E, 0x23, 0x40), rgb(0x2F, 0x7F, 0xA8), rgb(0x9E, 0xE6, 0xE0)},
+	{rgb(0x24, 0x11, 0x4A), rgb(0x8E, 0x44, 0xF0), rgb(0xFF, 0xB8, 0x6B)},
+	{rgb(0x1A, 0x0F, 0x2E), rgb(0xC2, 0x47, 0x7F), rgb(0xFF, 0xC2, 0xD6)},
+	{rgb(0x12, 0x1A, 0x3A), rgb(0x5A, 0x6C, 0xF0), rgb(0xE6, 0xA3, 0xFF)},
+	{rgb(0x30, 0x16, 0x34), rgb(0xE0, 0x56, 0x7A), rgb(0xFF, 0xD0, 0x8A)},
 }
 
 func rgb(r, g, b uint8) color.RGBA { return color.RGBA{r, g, b, 255} }
@@ -566,101 +572,108 @@ func smooth(e0, e1, x float64) float64 {
 
 func mix(a, b, t float64) float64 { return a + (b-a)*t }
 
-// Placeholder draws one of several generated cover designs, picked by seed.
+type fcol [3]float64
+
+func fc(c color.RGBA) fcol { return fcol{float64(c.R), float64(c.G), float64(c.B)} }
+
+func lerpC(a, b fcol, t float64) fcol {
+	return fcol{mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)}
+}
+
+// Placeholder draws an abstract gradient picture (misty mountains or silk
+// waves) picked by seed.
 func Placeholder(seed string, size int) image.Image {
 	h := seedOf(seed)
 	p := palettes[h%uint32(len(palettes))]
-	design := (h / 8) % 4
-	angle := float64((h/32)%360) * math.Pi / 180
+	top, mid, glow := fc(p[0]), fc(p[1]), fc(p[2])
+	black := fcol{0, 0, 0}
+	white := fcol{255, 255, 255}
+	r := func(shift uint, lo, hi float64) float64 {
+		return lo + float64((h>>shift)&0xff)/255*(hi-lo)
+	}
+	mountains := (h>>11)%2 == 0
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
 	s := float64(size)
-	px := 1.5 / s // anti-alias width in unit space
-	ca, sa := math.Cos(angle), math.Sin(angle)
-	fa := [3]float64{float64(p.a.R), float64(p.a.G), float64(p.a.B)}
-	fb := [3]float64{float64(p.b.R), float64(p.b.G), float64(p.b.B)}
-	fc := [3]float64{float64(p.accent.R), float64(p.accent.G), float64(p.accent.B)}
-	// music note (head at hx,hy) in unit space
-	hx, hy := 0.44, 0.62
+	px := 1.2 / s
+	gx := r(3, 0.3, 0.7)
+
+	type ridge struct{ base, amp, f1, f2, ph float64 }
+	var ridges []ridge
+	if mountains {
+		for k := 0; k < 3; k++ {
+			ridges = append(ridges, ridge{
+				base: 0.56 + float64(k)*0.13, amp: 0.13 - float64(k)*0.025,
+				f1: r(uint(5+k*3), 1.2, 2.6), f2: r(uint(9+k*2), 3.0, 5.5), ph: r(uint(13+k), 0, 6.28),
+			})
+		}
+	} else {
+		for k := 0; k < 5; k++ {
+			ridges = append(ridges, ridge{
+				base: 0.22 + float64(k)*0.17, amp: r(uint(7+k), 0.06, 0.14), ph: r(uint(9+k*2), 0, 6.28),
+			})
+		}
+	}
+	tilt := r(5, -0.35, 0.35)
+
 	for y := 0; y < size; y++ {
 		v := (float64(y) + 0.5) / s
+		// sky
+		var sky fcol
+		switch {
+		case v < 0.5:
+			sky = lerpC(top, mid, v/0.5)
+		case v < 0.78:
+			sky = lerpC(mid, glow, (v-0.5)/0.28)
+		default:
+			sky = glow
+		}
 		for x := 0; x < size; x++ {
 			u := (float64(x) + 0.5) / s
-			// diagonal gradient
-			g := 0.5 + ((u-0.5)*ca+(v-0.5)*sa)*0.9
-			g = math.Max(0, math.Min(1, g))
-			var col [3]float64
-			for i := 0; i < 3; i++ {
-				col[i] = mix(fa[i], fb[i], g)
-			}
-			light := 0.0 // 0..1 overlay of accent
-			dark := 0.0
-			switch design {
-			case 0: // vinyl rings around a centre
-				cx, cy := 0.72, 0.30
-				d := math.Hypot(u-cx, v-cy)
-				ring := math.Abs(math.Sin(d * 48))
-				light += 0.10 * (1 - smooth(0.0, 0.6, ring)) * (1 - smooth(0.45, 0.62, d))
-				dark += 0.35 * (1 - smooth(0.13, 0.13+px, d)) * smooth(0.04, 0.04+px, d)
-			case 1: // soft bubbles
-				for k := 0; k < 3; k++ {
-					bx := 0.2 + float64((h>>(k*5))%60)/100
-					by := 0.15 + float64((h>>(k*5+3))%60)/100
-					r := 0.16 + float64(k)*0.07
-					d := math.Hypot(u-bx, v-by)
-					light += 0.13 * (1 - smooth(r-px, r+px, d))
-				}
-			case 2: // waves
-				wv := math.Sin((u*ca+v*sa)*22 + math.Sin(u*6)*1.5)
-				light += 0.09 * smooth(0.6, 0.75, wv)
-			case 3: // equalizer bars along the bottom
-				bars := 9.0
-				bi := math.Floor(u * bars)
-				local := u*bars - bi
-				hgt := 0.12 + 0.38*float64((h>>uint(int(bi)%28))%100)/100
-				in := smooth(0.18, 0.18+px*bars, local) * (1 - smooth(0.82-px*bars, 0.82, local))
-				in *= smooth(1-hgt-px, 1-hgt+px, v) * (1 - smooth(0.93, 0.93+px, v))
-				light += 0.22 * in
-			}
-			// music note (not on the bars design)
-			note := 0.0
-			if design != 3 {
-				ex, ey := (u-hx)/0.085, (v-hy)/0.062
-				// tilted ellipse head
-				rx := ex*math.Cos(0.45) + ey*math.Sin(0.45)
-				ry := -ex*math.Sin(0.45) + ey*math.Cos(0.45)
-				dh := math.Hypot(rx, ry)
-				note = math.Max(note, 1-smooth(1-px*12, 1+px*12, dh))
-				// stem
-				sx0 := hx + 0.072
-				if u > sx0-0.016 && u < sx0+0.004 && v > 0.30 && v < hy {
-					e := math.Min(math.Min(u-(sx0-0.016), sx0+0.004-u), math.Min(v-0.30, hy-v))
-					note = math.Max(note, smooth(0, px, e))
-				}
-				// flag
-				if u > sx0-0.002 && v > 0.30 {
-					fx := (u - sx0) / 0.11
-					fy := (v - 0.30) / 0.16
-					curve := 0.55*fx + 0.25*math.Sin(fx*3.0)
-					if fx < 1 && fy < 1 {
-						e := math.Min(fy-curve*0.6, curve*0.6+0.35-fy) * 0.16
-						e = math.Min(e, (1-fx)*0.11)
-						note = math.Max(note, smooth(0, px, e))
+			c := sky
+			// glow (setting sun)
+			gd := math.Hypot(u-gx, v-0.625) / 0.7
+			c = lerpC(c, glow, 0.75*math.Max(0, 1-gd))
+			for k, rg := range ridges {
+				fk := float64(k)
+				if mountains {
+					edge := rg.base - rg.amp*(0.65*math.Sin(u*rg.f1*math.Pi+rg.ph)+0.35*math.Sin(u*rg.f2*math.Pi+rg.ph*1.7))
+					in := smooth(edge-px, edge+px, v)
+					if in <= 0 {
+						continue
 					}
+					t := (v - (rg.base - rg.amp)) / (1 - rg.base + rg.amp)
+					lt := lerpC(mid, top, 0.25+fk*0.25)
+					lb := lerpC(top, black, 0.35+fk*0.2)
+					layer := lerpC(lerpC(c, lt, 0.92), lb, math.Max(0, math.Min(1, t)))
+					c = lerpC(c, layer, in)
+				} else {
+					edge := rg.base + tilt*(u-0.5) + rg.amp*math.Sin(u*2.2*math.Pi+rg.ph)
+					in := smooth(edge-px, edge+px, v)
+					if in <= 0 {
+						continue
+					}
+					light := k%2 == 0
+					var wc fcol
+					a0 := 0.45
+					if light {
+						wc = lerpC(glow, white, 0.15)
+						a0 = 0.32
+					} else {
+						wc = lerpC(top, black, 0.2)
+					}
+					fade := math.Max(0, 1-(v-(rg.base-rg.amp))/0.35)
+					c = lerpC(c, wc, a0*fade*in)
 				}
-				note *= 0.92
 			}
 			// vignette
-			vd := math.Hypot(u-0.5, v-0.45)
-			vig := 1 - 0.35*vd*vd
-			for i := 0; i < 3; i++ {
-				c := col[i]
-				c = mix(c, fc[i], math.Min(1, light))
-				c *= 1 - dark
-				c *= vig
-				c = mix(c, 250, note)
-				col[i] = math.Max(0, math.Min(255, c))
-			}
-			img.SetRGBA(x, y, color.RGBA{uint8(col[0]), uint8(col[1]), uint8(col[2]), 255})
+			vd := math.Hypot(u-0.5, v-0.5) / 0.95
+			dark := 1 - 0.28*math.Min(1, vd)
+			img.SetRGBA(x, y, color.RGBA{
+				uint8(math.Max(0, math.Min(255, c[0]*dark))),
+				uint8(math.Max(0, math.Min(255, c[1]*dark))),
+				uint8(math.Max(0, math.Min(255, c[2]*dark))),
+				255,
+			})
 		}
 	}
 	return img

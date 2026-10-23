@@ -36,7 +36,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
               ? const SizedBox(width: double.infinity)
               : Padding(
                   key: const ValueKey('mini'),
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                   child: GestureDetector(
                     onTap: () => openNowPlaying(context),
                     onVerticalDragEnd: (d) {
@@ -55,11 +55,14 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       }
                       setState(() => _dx = 0);
                     },
-                    child: NeuBox(
-                      radius: 16,
-                      depth: 0.8,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: C.surfaceHi,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: neuShadows(depth: 0.6),
+                      ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -68,8 +71,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 44,
-                                    height: 44,
+                                    width: 42,
+                                    height: 42,
                                     child: CoverImage(
                                       cover: t.cover,
                                       coverId: t.coverId,
@@ -195,12 +198,12 @@ class _Progress extends StatelessWidget {
         return Container(
           height: 2.5,
           alignment: Alignment.centerLeft,
-          color: C.bgDeep,
+          color: Colors.white.withValues(alpha: 0.08),
           child: FractionallySizedBox(
             widthFactor: v,
             child: Container(
               decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [C.accentLo, C.accentHi]),
+                gradient: LinearGradient(colors: [C.accent, C.accentHi]),
               ),
             ),
           ),

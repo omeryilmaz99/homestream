@@ -15,7 +15,9 @@ sıkıştırılır.
 | İstek | Açıklama |
 |---|---|
 | `GET /api/music/info` | şarkı / albüm / sanatçı sayısı, tarama durumu |
-| `GET /api/music/home` | ana sayfa: `quick` (kısayollar), `rows` (Son Çalınanlar, Senin İçin Karışık, Son Eklenenler, En Çok Dinlenenler, Sanatçılar, Yeniden Keşfet) |
+| `GET /api/music/home` | ana sayfa: `quick` (kısayollar), `rows` (Son Dinlediklerin, Senin İçin Hazırlandı, Son Eklenenler, En Çok Dinlediklerin, Sanatçılar, Yeniden Keşfet) |
+| `GET /api/music/mix?n=50` | "Sana Özel Mix": profilin sevdiği sanatçı ve türlerden, her çağrıda yeni bir şarkı karışımı |
+| `GET /api/music/stats` | profil sayfası: `plays`, `minutes`, `liked`, `playlists`, `topArtists`, `recent` |
 | `GET /api/music/tracks?sort=title\|artist\|album\|added\|plays\|recent&genre=` | şarkılar |
 | `POST /api/music/tracks/batch` `{ids}` | id listesinden şarkılar |
 | `POST /api/music/tracks/{id}/played` `{at}` | dinlendi (30 sn ya da şarkının yarısı) |
@@ -51,7 +53,7 @@ Profil silinince müzik verileri de silinir.
   kodlanmaz) ve önbelleğe alınır.
 - `GET /api/music/covers/{id}?w=320` — kapak. Sıra: klasördeki resim (`cover.jpg`,
   `folder.jpg`…) → dosyaya gömülü kapak → video karesi → internet (Deezer, iTunes; anahtar
-  gerekmez) → otomatik oluşturulan kapak. Yanıt başlığı `X-Cover-Generated: 1` ise kapak
+  gerekmez) → otomatik oluşturulan kapak (mor-pembe tonlarda soyut dağ ya da dalga resmi). Yanıt başlığı `X-Cover-Generated: 1` ise kapak
   oluşturulmuştur. URL'deki `?v=` değeri kapak değişince değişir.
 
 ## Sunucu ayarları

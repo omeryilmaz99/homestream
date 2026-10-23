@@ -11,27 +11,7 @@ import '../../core/downloads.dart';
 import '../../core/image_cache.dart';
 import '../../state/app_state.dart';
 import '../theme.dart';
-
-/// Same palettes as the server's generated covers.
-const coverPalettes = [
-  [Color(0xFF1DB954), Color(0xFF0B2E1A)],
-  [Color(0xFF7B2FF7), Color(0xFF1E0B45)],
-  [Color(0xFFFF4E8A), Color(0xFF4A0D2B)],
-  [Color(0xFFFF8A3D), Color(0xFF4D2108)],
-  [Color(0xFF18C6C1), Color(0xFF08333A)],
-  [Color(0xFF3D7BFF), Color(0xFF0C184D)],
-  [Color(0xFFF5C518), Color(0xFF4A3705)],
-  [Color(0xFFFF4D4D), Color(0xFF420A0A)],
-];
-
-int _seed(String s) {
-  var h = 0x811c9dc5;
-  for (final c in s.codeUnits) {
-    h ^= c;
-    h = (h * 0x01000193) & 0xffffffff;
-  }
-  return h;
-}
+import 'art.dart';
 
 /// Shown while a cover loads, or when it can't be loaded (offline).
 class CoverPlaceholder extends StatelessWidget {
@@ -45,23 +25,19 @@ class CoverPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = coverPalettes[_seed(seed) % coverPalettes.length];
+    final showIcon = icon != Icons.music_note_rounded;
     return LayoutBuilder(
-      builder: (context, c) => DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: p,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            icon,
-            size: math.max(14, c.biggest.shortestSide * 0.38),
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
-        ),
+      builder: (context, c) => GradientArt(
+        seed,
+        child: showIcon
+            ? Center(
+                child: Icon(
+                  icon,
+                  size: math.max(14, c.biggest.shortestSide * 0.38),
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -185,19 +161,12 @@ class LikedCover extends StatelessWidget {
       borderRadius: BorderRadius.circular(radius),
       child: LayoutBuilder(
         builder: (context, c) => DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF4527D9), Color(0xFF8C7CF6), Color(0xFFB9E5CF)],
-              stops: [0, 0.6, 1],
-            ),
-          ),
+          decoration: const BoxDecoration(gradient: accentGradient),
           child: Center(
             child: Icon(
               Icons.favorite_rounded,
               color: Colors.white,
-              size: math.max(14, c.biggest.shortestSide * 0.4),
+              size: (c.biggest.shortestSide * 0.4).clamp(14.0, 96.0),
             ),
           ),
         ),
