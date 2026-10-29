@@ -160,6 +160,18 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     if (Platform.isWindows) await set('sub-font', 'Segoe UI Semibold');
     await set('hr-seek', 'yes');
     await set('hr-seek-framedrop', 'yes');
+    if (AppPlatform.isAndroid) {
+      // media_kit adds MPEG-4 Part 2 (Xvid/DivX, the usual AVI video) to the
+      // Android hardware decoders. AVI gives most of those frames no
+      // timestamp (B-frames) and many have "packed B-frames"; the hardware
+      // decoder then outputs frames stamped 0 and playback stutters/freezes.
+      // mpv's own default keeps MPEG-4 in software, which is cheap for these
+      // SD files, so do the same (other codecs stay hardware decoded).
+      try {
+        await controller.platform.future.timeout(const Duration(seconds: 5));
+      } catch (_) {}
+      await set('hwdec-codecs', 'h264,hevc,mpeg2video,vp8,vp9,av1');
+    }
     // Let mpv choose sensible defaults; we apply language preferences ourselves.
     await set('sid', 'no');
     await player.setVolume(prefs.volume.clamp(0, 150));
@@ -184,6 +196,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
           if (token == _openToken && mounted) related.value = r;
         })
         .catchError((_) {});
+    await _setStreamBuffer(it);
     try {
       await player.open(
         Media(
@@ -204,6 +217,28 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       if (token == _openToken) error.value = 'Video açılamadı: $e';
     }
     _showControls();
+  }
+
+  /// Badly interleaved AVI files keep audio and video far apart in the file,
+  /// so the demuxer jumps between two places for every packet. With mpv's
+  /// default 128 KiB stream buffer each jump is a new HTTP request (measured:
+  /// ~50 requests per second, stalls every few seconds over Wi-Fi). A bigger
+  /// buffer turns those jumps into reads from memory. Only for AVI, so other
+  /// formats keep fast seeking.
+  Future<void> _setStreamBuffer(MediaItem it) async {
+    final p = player.platform;
+    if (p is! NativePlayer) return;
+    final f = it.file;
+    final avi =
+        f != null &&
+        (f.container.toLowerCase() == 'avi' ||
+            f.path.toLowerCase().endsWith('.avi'));
+    try {
+      await p.setProperty(
+        'stream-buffer-size',
+        '${avi ? 8 * 1024 * 1024 : 128 * 1024}',
+      );
+    } catch (_) {}
   }
 
   void _setTitle() {
