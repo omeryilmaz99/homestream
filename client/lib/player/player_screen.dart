@@ -196,7 +196,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
           if (token == _openToken && mounted) related.value = r;
         })
         .catchError((_) {});
-    await _setStreamBuffer(it);
+    await _applyFileOptions(it);
     try {
       await player.open(
         Media(
@@ -219,13 +219,8 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     _showControls();
   }
 
-  /// Badly interleaved AVI files keep audio and video far apart in the file,
-  /// so the demuxer jumps between two places for every packet. With mpv's
-  /// default 128 KiB stream buffer each jump is a new HTTP request (measured:
-  /// ~50 requests per second, stalls every few seconds over Wi-Fi). A bigger
-  /// buffer turns those jumps into reads from memory. Only for AVI, so other
-  /// formats keep fast seeking.
-  Future<void> _setStreamBuffer(MediaItem it) async {
+  /// Per-file mpv options for AVI files.
+  Future<void> _applyFileOptions(MediaItem it) async {
     final p = player.platform;
     if (p is! NativePlayer) return;
     final f = it.file;
@@ -233,12 +228,25 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
         f != null &&
         (f.container.toLowerCase() == 'avi' ||
             f.path.toLowerCase().endsWith('.avi'));
-    try {
-      await p.setProperty(
-        'stream-buffer-size',
-        '${avi ? 8 * 1024 * 1024 : 128 * 1024}',
-      );
-    } catch (_) {}
+    Future<void> set(String k, String v) async {
+      try {
+        await p.setProperty(k, v);
+      } catch (_) {}
+    }
+
+    // Badly interleaved AVI files keep audio and video far apart in the
+    // file, so the demuxer jumps between two places for every packet. With
+    // mpv's default 128 KiB stream buffer each jump is a new HTTP request
+    // (measured: ~50 requests per second and a stall every few seconds over
+    // Wi-Fi). A bigger buffer turns those jumps into reads from memory. Only
+    // for AVI, so other formats keep fast seeking.
+    await set('stream-buffer-size', '${avi ? 8 * 1024 * 1024 : 128 * 1024}');
+    // AVI has no presentation timestamps for B-frames. Android's MediaCodec
+    // decoders need them (FFmpeg stamps such frames 0), so also H.264 in AVI
+    // would stutter there; AVI files are SD, decode them in software.
+    if (AppPlatform.isAndroid && prefs.hardwareDecoding) {
+      await set('hwdec', avi ? 'no' : 'auto-safe');
+    }
   }
 
   void _setTitle() {
