@@ -1,0 +1,167 @@
+10-29 13:01:56.350  1007  3450 D NetworkMonitor/101: PROBE_DNS connectivitycheck.gstatic.com 102ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:01:56.588  1007  3450 D NetworkMonitor/101: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=230ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:01:56 GMT], X-Android-Received-Millis=[1793278916588], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278916586]}
+10-29 13:01:56.661  1007  3449 D NetworkMonitor/101: PROBE_DNS www.google.com 443ms OK 142.251.155.119,142.251.157.119,142.251.153.119,142.251.156.119,142.251.150.119,142.251.152.119,142.251.151.119,142.251.154.119,2001:4860:482d:7700::,2001:4860:4829:7700::,2001:4860:482c:7700::,2001:4860:482b:7700::,2001:4860:4827:7700::,2001:4860:4828:7700::,2001:4860:482a:7700::,2001:4860:4826:7700::
+10-29 13:01:56.755  1007  3449 D NetworkMonitor/101: PROBE_HTTPS https://www.google.com/generate_204 time=85ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:01:56 GMT], X-Android-Received-Millis=[1793278916755], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278916753]}
+10-29 13:02:02.217  1007  3861 D NetworkMonitor/100: PROBE_DNS www.google.com 139ms OK 142.251.154.119,142.251.156.119,142.251.153.119,142.251.157.119,142.251.150.119,142.251.152.119,142.251.155.119,142.251.151.119,2001:4860:482c:7700::,2001:4860:482d:7700::,2001:4860:482b:7700::,2001:4860:4826:7700::,2001:4860:4829:7700::,2001:4860:4827:7700::,2001:4860:482a:7700::,2001:4860:4828:7700::
+10-29 13:02:02.292  1007  3867 D NetworkMonitor/100: PROBE_DNS connectivitycheck.gstatic.com 221ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:02:02.310  1007  3861 D NetworkMonitor/100: PROBE_HTTPS https://www.google.com/generate_204 time=81ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:02 GMT], X-Android-Received-Millis=[1793278922310], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278922291]}
+10-29 13:02:02.438  1007  3867 D NetworkMonitor/100: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=113ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:02 GMT], X-Android-Received-Millis=[1793278922437], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278922413]}
+10-29 13:02:06.228  3296  3296 I flutter : PROBE EARLY xvid-before {hwdec-current: , video-codec: , frame-drop-count: }
+10-29 13:02:08.898  1007  4367 D NetworkMonitor/100: PROBE_DNS www.google.com 82ms OK 142.251.154.119,142.251.156.119,142.251.153.119,142.251.157.119,142.251.150.119,142.251.152.119,142.251.155.119,142.251.151.119,2001:4860:482c:7700::,2001:4860:482d:7700::,2001:4860:482b:7700::,2001:4860:4826:7700::,2001:4860:4829:7700::,2001:4860:4827:7700::,2001:4860:482a:7700::,2001:4860:4828:7700::
+10-29 13:02:08.903  1007  4368 D NetworkMonitor/100: PROBE_DNS connectivitycheck.gstatic.com 89ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:02:08.965  1007  4368 D NetworkMonitor/100: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=61ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:09 GMT], X-Android-Received-Millis=[1793278928965], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278928958]}
+10-29 13:02:09.054  1007  4367 D NetworkMonitor/100: PROBE_HTTPS https://www.google.com/generate_204 time=149ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:09 GMT], X-Android-Received-Millis=[1793278929054], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278929024]}
+10-29 13:02:22.001  1007  4675 D NetworkMonitor/100: PROBE_DNS www.google.com 16ms OK 142.251.154.119,142.251.156.119,142.251.153.119,142.251.157.119,142.251.150.119,142.251.152.119,142.251.155.119,142.251.151.119,2001:4860:482c:7700::,2001:4860:482d:7700::,2001:4860:482b:7700::,2001:4860:4826:7700::,2001:4860:4829:7700::,2001:4860:4827:7700::,2001:4860:482a:7700::,2001:4860:4828:7700::
+10-29 13:02:22.004  1007  4676 D NetworkMonitor/100: PROBE_DNS connectivitycheck.gstatic.com 20ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:02:22.033  1007  4676 D NetworkMonitor/100: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=28ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:22 GMT], X-Android-Received-Millis=[1793278942032], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278942019]}
+10-29 13:02:22.043  1007  4675 D NetworkMonitor/100: PROBE_HTTPS https://www.google.com/generate_204 time=41ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:22 GMT], X-Android-Received-Millis=[1793278942043], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278942039]}
+10-29 13:02:28.236  3296  3296 I flutter : PROBE RESULT xvid-before wall=30s {hwdec-current: , time-pos: 29.000599, frame-drop-count: , decoder-frame-drop-count: , mistimed-frame-count: , vo-delayed-frame-count: , estimated-vf-fps: , container-fps: , hwdec-codecs: h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1, stream-buffer-size: 131072} bufferingEvents=1 missingPTS=0 timestampWarnings=0 logLines=48
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before media_kit/error: error: property not found _setProperty(osc, 1)
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before cplayer/v: Set property: hwdec="auto-safe" -> 1
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before playlist/warn: Reading plaintext playlist.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before lavf/error: Failed to create file cache.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Codec list:
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: mpeg4_mediacodec (mpeg4) - (null)
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Looking at hwdec mpeg4_mediacodec-mediacodec-copy...
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Trying hardware decoding via mpeg4_mediacodec-mediacodec-copy.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Using underlying hw-decoder 'mpeg4_mediacodec'
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Pixel formats supported by decoder: mediacodec
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Codec profile: unknown (0xf)
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ffmpeg/video/error: mpeg4_mediacodec: Both surface and native_window are NULL
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ffmpeg/video/v: mpeg4_mediacodec: Using surface 0x0
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ffmpeg/video/warn: mpeg4_mediacodec: Unsupported or unknown profile
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ffmpeg/video/error: mpeg4_mediacodec: MediaCodec 0x0 failed to start
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/error: Could not open codec.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Attempting next decoding method after failure of mpeg4_mediacodec-mediacodec-copy.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Using software decoding.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Selected codec: mpeg4
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ad/v: Codec list:
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ad/v: Selected codec: mp3float
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ao/opensles/v: using soft-buffer of 12000 samples.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before ffmpeg/video/v: mpeg4: Video uses a non-standard and wasteful way to store B-frames ('packed B-frames'). Consider using the mpeg4_unpack_bframes bitstream filter without encoding but stream copy to fix it.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vd/v: Using container aspect ratio.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/null/v: reconfig to 720x400 yuv420p bt.601/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=720x400+0+0
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/v: Initializing GPU context 'android'
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/v: EGL_VENDOR=Android
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/opengl/error: Could not create a GL context.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before vo/gpu/error: Failed initializing any suitable GPU context!
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before cplayer/fatal: Error opening/initializing the selected video_out (--vo) device.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before cplayer/fatal: Error opening/initializing the VO window.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before lavf/v: ...using this range for in-cache seek.
+10-29 13:02:28.236  3296  3296 I flutter : PROBE LOG xvid-before cplayer/v: hr-seek, skipping to 0.000000 (no framedrop)
+10-29 13:02:38.556  3296  3296 I flutter : PROBE EARLY xvid-after {hwdec-current: , video-codec: , frame-drop-count: }
+10-29 13:02:52.303  1007  5602 D NetworkMonitor/100: PROBE_DNS connectivitycheck.gstatic.com 10ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:02:52.312  1007  5601 D NetworkMonitor/100: PROBE_DNS www.google.com 18ms OK 142.251.154.119,142.251.156.119,142.251.153.119,142.251.157.119,142.251.150.119,142.251.152.119,142.251.155.119,142.251.151.119,2001:4860:482c:7700::,2001:4860:482d:7700::,2001:4860:482b:7700::,2001:4860:4826:7700::,2001:4860:4829:7700::,2001:4860:4827:7700::,2001:4860:482a:7700::,2001:4860:4828:7700::
+10-29 13:02:52.315  1007  5602 D NetworkMonitor/100: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=11ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:52 GMT], X-Android-Received-Millis=[1793278972315], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278972310]}
+10-29 13:02:52.398  1007  5601 D NetworkMonitor/100: PROBE_HTTPS https://www.google.com/generate_204 time=86ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:02:52 GMT], X-Android-Received-Millis=[1793278972398], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793278972394]}
+10-29 13:03:00.557  3296  3296 I flutter : PROBE RESULT xvid-after wall=30s {hwdec-current: , time-pos: 29.500599, frame-drop-count: , decoder-frame-drop-count: , mistimed-frame-count: , vo-delayed-frame-count: , estimated-vf-fps: , container-fps: , hwdec-codecs: h264,hevc,mpeg2video,vp8,vp9,av1, stream-buffer-size: 8388608} bufferingEvents=1 missingPTS=0 timestampWarnings=0 logLines=37
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after media_kit/error: error: property not found _setProperty(osc, 1)
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after cplayer/v: Set property: hwdec="auto-safe" -> 1
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after playlist/warn: Reading plaintext playlist.
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after lavf/error: Failed to create file cache.
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: Codec list:
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: mpeg4_mediacodec (mpeg4) - (null)
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: Not trying to use hardware decoding: codec mpeg4 is not on whitelist.
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: Using software decoding.
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: Selected codec: mpeg4
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after ad/v: Codec list:
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after ad/v: Selected codec: mp3float
+10-29 13:03:00.557  3296  3296 I flutter : PROBE LOG xvid-after vd/v: Using container aspect ratio.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after ao/opensles/v: using soft-buffer of 12000 samples.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/null/v: reconfig to 720x400 yuv420p bt.601/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=720x400+0+0
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/v: Initializing GPU context 'android'
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/v: EGL_VENDOR=Android
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/opengl/error: Could not create a GL context.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after vo/gpu/error: Failed initializing any suitable GPU context!
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after cplayer/fatal: Error opening/initializing the selected video_out (--vo) device.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after cplayer/fatal: Error opening/initializing the VO window.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after lavf/v: ...using this range for in-cache seek.
+10-29 13:03:00.558  3296  3296 I flutter : PROBE LOG xvid-after cplayer/v: hr-seek, skipping to 0.000000 (no framedrop)
+10-29 13:03:10.600  3296  3296 I flutter : PROBE EARLY badint-before {hwdec-current: , video-codec: , frame-drop-count: }
+10-29 13:03:32.602  3296  3296 I flutter : PROBE RESULT badint-before wall=30s {hwdec-current: , time-pos: 9.648000, frame-drop-count: , decoder-frame-drop-count: , mistimed-frame-count: , vo-delayed-frame-count: , estimated-vf-fps: , container-fps: , hwdec-codecs: h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1, stream-buffer-size: 131072} bufferingEvents=7 missingPTS=0 timestampWarnings=0 logLines=53
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before media_kit/error: error: property not found _setProperty(osc, 1)
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/v: Set property: hwdec="auto-safe" -> 1
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before playlist/warn: Reading plaintext playlist.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before lavf/error: Failed to create file cache.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Codec list:
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: mpeg4_mediacodec (mpeg4) - (null)
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Looking at hwdec mpeg4_mediacodec-mediacodec-copy...
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Trying hardware decoding via mpeg4_mediacodec-mediacodec-copy.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Using underlying hw-decoder 'mpeg4_mediacodec'
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Pixel formats supported by decoder: mediacodec
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Codec profile: unknown (0xf)
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ffmpeg/video/error: mpeg4_mediacodec: Both surface and native_window are NULL
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ffmpeg/video/v: mpeg4_mediacodec: Using surface 0x0
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ffmpeg/video/warn: mpeg4_mediacodec: Unsupported or unknown profile
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ffmpeg/video/error: mpeg4_mediacodec: MediaCodec 0x0 failed to start
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/error: Could not open codec.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Attempting next decoding method after failure of mpeg4_mediacodec-mediacodec-copy.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Using software decoding.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Selected codec: mpeg4
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ad/v: Codec list:
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ad/v: Selected codec: mp3float
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ao/opensles/v: using soft-buffer of 12000 samples.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before ffmpeg/video/v: mpeg4: Video uses a non-standard and wasteful way to store B-frames ('packed B-frames'). Consider using the mpeg4_unpack_bframes bitstream filter without encoding but stream copy to fix it.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vd/v: Using container aspect ratio.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/v: Initializing GPU context 'android'
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/v: EGL_VENDOR=Android
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/opengl/error: Could not create a GL context.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before vo/gpu/error: Failed initializing any suitable GPU context!
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/fatal: Error opening/initializing the selected video_out (--vo) device.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/fatal: Error opening/initializing the VO window.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before lavf/v: ...using this range for in-cache seek.
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/v: hr-seek, skipping to 0.000000 (no framedrop)
+10-29 13:03:32.602  3296  3296 I flutter : PROBE LOG badint-before cplayer/warn: Audio device underrun detected.
+10-29 13:03:42.667  3296  3296 I flutter : PROBE EARLY badint-after {hwdec-current: , video-codec: , frame-drop-count: }
+10-29 13:03:54.609  1007  5941 D NetworkMonitor/100: PROBE_DNS www.google.com 12ms OK 142.251.154.119,142.251.156.119,142.251.153.119,142.251.157.119,142.251.150.119,142.251.152.119,142.251.155.119,142.251.151.119,2001:4860:4827:7700::,2001:4860:482c:7700::,2001:4860:482b:7700::,2001:4860:482d:7700::,2001:4860:4826:7700::,2001:4860:4828:7700::,2001:4860:4829:7700::,2001:4860:482a:7700::
+10-29 13:03:54.613  1007  5942 D NetworkMonitor/100: PROBE_DNS connectivitycheck.gstatic.com 16ms OK 142.251.150.120,2001:4860:4826:7800::
+10-29 13:03:54.644  1007  5942 D NetworkMonitor/100: PROBE_HTTP http://connectivitycheck.gstatic.com/generate_204 time=31ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:03:54 GMT], X-Android-Received-Millis=[1793279034644], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793279034618]}
+10-29 13:03:54.649  1007  5941 D NetworkMonitor/100: PROBE_HTTPS https://www.google.com/generate_204 time=39ms ret=204 request={Connection=[close], User-Agent=[Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.32 Safari/537.36]} headers={null=[HTTP/1.1 204 No Content], Alt-Svc=[h3=":443"; ma=2592000,h3-29=":443"; ma=2592000], Connection=[close], Content-Length=[0], Cross-Origin-Resource-Policy=[cross-origin], Date=[Thu, 29 Oct 2026 13:03:54 GMT], X-Android-Received-Millis=[1793279034649], X-Android-Response-Source=[NETWORK 204], X-Android-Selected-Protocol=[http/1.1], X-Android-Sent-Millis=[1793279034646]}
+10-29 13:04:04.668  3296  3296 I flutter : PROBE RESULT badint-after wall=30s {hwdec-current: , time-pos: 28.500598, frame-drop-count: , decoder-frame-drop-count: , mistimed-frame-count: , vo-delayed-frame-count: , estimated-vf-fps: , container-fps: , hwdec-codecs: h264,hevc,mpeg2video,vp8,vp9,av1, stream-buffer-size: 8388608} bufferingEvents=1 missingPTS=0 timestampWarnings=0 logLines=37
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after media_kit/error: error: property not found _setProperty(osc, 1)
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/v: Set property: hwdec="auto-safe" -> 1
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg2video,vp8,vp9,av1" -> 1
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after playlist/warn: Reading plaintext playlist.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after lavf/error: Failed to create file cache.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: Codec list:
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: mpeg4_mediacodec (mpeg4) - (null)
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: Not trying to use hardware decoding: codec mpeg4 is not on whitelist.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: Using software decoding.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: Selected codec: mpeg4
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after ad/v: Codec list:
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after ad/v: Selected codec: mp3float
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after ao/opensles/v: using soft-buffer of 12000 samples.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vd/v: Using container aspect ratio.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/null/v: reconfig to 720x400 yuv420p bt.601/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=720x400+0+0
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/v: Initializing GPU context 'android'
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/v: EGL_VENDOR=Android
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/opengl/error: Could not create a GL context.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after vo/gpu/error: Failed initializing any suitable GPU context!
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/fatal: Error opening/initializing the selected video_out (--vo) device.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/fatal: Error opening/initializing the VO window.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after lavf/v: ...using this range for in-cache seek.
+10-29 13:04:04.668  3296  3296 I flutter : PROBE LOG badint-after cplayer/v: hr-seek, skipping to 0.000000 (no framedrop)
+10-29 13:04:06.676  3296  3296 I flutter : PROBE DONE
