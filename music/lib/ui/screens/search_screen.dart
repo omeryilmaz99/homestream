@@ -110,17 +110,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(20, top + 14, 20, 6),
-            child: const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Keşfet', style: T.h1),
-            ),
-          ),
+          const PageTitle('Keşfet'),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
             child: NeuBox(

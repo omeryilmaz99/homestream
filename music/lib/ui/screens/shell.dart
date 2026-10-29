@@ -11,9 +11,9 @@ import '../nav.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/mini_player.dart';
+import 'folders_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
-import 'profile_screen.dart';
 import 'search_screen.dart';
 
 class _TabInfo {
@@ -39,10 +39,10 @@ const _tabs = [
     LibraryScreen(),
   ),
   _TabInfo(
-    Icons.person_outline_rounded,
-    Icons.person_rounded,
-    'Profil',
-    ProfileScreen(),
+    Icons.folder_outlined,
+    Icons.folder_rounded,
+    'Klasörler',
+    FoldersScreen(),
   ),
 ];
 

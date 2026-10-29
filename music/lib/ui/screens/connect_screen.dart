@@ -190,29 +190,22 @@ class _Logo extends StatelessWidget {
   const _Logo();
   @override
   Widget build(BuildContext context) {
-    return NeuBox(
-      circle: true,
-      width: 120,
-      height: 120,
-      depth: 1.4,
-      child: Center(
-        child: Container(
-          width: 76,
-          height: 76,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [C.accentHi, C.accentLo],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+    return Container(
+      width: 112,
+      height: 112,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: C.accent.withValues(alpha: 0.28),
+            blurRadius: 36,
+            offset: const Offset(0, 10),
           ),
-          child: const Icon(
-            Icons.music_note_rounded,
-            size: 42,
-            color: Colors.black,
-          ),
-        ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/icon.png',
+        filterQuality: FilterQuality.medium,
       ),
     );
   }

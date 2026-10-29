@@ -16,12 +16,11 @@ import '../widgets/rows.dart';
 import 'album_screen.dart';
 import 'artist_screen.dart';
 import 'downloads_screen.dart';
-import 'folders_screen.dart';
 import 'liked_screen.dart';
 import 'playlist_screen.dart';
 import 'tracks_screen.dart';
 
-/// "Kitaplık": playlists, artists, albums, downloads and folders.
+/// "Kitaplık": playlists, artists, albums and downloads.
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
   @override
@@ -35,7 +34,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     'Sanatçılar',
     'Albümler',
     'İndirilenler',
-    'Klasörler',
   ];
 
   @override
@@ -49,8 +47,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
         body = const _Albums();
       case 3:
         body = const _DownloadsList();
-      case 4:
-        body = const FoldersScreen(embedded: true);
       default:
         body = const _Playlists();
     }
