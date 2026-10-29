@@ -7,6 +7,7 @@ import '../../core/api.dart';
 import '../../state/app_state.dart';
 import '../neu.dart';
 import '../theme.dart';
+import 'profile_button.dart';
 
 void showToast(BuildContext context, String message) {
   final m = ScaffoldMessenger.maybeOf(context);
@@ -459,7 +460,13 @@ class OfflineBanner extends StatelessWidget {
 class PageTitle extends StatelessWidget {
   final String title;
   final List<Widget> actions;
-  const PageTitle(this.title, {super.key, this.actions = const []});
+  final bool profile; // profile picture at the right end
+  const PageTitle(
+    this.title, {
+    super.key,
+    this.actions = const [],
+    this.profile = true,
+  });
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -473,6 +480,7 @@ class PageTitle extends StatelessWidget {
         children: [
           Expanded(child: Text(title, style: T.h1)),
           ...actions,
+          if (profile) ...[const SizedBox(width: 2), const ProfileButton()],
         ],
       ),
     );

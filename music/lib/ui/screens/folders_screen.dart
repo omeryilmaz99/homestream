@@ -16,23 +16,16 @@ import 'downloads_screen.dart';
 
 /// "Klasörler" tab: the music folders as they are on the disk.
 class FoldersScreen extends StatelessWidget {
-  final bool embedded; // inside the library tab: no page title
-  const FoldersScreen({super.key, this.embedded = false});
+  const FoldersScreen({super.key});
   @override
   Widget build(BuildContext context) =>
-      FolderScreen(path: '', title: 'Klasörler', embedded: embedded);
+      const FolderScreen(path: '', title: 'Klasörler');
 }
 
 class FolderScreen extends StatefulWidget {
   final String path;
   final String title;
-  final bool embedded;
-  const FolderScreen({
-    super.key,
-    required this.path,
-    required this.title,
-    this.embedded = false,
-  });
+  const FolderScreen({super.key, required this.path, required this.title});
 
   @override
   State<FolderScreen> createState() => _FolderScreenState();
@@ -101,10 +94,10 @@ class _FolderScreenState extends State<FolderScreen> {
           }
           return r;
         },
-        offline: _OfflineFolders(embedded: widget.embedded),
+        offline: const _OfflineFolders(),
         builder: (context, b, reload) {
           final title = b.name.isNotEmpty ? b.name : widget.title;
-          final header = root && !widget.embedded
+          final header = root
               ? PageTitle(
                   'Klasörler',
                   actions: [
@@ -278,15 +271,14 @@ class _FolderDownloadIcon extends StatelessWidget {
 
 /// Offline: downloaded folders and the rest of the downloads.
 class _OfflineFolders extends StatelessWidget {
-  final bool embedded;
-  const _OfflineFolders({this.embedded = false});
+  const _OfflineFolders();
   @override
   Widget build(BuildContext context) {
     final dl = context.watch<Downloads>();
     final folders = dl.collections.where((c) => c.type == 'folder').toList();
     return CustomScrollView(
       slivers: [
-        if (!embedded) const SliverToBoxAdapter(child: PageTitle('Klasörler')),
+        const SliverToBoxAdapter(child: PageTitle('Klasörler')),
         if (folders.isEmpty)
           SliverToBoxAdapter(
             child: EmptyState(

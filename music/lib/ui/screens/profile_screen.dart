@@ -15,7 +15,7 @@ import 'home_screen.dart' show ProfileAvatar;
 import 'liked_screen.dart';
 import 'settings_screen.dart';
 
-/// "Profil" tab: who is listening, listening numbers, favourite artists and
+/// Profile page (from the picture at the top right): who is listening, listening numbers, favourite artists and
 /// the last songs played.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -122,6 +122,19 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (Navigator.of(context).canPop()) ...[
+                Transform.translate(
+                  offset: const Offset(-10, 0),
+                  child: NeuIconButton(
+                    Icons.arrow_back_ios_new_rounded,
+                    plain: true,
+                    size: 40,
+                    iconSize: 19,
+                    tooltip: 'Geri',
+                    onTap: () => Navigator.maybePop(context),
+                  ),
+                ),
+              ],
               const Expanded(child: Text('Profil', style: T.h1)),
               NeuIconButton(
                 Icons.settings_outlined,

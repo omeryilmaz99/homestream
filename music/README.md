@@ -5,11 +5,11 @@ Evdeki Home Stream sunucusundaki müzikler için Spotify tarzı Android uygulama
 
 ## Özellikler
 
-- **Ana Sayfa, Keşfet, Kitaplık, Profil** sekmeleri; albüm, sanatçı, tür ve çalma listesi
+- **Ana Sayfa, Keşfet, Kitaplık, Klasörler** sekmeleri; albüm, sanatçı, tür ve çalma listesi
   sayfaları. Ana sayfada her seferinde yeni bir "Sana Özel Mix". Kitaplık: çalma listeleri
-  (Beğenilen Şarkılar dahil), sanatçılar, albümler, indirilenler ve sunucudaki klasör yapısını
-  olduğu gibi açan Klasörler. Profil: dinleme sayıları, en çok dinlenen sanatçılar, son
-  dinlenenler.
+  (Beğenilen Şarkılar dahil), sanatçılar, albümler ve indirilenler. Klasörler sunucudaki klasör
+  yapısını olduğu gibi açar. Sağ üstteki profil resmi Profil sayfasını açar: dinleme sayıları,
+  en çok dinlenen sanatçılar, son dinlenenler.
 - **Profiller şifresiz**; "Beni hatırla" açıksa uygulama her açılışta profil sormaz.
 - **Arka planda çalma**: bildirim ve kilit ekranı kontrolleri, kulaklık tuşları, telefon
   gelince durup sonra devam etme, kulaklık çıkınca duraklatma.

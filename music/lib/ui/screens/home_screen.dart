@@ -11,6 +11,7 @@ import '../theme.dart';
 import '../widgets/art.dart';
 import '../widgets/collection.dart';
 import '../widgets/common.dart';
+import '../widgets/profile_button.dart';
 import '../widgets/rows.dart';
 import '../widgets/track_tile.dart';
 import 'downloads_screen.dart';
@@ -96,12 +97,9 @@ class HomeScreen extends StatelessWidget {
                 tooltip: 'Ayarlar',
                 onTap: () => ShellNav.push(const SettingsScreen()),
               ),
+              const SizedBox(width: 2),
+              const ProfileButton(),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: () => ShellNav.select(3),
-                child: ProfileAvatar(profile: app.profile, size: 30),
-              ),
-              const SizedBox(width: 6),
             ],
           ),
           const SizedBox(height: 16),
