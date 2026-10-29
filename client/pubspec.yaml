@@ -1,7 +1,7 @@
 name: home_stream
 description: "Home Stream - ev sunucusu için film ve dizi oynatıcı"
 publish_to: 'none'
-version: 1.4.0+9
+version: 1.4.1+10
 
 environment:
   sdk: ^3.8.0

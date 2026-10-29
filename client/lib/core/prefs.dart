@@ -52,6 +52,12 @@ class Prefs {
   set activeServerId(String? v) =>
       v == null ? _p.remove('activeServer') : _p.setString('activeServer', v);
 
+  /// Profile order chosen on this device (ids), per server.
+  List<String> profileOrder(String serverId) =>
+      _p.getStringList('profileOrder.$serverId') ?? const [];
+  void setProfileOrder(String serverId, List<String> ids) =>
+      _p.setStringList('profileOrder.$serverId', ids);
+
   String? lastProfile(String serverId) => _p.getString('lastProfile.$serverId');
   void setLastProfile(String serverId, String? profileId) => profileId == null
       ? _p.remove('lastProfile.$serverId')

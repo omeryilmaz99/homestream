@@ -698,7 +698,7 @@ class _ProfileEditDialogState extends State<ProfileEditDialog> {
   }
 }
 
-/// Changes the order of the profiles (shared by all devices).
+/// Changes the order of the profiles on this device.
 class ProfileOrderDialog extends StatefulWidget {
   const ProfileOrderDialog({super.key});
   @override
@@ -707,9 +707,6 @@ class ProfileOrderDialog extends StatefulWidget {
 
 class _ProfileOrderDialogState extends State<ProfileOrderDialog> {
   late final List<Profile> _list = [...context.read<AppState>().profiles];
-  bool _busy = false;
-  String? _error;
-
   void _move(int i, int d) {
     final j = i + d;
     if (j < 0 || j >= _list.length) return;
@@ -719,21 +716,10 @@ class _ProfileOrderDialogState extends State<ProfileOrderDialog> {
     });
   }
 
-  Future<void> _save() async {
-    setState(() => _busy = true);
-    final state = context.read<AppState>();
-    try {
-      await state.api!.reorderProfiles([for (final p in _list) p.id]);
-      await state.refreshProfiles();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _error = e.toString();
-        });
-      }
-    }
+  void _save() {
+    // the order is kept on this device only
+    context.read<AppState>().setProfileOrder(_list);
+    Navigator.pop(context);
   }
 
   @override
@@ -749,8 +735,8 @@ class _ProfileOrderDialogState extends State<ProfileOrderDialog> {
           children: [
             Text(
               touch
-                  ? 'Okları kullan ya da satırı basılı tutup sürükle.'
-                  : 'Okları kullanarak profilleri yukarı veya aşağı taşı.',
+                  ? 'Okları kullan ya da satırı basılı tutup sürükle. Sıra yalnızca bu cihazda geçerli.'
+                  : 'Okları kullanarak profilleri yukarı veya aşağı taşı. Sıra yalnızca bu cihazda geçerli.',
               style: const TextStyle(color: AppColors.textMuted),
             ),
             const SizedBox(height: 12),
@@ -823,10 +809,6 @@ class _ProfileOrderDialogState extends State<ProfileOrderDialog> {
                 },
               ),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: AppColors.danger)),
-            ],
           ],
         ),
       ),
@@ -835,10 +817,7 @@ class _ProfileOrderDialogState extends State<ProfileOrderDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Vazgeç'),
         ),
-        FilledButton(
-          onPressed: _busy ? null : _save,
-          child: Text(_busy ? 'Kaydediliyor…' : 'Kaydet'),
-        ),
+        FilledButton(onPressed: _save, child: const Text('Kaydet')),
       ],
     );
   }

@@ -148,8 +148,6 @@ class ApiClient {
         as Map<String, dynamic>,
   );
   Future<void> deleteProfile(String id) => _send('DELETE', '/api/profiles/$id');
-  Future<void> reorderProfiles(List<String> ids) =>
-      _send('PUT', '/api/profiles/order', body: {'ids': ids});
   Future<void> deleteProfilePhoto(String id) =>
       _send('DELETE', '/api/profiles/$id/photo');
 

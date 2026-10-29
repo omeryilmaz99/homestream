@@ -66,7 +66,7 @@ class AppState extends ChangeNotifier {
     final client = ApiClient(s.url);
     try {
       serverInfo = await client.info(timeout: const Duration(seconds: 6));
-      profiles = await client.profiles();
+      profiles = _ordered(await client.profiles());
       api = client;
       prefs.activeServerId = s.id;
       if (serverInfo!.name.isNotEmpty && s.name.isEmpty) {
@@ -112,10 +112,38 @@ class AppState extends ChangeNotifier {
     refreshProfiles();
   }
 
+  /// Applies this device's profile order; profiles it doesn't know yet
+  /// (new ones) keep the server order after the ordered ones.
+  List<Profile> _ordered(List<Profile> list) {
+    final order = server == null
+        ? const <String>[]
+        : prefs.profileOrder(server!.id);
+    if (order.isEmpty) return list;
+    final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
+    final out = [...list];
+    final pos = {for (var i = 0; i < list.length; i++) list[i].id: i};
+    out.sort((a, b) {
+      final ra = rank[a.id], rb = rank[b.id];
+      if (ra != null && rb != null) return ra.compareTo(rb);
+      if (ra != null) return -1;
+      if (rb != null) return 1;
+      return pos[a.id]!.compareTo(pos[b.id]!);
+    });
+    return out;
+  }
+
+  /// Saves the profile order for this device only.
+  void setProfileOrder(List<Profile> ordered) {
+    if (server == null) return;
+    prefs.setProfileOrder(server!.id, [for (final p in ordered) p.id]);
+    profiles = _ordered(profiles);
+    notifyListeners();
+  }
+
   Future<void> refreshProfiles() async {
     if (api == null) return;
     try {
-      profiles = await api!.profiles();
+      profiles = _ordered(await api!.profiles());
       // keep the signed-in profile's name/photo up to date
       final cur = profile;
       if (cur != null) {
