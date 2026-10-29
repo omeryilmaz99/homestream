@@ -87,6 +87,18 @@ class _HeroBannerState extends State<HeroBanner>
       onFocusChange: (f) {
         _focused = f;
         _restartTimer();
+        // coming back up with a remote: show the whole banner again, not
+        // just its buttons peeking out under the top bar
+        if (f) {
+          final pos = Scrollable.maybeOf(context)?.position;
+          if (pos != null && pos.pixels > 0) {
+            pos.animateTo(
+              0,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        }
       },
       child: SizedBox(
         height: height,

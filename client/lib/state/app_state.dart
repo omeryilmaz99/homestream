@@ -116,6 +116,11 @@ class AppState extends ChangeNotifier {
     if (api == null) return;
     try {
       profiles = await api!.profiles();
+      // keep the signed-in profile's name/photo up to date
+      final cur = profile;
+      if (cur != null) {
+        profile = profiles.where((p) => p.id == cur.id).firstOrNull ?? cur;
+      }
       notifyListeners();
     } catch (_) {}
   }

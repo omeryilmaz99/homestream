@@ -13,6 +13,7 @@ import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
 import '../theme.dart';
+import '../tv_focus.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
@@ -371,13 +372,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: '%${prefs.subtitleScale}',
           trailing: SizedBox(
             width: 240,
-            child: Slider(
-              value: prefs.subtitleScale.toDouble().clamp(50, 200),
-              min: 50,
-              max: 200,
-              divisions: 15,
-              label: '%${prefs.subtitleScale}',
-              onChanged: (v) => setState(() => prefs.subtitleScale = v.round()),
+            child: RemoteSlider(
+              child: Slider(
+                value: prefs.subtitleScale.toDouble().clamp(50, 200),
+                min: 50,
+                max: 200,
+                divisions: 15,
+                label: '%${prefs.subtitleScale}',
+                onChanged: (v) =>
+                    setState(() => prefs.subtitleScale = v.round()),
+              ),
             ),
           ),
         ),

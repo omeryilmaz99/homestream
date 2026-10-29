@@ -72,6 +72,8 @@ func Open(path string) (*Store, error) {
 	// migrations (ignore "duplicate column" on databases that already have them)
 	for _, m := range []string{
 		`ALTER TABLE folders ADD COLUMN kind TEXT NOT NULL DEFAULT 'auto'`,
+		`ALTER TABLE profiles ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`,
+		`ALTER TABLE profiles ADD COLUMN photo TEXT NOT NULL DEFAULT ''`,
 	} {
 		if _, err := db.Exec(m); err != nil && !strings.Contains(err.Error(), "duplicate column") {
 			db.Close()
@@ -235,18 +237,30 @@ type Profile struct {
 	Color     string `json:"color"`
 	Avatar    string `json:"avatar"`
 	CreatedAt int64  `json:"createdAt"`
+	// Photo is a version token of the uploaded profile photo ("" = none);
+	// the API turns it into a URL.
+	Photo string `json:"photo"`
 }
 
+const profileCols = `id,name,color,avatar,created_at,photo`
+
+func scanProfile(sc interface{ Scan(...any) error }) (Profile, error) {
+	var p Profile
+	err := sc.Scan(&p.ID, &p.Name, &p.Color, &p.Avatar, &p.CreatedAt, &p.Photo)
+	return p, err
+}
+
+// Profiles returns the profiles in the order chosen by the user.
 func (s *Store) Profiles() ([]Profile, error) {
-	rows, err := s.DB.Query(`SELECT id,name,color,avatar,created_at FROM profiles ORDER BY created_at, id`)
+	rows, err := s.DB.Query(`SELECT ` + profileCols + ` FROM profiles ORDER BY sort_order, created_at, id`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	out := []Profile{}
 	for rows.Next() {
-		var p Profile
-		if err := rows.Scan(&p.ID, &p.Name, &p.Color, &p.Avatar, &p.CreatedAt); err != nil {
+		p, err := scanProfile(rows)
+		if err != nil {
 			return nil, err
 		}
 		out = append(out, p)
@@ -255,21 +269,64 @@ func (s *Store) Profiles() ([]Profile, error) {
 }
 
 func (s *Store) Profile(id string) (Profile, bool) {
-	var p Profile
-	err := s.DB.QueryRow(`SELECT id,name,color,avatar,created_at FROM profiles WHERE id=?`, id).
-		Scan(&p.ID, &p.Name, &p.Color, &p.Avatar, &p.CreatedAt)
+	p, err := scanProfile(s.DB.QueryRow(`SELECT `+profileCols+` FROM profiles WHERE id=?`, id))
 	return p, err == nil
 }
 
 func (s *Store) CreateProfile(name, color, avatar string) (Profile, error) {
 	p := Profile{ID: "p_" + RandomHex(4), Name: name, Color: color, Avatar: avatar, CreatedAt: time.Now().Unix()}
-	_, err := s.DB.Exec(`INSERT INTO profiles(id,name,color,avatar,created_at) VALUES(?,?,?,?,?)`, p.ID, p.Name, p.Color, p.Avatar, p.CreatedAt)
+	_, err := s.DB.Exec(`INSERT INTO profiles(id,name,color,avatar,created_at,sort_order)
+		VALUES(?,?,?,?,?,(SELECT COALESCE(MAX(sort_order),0)+1 FROM profiles))`,
+		p.ID, p.Name, p.Color, p.Avatar, p.CreatedAt)
 	return p, err
 }
 
 func (s *Store) UpdateProfile(p Profile) error {
 	_, err := s.DB.Exec(`UPDATE profiles SET name=?,color=?,avatar=? WHERE id=?`, p.Name, p.Color, p.Avatar, p.ID)
 	return err
+}
+
+// SetProfilePhoto stores the photo version token ("" removes it).
+func (s *Store) SetProfilePhoto(id, token string) error {
+	_, err := s.DB.Exec(`UPDATE profiles SET photo=? WHERE id=?`, token, id)
+	return err
+}
+
+// ReorderProfiles saves the given order; profiles missing from ids keep
+// their relative order after the listed ones.
+func (s *Store) ReorderProfiles(ids []string) error {
+	cur, err := s.Profiles()
+	if err != nil {
+		return err
+	}
+	order := make([]string, 0, len(cur))
+	seen := map[string]bool{}
+	known := map[string]bool{}
+	for _, p := range cur {
+		known[p.ID] = true
+	}
+	for _, id := range ids {
+		if known[id] && !seen[id] {
+			seen[id] = true
+			order = append(order, id)
+		}
+	}
+	for _, p := range cur {
+		if !seen[p.ID] {
+			order = append(order, p.ID)
+		}
+	}
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for i, id := range order {
+		if _, err := tx.Exec(`UPDATE profiles SET sort_order=? WHERE id=?`, i+1, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 func (s *Store) DeleteProfile(id string) error {

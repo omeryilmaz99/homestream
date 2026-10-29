@@ -87,3 +87,17 @@ class _FocusableState extends State<Focusable> {
     );
   }
 }
+
+/// Sliders take up/down on a keyboard too, which traps a remote control on
+/// them. In directional mode they only use left/right, so up/down move on.
+class RemoteSlider extends StatelessWidget {
+  final Widget child;
+  const RemoteSlider({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) => MediaQuery(
+    data: MediaQuery.of(
+      context,
+    ).copyWith(navigationMode: NavigationMode.directional),
+    child: child,
+  );
+}

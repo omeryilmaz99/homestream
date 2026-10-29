@@ -717,16 +717,18 @@ class _TrackMenuState extends State<TrackMenu> {
                   ),
                 ),
                 Expanded(
-                  child: Slider(
-                    value: s.prefs.subtitleScale.toDouble().clamp(50, 200),
-                    min: 50,
-                    max: 200,
-                    divisions: 15,
-                    label: '${s.prefs.subtitleScale}%',
-                    onChanged: (v) {
-                      s.setSubScale(v.round());
-                      setState(() {});
-                    },
+                  child: RemoteSlider(
+                    child: Slider(
+                      value: s.prefs.subtitleScale.toDouble().clamp(50, 200),
+                      min: 50,
+                      max: 200,
+                      divisions: 15,
+                      label: '${s.prefs.subtitleScale}%',
+                      onChanged: (v) {
+                        s.setSubScale(v.round());
+                        setState(() {});
+                      },
+                    ),
                   ),
                 ),
               ],

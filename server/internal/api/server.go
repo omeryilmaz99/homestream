@@ -50,7 +50,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/info", s.handleInfo)
 	mux.HandleFunc("GET /api/profiles", s.handleProfiles)
 	mux.HandleFunc("POST /api/profiles", s.handleCreateProfile)
+	mux.HandleFunc("PUT /api/profiles/order", s.handleReorderProfiles)
 	mux.HandleFunc("PUT /api/profiles/{id}", s.handleUpdateProfile)
+	mux.HandleFunc("PUT /api/profiles/{id}/photo", s.handleSetProfilePhoto)
+	mux.HandleFunc("DELETE /api/profiles/{id}/photo", s.handleDeleteProfilePhoto)
+	mux.HandleFunc("GET /api/profiles/{id}/photo", s.handleProfilePhoto)
 	mux.HandleFunc("DELETE /api/profiles/{id}", s.handleDeleteProfile)
 	mux.HandleFunc("GET /api/home", s.handleHome)
 	mux.HandleFunc("GET /api/movies", s.handleList("movie"))
@@ -151,7 +155,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 				}
 			}
 			p := r.URL.Path
-			quiet := strings.HasPrefix(p, "/api/images/") || strings.HasPrefix(p, "/api/stream/") ||
+			quiet := strings.HasPrefix(p, "/api/images/") || strings.HasSuffix(p, "/photo") || strings.HasPrefix(p, "/api/stream/") ||
 				strings.HasPrefix(p, "/api/music/covers/") || strings.HasPrefix(p, "/api/music/stream/") ||
 				p == "/api/music/scan/status" || strings.HasSuffix(p, "/played") ||
 				p == "/api/scan/status" || strings.HasSuffix(p, "/progress") || r.Method == http.MethodHead

@@ -303,11 +303,15 @@ class Profile {
   final String name;
   final String color;
   final String avatar;
+
+  /// Server path of the uploaded photo ("" = none, show the emoji).
+  final String photo;
   Profile.fromJson(Map<String, dynamic> j)
     : id = _s(j['id']),
       name = _s(j['name']),
       color = _s(j['color']),
-      avatar = _s(j['avatar']);
+      avatar = _s(j['avatar']),
+      photo = _s(j['photo']);
 }
 
 class SearchResults {

@@ -148,6 +148,37 @@ class ApiClient {
         as Map<String, dynamic>,
   );
   Future<void> deleteProfile(String id) => _send('DELETE', '/api/profiles/$id');
+  Future<void> reorderProfiles(List<String> ids) =>
+      _send('PUT', '/api/profiles/order', body: {'ids': ids});
+  Future<void> deleteProfilePhoto(String id) =>
+      _send('DELETE', '/api/profiles/$id/photo');
+
+  /// Uploads a photo; the server crops it to a square.
+  Future<void> uploadProfilePhoto(String id, List<int> bytes) async {
+    final req = http.Request('PUT', Uri.parse(url('/api/profiles/$id/photo')));
+    req.headers.addAll(_headers);
+    req.headers['Content-Type'] = 'application/octet-stream';
+    req.bodyBytes = bytes;
+    http.StreamedResponse resp;
+    try {
+      resp = await _http.send(req).timeout(const Duration(seconds: 60));
+    } on TimeoutException {
+      throw ApiException('Sunucu yanıt vermedi (zaman aşımı).');
+    } on SocketException {
+      throw ApiException('Sunucuya bağlanılamadı.');
+    } on http.ClientException catch (e) {
+      throw ApiException('Bağlantı hatası: ${e.message}');
+    }
+    final text = await resp.stream.bytesToString();
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      String msg = 'Sunucu hatası (${resp.statusCode})';
+      try {
+        final j = jsonDecode(text);
+        if (j is Map && j['error'] != null) msg = '${j['error']}';
+      } catch (_) {}
+      throw ApiException(msg, resp.statusCode);
+    }
+  }
 
   // ---- library ----
   Future<HomeData> home() async =>

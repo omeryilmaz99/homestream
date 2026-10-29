@@ -16,16 +16,30 @@ import 'play_launcher.dart';
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
   @override
-  State<BrowseScreen> createState() => _BrowseScreenState();
+  State<BrowseScreen> createState() => BrowseScreenState();
 }
 
-class _BrowseScreenState extends State<BrowseScreen> {
+class BrowseScreenState extends State<BrowseScreen> {
   late final AppState _state = context.read<AppState>();
   String _path = '';
   BrowseResult? _result;
   String? _error;
   bool _loading = false;
   final List<String> _crumbNames = [];
+  // remote/keyboard: where focus goes after opening a folder
+  final _pageFocus = FocusNode(canRequestFocus: false, skipTraversal: true);
+  // a fresh node per folder: the old list stays built while it fades out
+  FocusNode _targetFocus = FocusNode();
+  final _scroll = ScrollController();
+  String _focusPath = '';
+
+  /// Back button: opens the parent folder. False at the top level.
+  bool goUp() {
+    final parent = _result?.parent;
+    if (parent == null) return false;
+    _open(parent);
+    return true;
+  }
 
   @override
   void initState() {
@@ -37,6 +51,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
   @override
   void dispose() {
     _state.dataVersion.removeListener(_reload);
+    _pageFocus.dispose();
+    _targetFocus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -45,16 +62,27 @@ class _BrowseScreenState extends State<BrowseScreen> {
   Future<void> _open(String path, {bool keepCrumbs = false}) async {
     final api = _state.api;
     if (api == null) return;
+    final hadFocus = _pageFocus.hasFocus;
+    final from = _path;
     setState(() => _loading = true);
     try {
       final r = await api.browse(path);
       if (!mounted) return;
+      final changed = r.path != _path;
       setState(() {
         _path = r.path;
         _result = r;
         _error = null;
         _loading = false;
+        // going up: focus the folder we came out of, else the first entry
+        if (changed) {
+          _focusPath = from;
+          final old = _targetFocus;
+          _targetFocus = FocusNode();
+          Future.delayed(const Duration(seconds: 2), old.dispose);
+        }
       });
+      if (changed && hadFocus) _focusTarget();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -63,6 +91,35 @@ class _BrowseScreenState extends State<BrowseScreen> {
         });
       }
     }
+  }
+
+  int _targetIndex(BrowseResult r) {
+    final i = r.entries.indexWhere(
+      (e) =>
+          e.isDir &&
+          _focusPath.isNotEmpty &&
+          (_focusPath == e.path || _focusPath.startsWith('${e.path}/')),
+    );
+    return i < 0 ? 0 : i;
+  }
+
+  void _focusTarget() {
+    final r = _result;
+    if (r == null || r.entries.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_targetFocus.context == null && _scroll.hasClients) {
+        // not built yet (far down the list): scroll near it first
+        _scroll.jumpTo(
+          (_targetIndex(r) * 72.0).clamp(0, _scroll.position.maxScrollExtent),
+        );
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _targetFocus.requestFocus(),
+        );
+      } else {
+        _targetFocus.requestFocus();
+      }
+    });
   }
 
   List<(String, String)> _crumbs() {
@@ -165,6 +222,19 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
     _crumbNames.clear();
     final crumbs = _crumbs();
+    final target = r == null ? -1 : _targetIndex(r);
+    return Focus(
+      focusNode: _pageFocus,
+      child: _page(context, r, crumbs, target),
+    );
+  }
+
+  Widget _page(
+    BuildContext context,
+    BrowseResult? r,
+    List<(String, String)> crumbs,
+    int target,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -250,10 +320,16 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   title: 'Bu klasör boş',
                   message: 'Burada video dosyası veya alt klasör yok.',
                 )
-              : AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
+              : TweenAnimationBuilder<double>(
+                  // one list at a time (focus and scroll position follow it)
+                  key: ValueKey(r.path),
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 200),
+                  builder: (context, v, child) =>
+                      Opacity(opacity: v, child: child),
                   child: ListView.builder(
                     key: ValueKey(r.path),
+                    controller: _scroll,
                     padding: EdgeInsets.fromLTRB(
                       pagePad(context) - 8,
                       0,
@@ -265,6 +341,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                       final e = r.entries[i];
                       return _EntryTile(
                         entry: e,
+                        focusNode: i == target ? _targetFocus : null,
                         onTap: () => e.isDir ? _open(e.path) : _openVideo(e),
                       );
                     },
@@ -279,7 +356,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
 class _EntryTile extends StatefulWidget {
   final BrowseEntry entry;
   final VoidCallback onTap;
-  const _EntryTile({required this.entry, required this.onTap});
+  final FocusNode? focusNode;
+  const _EntryTile({required this.entry, required this.onTap, this.focusNode});
   @override
   State<_EntryTile> createState() => _EntryTileState();
 }
@@ -293,6 +371,7 @@ class _EntryTileState extends State<_EntryTile> {
         ? e.userData.position / e.duration
         : 0.0;
     return FocusableActionDetector(
+      focusNode: widget.focusNode,
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (v) => setState(() => _hover = v),
       onShowFocusHighlight: (v) => setState(() => _hover = v),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/platform.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
@@ -11,6 +12,7 @@ import 'home_screen.dart';
 import 'library_screen.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/profile_avatar.dart';
 
 /// Main layout: transparent top navigation over the active page.
 class Shell extends StatefulWidget {
@@ -22,6 +24,14 @@ class Shell extends StatefulWidget {
 class ShellState extends State<Shell> {
   int _index = 0;
   final _searchKey = GlobalKey<SearchScreenState>();
+  final _browseKey = GlobalKey<BrowseScreenState>();
+  final homeNavFocus = FocusNode();
+
+  @override
+  void dispose() {
+    homeNavFocus.dispose();
+    super.dispose();
+  }
 
   static const _tabs = ['Ana Sayfa', 'Filmler', 'Diziler', 'Klasörler'];
 
@@ -40,16 +50,26 @@ class ShellState extends State<Shell> {
       const HomeScreen(),
       const LibraryScreen(series: false),
       const LibraryScreen(series: true),
-      const BrowseScreen(),
+      BrowseScreen(key: _browseKey),
       SearchScreen(key: _searchKey),
       const SettingsScreen(),
     ];
     final compact = isCompact(context);
-    // phones: Android back returns to the home tab before leaving the app
+    // Back (phone, TV remote): folders go up one level, other pages return
+    // to the home tab; only the home tab leaves the app
     return PopScope(
-      canPop: !compact || _index == 0,
+      canPop: _index == 0,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) go(0);
+        if (didPop) return;
+        if (_index == 3 && _browseKey.currentState?.goUp() == true) return;
+        go(0);
+        // the page that had focus is hidden now; with a remote, continue
+        // from the "Ana Sayfa" tab
+        if (AppPlatform.isTv) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => homeNavFocus.requestFocus(),
+          );
+        }
       },
       child: CallbackShortcuts(
         bindings: {
@@ -207,6 +227,7 @@ class _TopBar extends StatelessWidget {
           const SizedBox(width: 36),
           for (var i = 0; i < ShellState._tabs.length; i++)
             _NavItem(
+              focusNode: i == 0 ? shell.homeNavFocus : null,
               label: ShellState._tabs[i],
               icon: const [
                 Icons.home_rounded,
@@ -246,7 +267,9 @@ class _NavItem extends StatefulWidget {
   final bool selected;
   final bool showLabel;
   final VoidCallback onTap;
+  final FocusNode? focusNode;
   const _NavItem({
+    this.focusNode,
     required this.label,
     required this.icon,
     required this.selected,
@@ -268,6 +291,7 @@ class _NavItemState extends State<_NavItem> {
         ? Colors.white
         : (_hover ? const Color(0xFFE5E5EA) : AppColors.textDim);
     return FocusableActionDetector(
+      focusNode: widget.focusNode,
       mouseCursor: SystemMouseCursors.click,
       onShowHoverHighlight: (v) => setState(() => _hover = v),
       onShowFocusHighlight: (v) => setState(() => _focused = v),
@@ -399,26 +423,7 @@ class _ProfileMenu extends StatelessWidget {
           ),
         ),
       ],
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          gradient: LinearGradient(
-            colors: [
-              parseHexColor(p?.color ?? ''),
-              Color.lerp(parseHexColor(p?.color ?? ''), Colors.black, 0.45)!,
-            ],
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          p?.avatar.isNotEmpty == true
-              ? p!.avatar
-              : (p?.name.isNotEmpty == true ? p!.name.characters.first : '?'),
-          style: TextStyle(fontSize: size / 2),
-        ),
-      ),
+      child: ProfileAvatar.of(p, size: size, radius: 10),
     );
   }
 }

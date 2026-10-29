@@ -50,6 +50,9 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Profiller okunamadı")
 		return
 	}
+	for i := range ps {
+		ps[i] = profileOut(ps[i])
+	}
 	writeJSON(w, http.StatusOK, ps)
 }
 
@@ -94,7 +97,7 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Profil oluşturulamadı")
 		return
 	}
-	writeJSON(w, http.StatusCreated, created)
+	writeJSON(w, http.StatusCreated, profileOut(created))
 }
 
 func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +119,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Profil güncellenemedi")
 		return
 	}
-	writeJSON(w, http.StatusOK, p)
+	writeJSON(w, http.StatusOK, profileOut(p))
 }
 
 func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +132,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Profil silinemedi")
 		return
 	}
+	_ = os.Remove(s.photoPath(id))
 	if s.Music != nil {
 		if err := s.Music.DeleteProfileData(id); err != nil {
 			log.Printf("profiles: music data of %s: %v", id, err)
