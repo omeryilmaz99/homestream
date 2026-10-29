@@ -48,7 +48,7 @@ class _ProbeState extends State<Probe> {
     final p = Player(
       configuration: const PlayerConfiguration(
         bufferSize: 64 * 1024 * 1024,
-        logLevel: MPVLogLevel.warn,
+        logLevel: MPVLogLevel.v,
       ),
     );
     final c = VideoController(
@@ -63,9 +63,14 @@ class _ProbeState extends State<Probe> {
       status = name;
     });
     final logs = <String>[];
-    final sub = p.stream.log.listen(
-      (l) => logs.add('${l.prefix}/${l.level}: ${l.text.trim()}'),
+    final keep = RegExp(
+      r'hwdec|hardware|timestamp|PTS|mediacodec|Using|codec|drop|error|fatal|warn|vo/|EGL|interop',
+      caseSensitive: false,
     );
+    final sub = p.stream.log.listen((l) {
+      final line = '${l.prefix}/${l.level}: ${l.text.trim()}';
+      if (keep.hasMatch(line)) logs.add(line);
+    });
     var buffering = 0;
     final bsub = p.stream.buffering.listen((b) {
       if (b) buffering++;
@@ -90,7 +95,15 @@ class _ProbeState extends State<Probe> {
     }
     await p.open(Media('$base/$file'));
     final sw = Stopwatch()..start();
-    await Future.delayed(const Duration(seconds: 30));
+    await Future.delayed(const Duration(seconds: 8));
+    final early = <String, String>{};
+    for (final k in ['hwdec-current', 'video-codec', 'frame-drop-count']) {
+      try {
+        early[k] = await np.getProperty(k);
+      } catch (_) {}
+    }
+    debugPrint('PROBE EARLY $name $early');
+    await Future.delayed(const Duration(seconds: 22));
     final props = [
       'hwdec-current',
       'time-pos',
@@ -117,7 +130,7 @@ class _ProbeState extends State<Probe> {
     );
     final seen = <String>{};
     for (final l in logs) {
-      if (seen.add(l) && seen.length <= 25) debugPrint('PROBE LOG $name $l');
+      if (seen.add(l) && seen.length <= 60) debugPrint('PROBE LOG $name $l');
     }
     await sub.cancel();
     await bsub.cancel();

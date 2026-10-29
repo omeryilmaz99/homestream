@@ -53,7 +53,7 @@ jobs:
           arch: x86_64
           target: google_apis
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu guest -noaudio -no-boot-anim
           disable-animations: true
           script: bash ci/avi/run.sh client/build/app/outputs/flutter-apk/app-release.apk
       - name: Publish results
