@@ -1,0 +1,300 @@
+10-30 20:45:36.555  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec" -> 1
+10-30 20:45:36.597  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:45:36.966  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec.
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:45:36.970  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:45:36.970  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Using surface 0x7b4bffcc0000
+10-30 20:45:37.198  3339  4004 D CCodec  : allocate(c2.goldfish.h264.decoder)
+10-30 20:45:37.315  3339  4004 I CCodec  : setting up 'default' as default (vendor) store
+10-30 20:45:37.468  3339  4004 I CCodec  : Created component [c2.goldfish.h264.decoder]
+10-30 20:45:37.475  3339  4004 D CCodecConfig: read media type: video/avc
+10-30 20:45:37.482  3339  4004 D CCodecConfig: ignoring local param raw.size (0xd2001800) as it is already supported
+10-30 20:45:37.482  3339  4004 D CCodecConfig: ignoring local param default.color (0x5200180b) as it is already supported
+10-30 20:45:37.571  3339  4004 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:45:37.574  3339  4004 D CCodecConfig: c2 config diff is Dict {
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.pl.level = 20496
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.pl.profile = 20481
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.vui.color.matrix = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.vui.color.primaries = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.vui.color.range = 2
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 coded.vui.color.transfer = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 default.color.matrix = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 default.color.primaries = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 default.color.range = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 default.color.transfer = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 input.buffers.max-size.value = 6291456
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 input.delay.value = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   string input.media-type.value = "video/avc"
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 output.delay.value = 8
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   string output.media-type.value = "video/raw"
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.color.matrix = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.color.primaries = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.color.range = 2
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.color.transfer = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.max-size.height = 240
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.max-size.width = 320
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.pixel-format.value = 35
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::i32 raw.rotation.flip = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::i32 raw.rotation.value = 0
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.sar.height = 1
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.sar.width = 1
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.size.height = 240
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2::u32 raw.size.width = 320
+10-30 20:45:37.574  3339  4004 D CCodecConfig:   c2:
+10-30 20:45:37.617  3339  4000 D MediaCodec: flushMediametrics
+10-30 20:45:37.619  3339  4000 I MediaCodec: [c2.goldfish.h264.decoder] setting surface generation to 3419137
+10-30 20:45:37.621  3339  4004 I CCodecBufferChannel: Using latch times for frame rendered signals - present fences not supported
+10-30 20:45:37.624  3339  4004 D CCodec  : [c2.goldfish.h264.decoder] buffers are bound to CCodec for this session
+10-30 20:45:37.625  3339  4004 D CCodecConfig: no c2 equivalents for csd-1
+10-30 20:45:37.626  3339  4004 D CCodecConfig: no c2 equivalents for native-window
+10-30 20:45:37.626  3339  4004 D CCodecConfig: no c2 equivalents for flags
+10-30 20:45:37.627  3339  4004 D CCodecConfig: config failed => CORRUPTED
+10-30 20:45:37.628  3339  4004 D CCodecConfig: c2 config diff is   c2::u32 raw.size.height = 1080
+10-30 20:45:37.628  3339  4004 D CCodecConfig:   c2::u32 raw.size.width = 1920
+10-30 20:45:37.628  3339  4004 D CCodec  : encoding statistics level = 0
+10-30 20:45:37.628  3339  4004 D CCodec  : setup formats input: AMessage(what = 0x00000000) = {
+10-30 20:45:37.628  3339  4004 D CCodec  :   int32_t height = 1080
+10-30 20:45:37.628  3339  4004 D CCodec  :   int32_t level = 65536
+10-30 20:45:37.628  3339  4004 D CCodec  :   int32_t max-input-size = 6291456
+10-30 20:45:37.628  3339  4004 D CCodec  :   string mime = "video/avc"
+10-30 20:45:37.628  3339  4004 D CCodec  :   int32_t profile = 65536
+10-30 20:45:37.628  3339  4004 D CCodec  :   int32_t width = 1920
+10-30 20:45:37.628  3339  4004 D CCodec  :   Rect crop(0, 0, 1919, 1079)
+10-30 20:45:37.628  3339  4004 D CCodec  : }
+10-30 20:45:37.629  3339  4004 D CCodec  : setup formats output: AMessage(what = 0x00000000) = {
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t android._color-format = 2135033992
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t android._video-scaling = 1
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t rotation-degrees = 0
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t color-standard = 1
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t color-range = 2
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t color-transfer = 3
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t sar-height = 1
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t sar-width = 1
+10-30 20:45:37.629  3339  4004 D CCodec  :   Rect crop(0, 0, 1919, 1079)
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t width = 1920
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t height = 1080
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t max-height = 240
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t max-width = 320
+10-30 20:45:37.629  3339  4004 D CCodec  :   string mime = "video/raw"
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t android._dataspace = 260
+10-30 20:45:37.629  3339  4004 D CCodec  :   int32_t color-format = 2130708361
+10-30 20:45:37.629  3339  4004 D CCodec  : }
+10-30 20:45:37.629  3339  4004 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:45:37.629  3339  4004 D CCodecConfig: c2 config diff is   c2::u32 raw.max-size.height = 1080
+10-30 20:45:37.629  3339  4004 D CCodecConfig:   c2::u32 raw.max-size.width = 1920
+10-30 20:45:37.644  3339  4004 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Created input block pool with allocatorID 16 => poolID 17 - OK (0)
+10-30 20:45:37.644  3339  4004 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Query output surface allocator returned 0 params => BAD_INDEX (6)
+10-30 20:45:37.644  3339  4004 I CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Created output block pool with allocatorID 18 => poolID 17 - OK
+10-30 20:45:37.645  3339  4004 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Configured output block pool ids 17 => OK
+10-30 20:45:37.785  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:45:37.785  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: MediaCodec started successfully: codec = c2.goldfish.h264.decoder, ret = 0
+10-30 20:45:37.786  3339  3339 I flutter : MPV ffmpeg/video/warn: h264_mediacodec: Input packet is missing PTS
+10-30 20:45:37.787  3339  4000 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:45:37.817  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Ignoring stale input buffer done callback: last flush index = 3, frameIndex = 0
+10-30 20:45:37.836  3339  4004 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] flushed work; ignored.
+10-30 20:45:37.838  3339  4004 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Discard frames from previous generation.
+10-30 20:45:37.839  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] Ignoring stale input buffer done callback: last flush index = 3, frameIndex = 3
+10-30 20:45:37.869  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output MediaFormat changed to {crop-right=1919, max-height=1080, sar-width=1, color-format=2130708361, mime=video/raw, color-standard=1, color-transfer=3, sar-height=1, crop-bottom=1079, max-width=1920, crop-left=0, width=1920, color-range=2, crop-top=0, rotation-degrees=0, height=1080}
+10-30 20:45:37.872  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:45:38.074  3339  4004 D CCodecConfig: c2 config diff is   c2::u32 raw.crop.height = 1080
+10-30 20:45:38.074  3339  4004 D CCodecConfig:   c2::u32 raw.crop.left = 0
+10-30 20:45:38.074  3339  4004 D CCodecConfig:   c2::u32 raw.crop.top = 0
+10-30 20:45:38.074  3339  4004 D CCodecConfig:   c2::u32 raw.crop.width = 1920
+10-30 20:45:38.076  3339  3339 I flutter : MPV vd/info: Using hardware decoding (mediacodec).
+10-30 20:45:38.076  3339  3339 I flutter : MPV vd/v: Decoder format: 1920x1080 [0:1] mediacodec bt.709/bt.709/bt.1886/limited/auto CL=unknown crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [in] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [userdeint] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [autorotate] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.124  3339  3339 I flutter : MPV vf/v: [convert] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.653  3339  3339 I flutter : MPV vf/v: [out] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.654  3339  3339 I flutter : MPV cplayer/info: VO: [mediacodec_embed] 1920x1080 mediacodec
+10-30 20:45:38.654  3339  3339 I flutter : MPV cplayer/v: VO: Description: Android (Embedded MediaCodec Surface)
+10-30 20:45:38.655  3339  3339 I flutter : MPV vo/mediacodec_embed/v: reconfig to 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:41.293  3339  3339 I flutter : LAYER check hwdec=mediacodec vid=1
+10-30 20:45:42.210  1061  1077 E HardwareInfoFeatureProviderImpl: 	at com.android.settings.core.PreferenceControllerListHelper.getPreferenceControllersFromXml(PreferenceControllerListHelper.java:83)
+10-30 20:46:06.564  3339  4000 I CCodecBufferChannel: [c2.goldfish.h264.decoder#472] queueBuffer failed: -19
+10-30 20:46:06.564  3339  4000 E MediaCodec: rendering to non-initialized(obsolete) surface
+10-30 20:46:06.564  3339  4000 E MediaCodec: Codec reported err 0x80000000/UNKNOWN_ERROR, actionCode 0, while in state 6/STARTED
+10-30 20:46:06.564  3339  4000 D MediaCodec: flushMediametrics
+10-30 20:46:06.564  3339  4000 W MediaCodec: nativeWindowDisconnect returned an error: No such device (-19)
+10-30 20:46:06.578  3339  4000 E MediaCodec: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.578  3339  4000 E MediaCodec: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.578  3339  4000 E MediaCodec: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.578  3339  4000 E MediaCodec: flush() is valid only at Executing states; currently at Released state
+10-30 20:46:06.607  3339  4000 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] MediaCodec discarded an unknown buffer
+10-30 20:46:06.608  3339  4000 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] MediaCodec discarded an unknown buffer
+10-30 20:46:06.608  3339  4000 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] MediaCodec discarded an unknown buffer
+10-30 20:46:06.608  3339  4000 D CCodecBufferChannel: [c2.goldfish.h264.decoder#472] MediaCodec discarded an unknown buffer
+10-30 20:46:06.676  3339  4000 D MediaCodec: flushMediametrics
+10-30 20:46:06.682  3339  4000 D MediaCodec: flushMediametrics
+10-30 20:46:06.682  3339  4000 W MediaCodec: no metrics handle found
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: android.media.MediaCodec$CodecException:
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: flush() is valid only at Executing states; currently at Released state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to flush codec
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/warn: Attempting next decoding method after failure of h264_mediacodec-mediacodec.
+10-30 20:46:06.953  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:06.954  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:09.225  3339  4624 D CCodec  : allocate(c2.goldfish.h264.decoder)
+10-30 20:46:09.226  3339  4624 I CCodec  : setting up 'default' as default (vendor) store
+10-30 20:46:09.228  3339  4624 I CCodec  : Created component [c2.goldfish.h264.decoder]
+10-30 20:46:09.228  3339  4624 D CCodecConfig: read media type: video/avc
+10-30 20:46:09.229  3339  4624 D CCodecConfig: ignoring local param raw.size (0xd2001800) as it is already supported
+10-30 20:46:09.229  3339  4624 D CCodecConfig: ignoring local param default.color (0x5200180b) as it is already supported
+10-30 20:46:09.229  3339  4624 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:09.229  3339  4624 D CCodecConfig: c2 config diff is Dict {
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.pl.level = 20496
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.pl.profile = 20481
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.vui.color.matrix = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.vui.color.primaries = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.vui.color.range = 2
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 coded.vui.color.transfer = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 default.color.matrix = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 default.color.primaries = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 default.color.range = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 default.color.transfer = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 input.buffers.max-size.value = 6291456
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 input.delay.value = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   string input.media-type.value = "video/avc"
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 output.delay.value = 8
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   string output.media-type.value = "video/raw"
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.color.matrix = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.color.primaries = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.color.range = 2
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.color.transfer = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.max-size.height = 240
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.max-size.width = 320
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.pixel-format.value = 35
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::i32 raw.rotation.flip = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::i32 raw.rotation.value = 0
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.sar.height = 1
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.sar.width = 1
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.size.height = 240
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2::u32 raw.size.width = 320
+10-30 20:46:09.229  3339  4624 D CCodecConfig:   c2:
+10-30 20:46:09.231  3339  4623 D MediaCodec: flushMediametrics
+10-30 20:46:09.232  3339  4623 I MediaCodec: [c2.goldfish.h264.decoder] setting surface generation to 3419138
+10-30 20:46:09.232  3339  4624 I CCodecBufferChannel: Using latch times for frame rendered signals - present fences not supported
+10-30 20:46:09.232  3339  4624 D CCodec  : [c2.goldfish.h264.decoder] buffers are bound to CCodec for this session
+10-30 20:46:09.232  3339  4624 D CCodecConfig: no c2 equivalents for csd-1
+10-30 20:46:09.232  3339  4624 D CCodecConfig: no c2 equivalents for native-window
+10-30 20:46:09.232  3339  4624 D CCodecConfig: no c2 equivalents for flags
+10-30 20:46:09.233  3339  4624 D CCodecConfig: config failed => CORRUPTED
+10-30 20:46:09.233  3339  4624 D CCodecConfig: c2 config diff is   c2::u32 raw.size.height = 1080
+10-30 20:46:09.233  3339  4624 D CCodecConfig:   c2::u32 raw.size.width = 1920
+10-30 20:46:09.233  3339  4624 D CCodec  : encoding statistics level = 0
+10-30 20:46:09.233  3339  4624 D CCodec  : setup formats input: AMessage(what = 0x00000000) = {
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t height = 1080
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t level = 65536
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t max-input-size = 6291456
+10-30 20:46:09.233  3339  4624 D CCodec  :   string mime = "video/avc"
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t profile = 65536
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t width = 1920
+10-30 20:46:09.233  3339  4624 D CCodec  :   Rect crop(0, 0, 1919, 1079)
+10-30 20:46:09.233  3339  4624 D CCodec  : }
+10-30 20:46:09.233  3339  4624 D CCodec  : setup formats output: AMessage(what = 0x00000000) = {
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t android._color-format = 2135033992
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t android._video-scaling = 1
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t rotation-degrees = 0
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t color-standard = 1
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t color-range = 2
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t color-transfer = 3
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t sar-height = 1
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t sar-width = 1
+10-30 20:46:09.233  3339  4624 D CCodec  :   Rect crop(0, 0, 1919, 1079)
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t width = 1920
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t height = 1080
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t max-height = 240
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t max-width = 320
+10-30 20:46:09.233  3339  4624 D CCodec  :   string mime = "video/raw"
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t android._dataspace = 260
+10-30 20:46:09.233  3339  4624 D CCodec  :   int32_t color-format = 2130708361
+10-30 20:46:09.233  3339  4624 D CCodec  : }
+10-30 20:46:09.233  3339  4624 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:09.233  3339  4624 D CCodecConfig: c2 config diff is   c2::u32 raw.max-size.height = 1080
+10-30 20:46:09.233  3339  4624 D CCodecConfig:   c2::u32 raw.max-size.width = 1920
+10-30 20:46:09.234  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Created input block pool with allocatorID 16 => poolID 18 - OK (0)
+10-30 20:46:09.234  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Query output surface allocator returned 0 params => BAD_INDEX (6)
+10-30 20:46:09.234  3339  4624 I CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Created output block pool with allocatorID 18 => poolID 18 - OK
+10-30 20:46:09.234  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Configured output block pool ids 18 => OK
+10-30 20:46:09.264  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Ignoring stale input buffer done callback: last flush index = 0, frameIndex = 0
+10-30 20:46:09.282  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.282  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.282  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.282  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.283  3339  4623 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:09.286  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec.
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Using surface 0x7b4bffcc1680
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: MediaCodec started successfully: codec = c2.goldfish.h264.decoder, ret = 0
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/warn: h264_mediacodec: Input packet is missing PTS
+10-30 20:46:09.399  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Ignoring stale input buffer done callback: last flush index = 3, frameIndex = 3
+10-30 20:46:09.486  3339  4624 D CCodecConfig: c2 config diff is   c2::u32 raw.crop.height = 1080
+10-30 20:46:09.486  3339  4624 D CCodecConfig:   c2::u32 raw.crop.left = 0
+10-30 20:46:09.486  3339  4624 D CCodecConfig:   c2::u32 raw.crop.top = 0
+10-30 20:46:09.486  3339  4624 D CCodecConfig:   c2::u32 raw.crop.width = 1920
+10-30 20:46:09.577  3339  4623 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:09.579  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.579  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.579  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.579  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:09.580  3339  4623 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:09.652  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] flushed work; ignored.
+10-30 20:46:09.653  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Discard frames from previous generation.
+10-30 20:46:09.730  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Ignoring stale input buffer done callback: last flush index = 7, frameIndex = 7
+10-30 20:46:09.830  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output MediaFormat changed to {crop-right=1919, max-height=1080, sar-width=1, color-format=2130708361, mime=video/raw, color-standard=1, color-transfer=3, sar-height=1, crop-bottom=1079, max-width=1920, crop-left=0, width=1920, color-range=2, crop-top=0, rotation-degrees=0, height=1080}
+10-30 20:46:09.830  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:46:09.830  3339  3339 I flutter : MPV vd/info: Using hardware decoding (mediacodec).
+10-30 20:46:09.831  3339  3339 I flutter : MPV vd/v: Decoder format: 1920x1080 [0:1] mediacodec bt.709/bt.709/bt.1886/limited/auto CL=unknown crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [in] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [userdeint] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [autorotate] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [convert] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [out] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:10.778  3339  3339 I flutter : MPV cplayer/info: VO: [mediacodec_embed] 1920x1080 mediacodec
+10-30 20:46:10.778  3339  3339 I flutter : MPV cplayer/v: VO: Description: Android (Embedded MediaCodec Surface)
+10-30 20:46:10.778  3339  3339 I flutter : MPV vo/mediacodec_embed/v: reconfig to 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:11.151  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:11.194  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:11.202  1061  1084 E HardwareInfoFeatureProviderImpl: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:11.266  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:11.702  1061  1084 E SystemServiceRegistry: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.021  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.549  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.555  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.558  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.679  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:12.687  1061  1084 W SliceDataConverter: 	at com.android.settings.slices.SliceDataConverter.getSliceDataFromXML(SliceDataConverter.java:204)
+10-30 20:46:18.528  3339  4623 I CCodecConfig: query failed after returning 12 values (BAD_INDEX)
+10-30 20:46:18.529  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Discard frames from previous generation.
+10-30 20:46:18.529  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Ignoring stale input buffer done callback: last flush index = 215, frameIndex = 212
+10-30 20:46:18.530  3339  4623 I MediaCodec: [c2.goldfish.h264.decoder] setting surface generation to 3419139
+10-30 20:46:18.531  3339  4016 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Ignoring stale input buffer done callback: last flush index = 215, frameIndex = 213
+10-30 20:46:18.531  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] flushed work; ignored.
+10-30 20:46:18.531  3339  4624 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] Discard frames from previous generation.
+10-30 20:46:18.542  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:18.543  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:18.543  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:18.543  3339  4623 D CCodecBufferChannel: [c2.goldfish.h264.decoder#774] MediaCodec discarded an unknown buffer
+10-30 20:46:18.566  3339  4623 D MediaCodec: flushMediametrics
+10-30 20:46:18.570  3339  4623 D MediaCodec: flushMediametrics
+10-30 20:46:18.571  3339  4623 W MediaCodec: no metrics handle found
+10-30 20:46:18.743  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:18.747  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:22.863  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec" -> 1
+10-30 20:46:22.912  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:46:23.116  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)

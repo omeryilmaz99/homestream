@@ -1,0 +1,213 @@
+10-30 20:45:36.341  3339  3339 I flutter : HSTEST play "Layertest": Layertest
+10-30 20:45:36.399  3339  3339 I flutter : LAYER player for Layertest: layer=true
+10-30 20:45:36.497  3339  3339 I flutter : MPV media_kit/error: error: property not found _setProperty(osc, 1)
+10-30 20:45:36.555  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg2video,vp8,vp9,av1" -> 1
+10-30 20:45:36.555  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec" -> 1
+10-30 20:45:36.587  3339  3339 I flutter : LAYER attach wid=12750
+10-30 20:45:36.590  3339  3339 I flutter : MPV cplayer/v: Set property: wid="12750" -> 1
+10-30 20:45:36.597  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:45:36.913  3339  3339 I flutter : MPV ffmpeg/v: Mime-type: 'video/x-matroska'
+10-30 20:45:36.935  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:45:36.966  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:45:36.966  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec.
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:45:36.967  3339  3339 I flutter : MPV vd/v: Codec profile: unknown (0x64)
+10-30 20:45:36.970  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:45:36.970  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Using surface 0x7b4bffcc0000
+10-30 20:45:37.785  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:45:37.785  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: MediaCodec started successfully: codec = c2.goldfish.h264.decoder, ret = 0
+10-30 20:45:37.786  3339  3339 I flutter : MPV ffmpeg/video/warn: h264_mediacodec: Input packet is missing PTS
+10-30 20:45:37.795  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:45:37.796  3339  3339 I flutter : MPV ad/v: Codec list:
+10-30 20:45:37.842  3339  3339 I flutter : MPV ad/v: Selected codec: aac
+10-30 20:45:37.869  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output MediaFormat changed to {crop-right=1919, max-height=1080, sar-width=1, color-format=2130708361, mime=video/raw, color-standard=1, color-transfer=3, sar-height=1, crop-bottom=1079, max-width=1920, crop-left=0, width=1920, color-range=2, crop-top=0, rotation-degrees=0, height=1080}
+10-30 20:45:37.872  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:45:38.076  3339  3339 I flutter : MPV vd/info: Using hardware decoding (mediacodec).
+10-30 20:45:38.076  3339  3339 I flutter : MPV vd/v: Decoder format: 1920x1080 [0:1] mediacodec bt.709/bt.709/bt.1886/limited/auto CL=unknown crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vd/v: Using container aspect ratio.
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [in] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [userdeint] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.076  3339  3339 I flutter : MPV vf/v: [autorotate] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.124  3339  3339 I flutter : MPV vf/v: [convert] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.632  3339  3339 I flutter : MPV ao/opensles/v: using soft-buffer of 12000 samples.
+10-30 20:45:38.653  3339  3339 I flutter : MPV vf/v: [out] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.654  3339  3339 I flutter : MPV cplayer/info: VO: [mediacodec_embed] 1920x1080 mediacodec
+10-30 20:45:38.654  3339  3339 I flutter : MPV cplayer/v: VO: Description: Android (Embedded MediaCodec Surface)
+10-30 20:45:38.655  3339  3339 I flutter : MPV vo/mediacodec_embed/v: reconfig to 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:45:38.683  3339  3339 I flutter : MPV cplayer/v: first video frame after restart shown
+10-30 20:45:38.689  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:45:38.705  3339  3339 I flutter : MPV cplayer/v: playback restart complete @ 0.000000, audio=playing, video=playing
+10-30 20:45:39.258  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:45:41.293  3339  3339 I flutter : LAYER check hwdec=mediacodec vid=1
+10-30 20:46:06.709  3339  3339 I flutter : LAYER attach wid=0
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: android.media.MediaCodec$CodecException:
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: 
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/warn: Error while decoding frame (hardware decoding)!
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: 
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/warn: Error while decoding frame (hardware decoding)!
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: Invalid to call at Released state; only valid in executing state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: 
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to dequeue output buffer (status=-542398533)
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/warn: Error while decoding frame (hardware decoding)!
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: amediacodec: java.lang.IllegalStateException: flush() is valid only at Executing states; currently at Released state
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/error: 
+10-30 20:46:06.952  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Failed to flush codec
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/warn: Attempting next decoding method after failure of h264_mediacodec-mediacodec.
+10-30 20:46:06.952  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:06.953  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:46:06.953  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:06.954  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:06.954  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:06.955  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:46:06.955  3339  3339 I flutter : MPV cplayer/v: Set property: wid="0" -> 1
+10-30 20:46:06.955  3339  3339 I flutter : MPV cplayer/info: Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:46:09.205  3339  3339 I flutter : LAYER attach wid=12662
+10-30 20:46:09.286  3339  3339 I flutter : MPV cplayer/v: Set property: wid="12662" -> 1
+10-30 20:46:09.286  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec.
+10-30 20:46:09.286  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Codec profile: unknown (0x64)
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Using surface 0x7b4bffcc1680
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: MediaCodec started successfully: codec = c2.goldfish.h264.decoder, ret = 0
+10-30 20:46:09.287  3339  3339 I flutter : MPV ffmpeg/video/warn: h264_mediacodec: Input packet is missing PTS
+10-30 20:46:09.287  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:46:09.288  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:46:09.574  3339  3339 I flutter : MPV lavf/v: ...using this range for in-cache seek.
+10-30 20:46:09.830  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output MediaFormat changed to {crop-right=1919, max-height=1080, sar-width=1, color-format=2130708361, mime=video/raw, color-standard=1, color-transfer=3, sar-height=1, crop-bottom=1079, max-width=1920, crop-left=0, width=1920, color-range=2, crop-top=0, rotation-degrees=0, height=1080}
+10-30 20:46:09.830  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Output crop parameters top=0 bottom=1079 left=0 right=1919, resulting dimensions width=1920 height=1080
+10-30 20:46:09.830  3339  3339 I flutter : MPV vd/info: Using hardware decoding (mediacodec).
+10-30 20:46:09.831  3339  3339 I flutter : MPV vd/v: Decoder format: 1920x1080 [0:1] mediacodec bt.709/bt.709/bt.1886/limited/auto CL=unknown crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vd/v: Using container aspect ratio.
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [in] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [userdeint] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [autorotate] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [convert] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:09.831  3339  3339 I flutter : MPV vf/v: [out] 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:10.778  3339  3339 I flutter : MPV cplayer/info: VO: [mediacodec_embed] 1920x1080 mediacodec
+10-30 20:46:10.778  3339  3339 I flutter : MPV cplayer/v: VO: Description: Android (Embedded MediaCodec Surface)
+10-30 20:46:10.778  3339  3339 I flutter : MPV vo/mediacodec_embed/v: reconfig to 1920x1080 mediacodec bt.709/bt.709/bt.1886/limited/display SP=1.000000 CL=mpeg2/4/h264 crop=1920x1080+0+0
+10-30 20:46:10.778  3339  3339 I flutter : MPV cplayer/v: first video frame after restart shown
+10-30 20:46:10.790  3339  3339 I flutter : MPV cplayer/v: playback restart complete @ 26.792000, audio=playing, video=playing
+10-30 20:46:18.435  3339  3339 I flutter : LAYER key KeyDownEvent back
+10-30 20:46:18.435  3339  3339 I flutter : LAYER close
+10-30 20:46:18.475  3339  3339 I flutter : LAYER attach wid=0
+10-30 20:46:18.721  3339  3339 I flutter : LAYER system back didPop=true
+10-30 20:46:18.726  3339  3339 I flutter : LAYER swallowed back release
+10-30 20:46:18.743  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:46:18.743  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:18.747  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:18.747  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:18.748  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:46:18.749  3339  3339 I flutter : MPV cplayer/v: Set property: wid="0" -> 1
+10-30 20:46:18.749  3339  3339 I flutter : MPV cplayer/info: Video --vid=1 (h264 1920x1080 24.000fps)
+10-30 20:46:22.730  3339  3339 I flutter : HSTEST play "Hidepth": Hidepth
+10-30 20:46:22.753  3339  3339 I flutter : LAYER player for Hidepth: layer=true
+10-30 20:46:22.847  3339  3339 I flutter : MPV media_kit/error: error: property not found _setProperty(osc, 1)
+10-30 20:46:22.863  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg2video,vp8,vp9,av1" -> 1
+10-30 20:46:22.863  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec" -> 1
+10-30 20:46:22.904  3339  3339 I flutter : LAYER attach wid=12454
+10-30 20:46:22.912  3339  3339 I flutter : MPV cplayer/v: Set property: wid="12454" -> 1
+10-30 20:46:22.912  3339  3339 I flutter : MPV cplayer/v: Set property: vo="mediacodec_embed" -> 1
+10-30 20:46:23.046  3339  3339 I flutter : MPV ffmpeg/v: Mime-type: 'video/x-matroska'
+10-30 20:46:23.115  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1280x720 24.000fps)
+10-30 20:46:23.116  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:46:23.116  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:23.117  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:23.117  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec.
+10-30 20:46:23.117  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:46:23.118  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:46:23.118  3339  3339 I flutter : MPV vd/v: Codec profile: unknown (0x6e)
+10-30 20:46:23.118  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:46:23.120  3339  3339 I flutter : MPV vd/error: Could not open codec.
+10-30 20:46:23.120  3339  3339 I flutter : MPV vd/v: Attempting next decoding method after failure of h264_mediacodec-mediacodec.
+10-30 20:46:23.120  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:23.227  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:46:23.229  3339  3339 I flutter : MPV ad/v: Codec list:
+10-30 20:46:23.245  3339  3339 I flutter : MPV ad/v: Selected codec: aac
+10-30 20:46:23.403  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:23.404  3339  3339 I flutter : MPV vd/v: Using container aspect ratio.
+10-30 20:46:23.407  3339  3339 I flutter : MPV hwupload/info: hardware format not supported
+10-30 20:46:23.408  3339  3339 I flutter : MPV autoconvert/error: Failed to create HW uploader for format yuv420p10
+10-30 20:46:23.408  3339  3339 I flutter : MPV autoconvert/error: can't find video conversion for yuv420p10
+10-30 20:46:23.409  3339  3339 I flutter : MPV vf/fatal: Cannot convert decoder/filter output to any format supported by the output.
+10-30 20:46:23.474  3339  3339 I flutter : MPV ao/opensles/v: using soft-buffer of 12000 samples.
+10-30 20:46:23.475  3339  3339 I flutter : MPV cplayer/fatal: Could not initialize video chain.
+10-30 20:46:23.516  3339  3339 I flutter : MPV cplayer/info: Video: no video
+10-30 20:46:23.531  3339  3339 I flutter : MPV cplayer/v: playback restart complete @ -0.019856, audio=playing, video=eof
+10-30 20:46:25.512  3339  3339 I flutter : LAYER check hwdec= vid=
+10-30 20:46:27.513  3339  3339 I flutter : LAYER check hwdec= vid=
+10-30 20:46:29.514  3339  3339 I flutter : LAYER replace (layer=true) at 5.978
+10-30 20:46:29.521  3339  3339 I flutter : LAYER attach wid=0
+10-30 20:46:29.529  3339  3339 I flutter : LAYER player for Hidepth: layer=false
+10-30 20:46:29.531  3339  3339 I flutter : MPV cplayer/v: Set property: wid="0" -> 1
+10-30 20:46:29.534  3339  3339 I flutter : MPV cplayer/info: Video --vid=1 (h264 1280x720 24.000fps)
+10-30 20:46:29.537  3339  3339 I flutter : MPV media_kit/error: error: property not found _setProperty(osc, 1)
+10-30 20:46:29.552  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec,mediacodec-copy" -> 1
+10-30 20:46:29.554  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1" -> 1
+10-30 20:46:29.555  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec-codecs="h264,hevc,mpeg2video,vp8,vp9,av1" -> 1
+10-30 20:46:29.556  3339  3339 I flutter : MPV cplayer/v: Set property: hwdec="mediacodec,mediacodec-copy" -> 1
+10-30 20:46:29.602  3339  3339 I flutter : MPV ffmpeg/v: Mime-type: 'video/x-matroska'
+10-30 20:46:29.705  3339  3339 I flutter : MPV cplayer/info: (+) Video --vid=1 (h264 1280x720 24.000fps)
+10-30 20:46:29.763  3339  3339 I flutter : MPV vd/v: Codec list:
+10-30 20:46:29.764  3339  3339 I flutter : MPV vd/v: h264_mediacodec (h264) - (null)
+10-30 20:46:29.764  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec...
+10-30 20:46:29.764  3339  3339 I flutter : MPV vd/v: Looking at hwdec h264_mediacodec-mediacodec-copy...
+10-30 20:46:29.764  3339  3339 I flutter : MPV vd/v: Trying hardware decoding via h264_mediacodec-mediacodec-copy.
+10-30 20:46:29.765  3339  3339 I flutter : MPV vd/v: Using underlying hw-decoder 'h264_mediacodec'
+10-30 20:46:29.765  3339  3339 I flutter : MPV vd/v: Pixel formats supported by decoder: mediacodec
+10-30 20:46:29.766  3339  3339 I flutter : MPV vd/v: Codec profile: unknown (0x6e)
+10-30 20:46:29.766  3339  3339 I flutter : MPV vd/v: Requesting pixfmt 'mediacodec' from decoder.
+10-30 20:46:29.766  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: Both surface and native_window are NULL
+10-30 20:46:29.766  3339  3339 I flutter : MPV ffmpeg/video/v: h264_mediacodec: Using surface 0x0
+10-30 20:46:29.766  3339  3339 I flutter : MPV ffmpeg/video/error: h264_mediacodec: MediaCodec 0x0 failed to start
+10-30 20:46:29.766  3339  3339 I flutter : MPV vd/error: Could not open codec.
+10-30 20:46:29.766  3339  3339 I flutter : MPV vd/v: Attempting next decoding method after failure of h264_mediacodec-mediacodec-copy.
+10-30 20:46:29.767  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:29.787  3339  3339 I flutter : MPV vd/v: Selected codec: h264
+10-30 20:46:29.787  3339  3339 I flutter : MPV ad/v: Codec list:
+10-30 20:46:29.788  3339  3339 I flutter : MPV ad/v: Selected codec: aac
+10-30 20:46:30.637  3339  3339 I flutter : MPV ao/opensles/v: using soft-buffer of 12000 samples.
+10-30 20:46:30.685  3339  3339 I flutter : MPV vd/v: Using software decoding.
+10-30 20:46:30.686  3339  3339 I flutter : MPV vd/v: Using container aspect ratio.
+10-30 20:46:30.866  3339  3339 I flutter : MPV cplayer/v: Set property: android-surface-size="1280x720" -> 1
+10-30 20:46:30.866  3339  3339 I flutter : MPV cplayer/v: Set property: wid="12378" -> 1
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/v: Initializing GPU context 'android'
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_VENDOR=Android
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-30 20:46:30.866  3339  3339 I flutter : MPV vo/gpu/opengl/error: Could not create a GL context.
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/error: Failed initializing any suitable GPU context!
+10-30 20:46:30.867  3339  3339 I flutter : MPV cplayer/fatal: Error opening/initializing the selected video_out (--vo) device.
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/v: Initializing GPU context 'android'
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_VERSION=1.4 Android META-EGL
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_VENDOR=Android
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/v: EGL_CLIENT_APIS=OpenGL_ES
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/v: Trying to create GLES 2.x + context.
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/fatal: Could not create EGL context for GLES 2.x +!
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/opengl/error: Could not create a GL context.
+10-30 20:46:30.867  3339  3339 I flutter : MPV vo/gpu/error: Failed initializing any suitable GPU context!
+10-30 20:46:30.867  3339  3339 I flutter : MPV cplayer/fatal: Error opening/initializing the VO window.
+10-30 20:46:30.867  3339  3339 I flutter : MPV cplayer/info: Video: no video
+10-30 20:46:30.867  3339  3339 I flutter : MPV mkv/v: ...using this range for in-cache seek.
+10-30 20:46:30.867  3339  3339 I flutter : MPV mkv/v: seeking stream 0 (video) to nothing
+10-30 20:46:30.869  3339  3339 I flutter : MPV cplayer/v: playback restart complete @ 5.978825, audio=playing, video=eof
+10-30 20:47:01.622  3339  3339 I flutter : LAYER key KeyDownEvent back
+10-30 20:47:01.622  3339  3339 I flutter : LAYER close
+10-30 20:47:01.631  3339  3339 I flutter : LAYER system back didPop=true
+10-30 20:47:01.637  3339  3339 I flutter : HSTEST done
+10-30 20:47:01.656  3339  3339 I flutter : LAYER swallowed back release

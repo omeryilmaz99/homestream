@@ -1,0 +1,81 @@
+Display 0 name="Built-in Screen"#1
+WindowedMagnification:0:31#2
+HideDisplayCutout:0:14#3
+OneHanded:0:14#4
+FullscreenMagnification:0:12#5
+Leaf:0:1#6
+WallpaperWindowToken{6e86acf token=android.os.Binder@1cccf2e}#63
+796dbc1 com.android.systemui.wallpapers.ImageWallpaper#64
+com.android.systemui.wallpapers.ImageWallpaper#65
+Wallpaper BBQ wrapper#66
+DefaultTaskDisplayArea#7
+Task=1#44
+Task=7#90
+eef920f ActivityRecordInputSink com.google.android.apps.nexuslauncher/.NexusLauncherActivity#96
+ActivityRecord{11bf29c u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity#91
+d04680c com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#92
+com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#123
+ImeContainer#10
+WindowToken{af454fd type=2011 android.os.Binder@913a689}#83
+Surface(name=c31f50b InputMethod)/@0x8b83601 - animation-leash of insets_animation#130
+c31f50b InputMethod#84
+43b92d4 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#98
+com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#122
+Task=2#45
+Task=3#46
+Dim layer#50
+Task=4#47
+Dim layer#51
+Task=8#102
+936406 ActivityRecordInputSink com.homestream.home_stream/.MainActivity#108
+ActivityRecord{9df9ac7 u0 com.homestream.home_stream/.MainActivity#103
+9b79dbc com.homestream.home_stream/com.homestream.home_stream.MainActivity#109
+Leaf:3:12#8
+WindowToken{9e49116 type=2038 android.os.BinderProxy@b3e868f}#48
+f471a4a ShellDropTarget#49
+ImePlaceholder:13:14#9
+OneHanded:15:15#11
+FullscreenMagnification:15:15#12
+Leaf:15:15#13
+WindowToken{f3d05e9 type=2000 android.os.BinderProxy@5a838b3}#69
+Surface(name=ffeb26e StatusBar)/@0x367877a - animation-leash of insets_animation#124
+ffeb26e StatusBar#70
+StatusBar#81
+HideDisplayCutout:16:16#14
+OneHanded:16:16#15
+FullscreenMagnification:16:16#16
+Leaf:16:16#17
+OneHanded:17:17#18
+FullscreenMagnification:17:17#19
+Leaf:17:17#20
+WindowToken{dd96696 type=2040 android.os.BinderProxy@176dc58}#67
+d69217 NotificationShade#68
+HideDisplayCutout:18:23#21
+OneHanded:18:23#22
+FullscreenMagnification:18:23#23
+Leaf:18:23#24
+Leaf:24:25#25
+HideDisplayCutout:26:31#26
+OneHanded:26:31#27
+FullscreenMagnification:26:27#28
+Leaf:26:27#29
+Leaf:28:28#30
+FullscreenMagnification:29:31#31
+Leaf:29:31#32
+HideDisplayCutout:32:35#33
+OneHanded:32:32#34
+Leaf:32:32#35
+FullscreenMagnification:33:33#36
+Leaf:33:33#37
+OneHanded:34:35#38
+FullscreenMagnification:34:35#39
+Leaf:34:35#40
+Leaf:36:36#41
+Accessibility Overlays#43
+Display Overlays#42
+[Gesture Monitor] swipe-up#73
+Input Consumer recents_animation_input_consumer#89
+WindowToken{17af09c type=2024 android.os.BinderProxy@9b74a35}#54
+b502aa5 ScreenDecorOverlay#55
+WindowToken{9d5a01b type=2024 android.os.BinderProxy@53b9a2a}#56
+69f95b8 ScreenDecorOverlayBottom#57

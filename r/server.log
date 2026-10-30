@@ -1,0 +1,40 @@
+Home Stream dev: "CI" listening on :8421, library /home/runner/work/homestream/homestream/ci-lib, data /tmp/hsdata
+discovery: listening on udp/8421
+music: scan done in 1ms: 0 tracks, 0 albums, 0 artists
+scan: done in 2ms: 2 movies, 0 series, 0 episodes
+GET /api/info 200 0s
+GET /api/info 200 0s
+POST /api/profiles 201 0s
+scan: done in 87ms: 2 movies, 0 series, 0 episodes
+GET /api/info 200 0s
+GET /api/profiles 200 0s
+GET /api/series?sort=added&order=desc 200 0s
+GET /api/movies?sort=added&order=desc 200 1ms
+GET /api/home 200 2ms
+GET /api/browse?path 200 0s
+GET /api/settings 200 0s
+GET /api/genres 200 0s
+GET /api/genres 200 0s
+GET /api/search?q=Layertest 200 0s
+GET /api/items/70f8f8313884b86f 200 0s
+GET /api/items/70f8f8313884b86f/related 200 0s
+stream: Layertest (127.0.0.1:45816)
+GET /api/subtitles/e73b87dd8ad0a32a 200 0s
+GET /api/home 200 2ms
+GET /api/series?sort=added&order=desc 200 0s
+GET /api/browse?path 200 0s
+GET /api/movies?sort=added&order=desc 200 0s
+GET /api/genres 200 0s
+GET /api/genres 200 0s
+GET /api/search?q=Hidepth 200 0s
+GET /api/items/a8f82cd8a7f74d1a 200 0s
+GET /api/items/a8f82cd8a7f74d1a/related 200 0s
+stream: Hidepth (127.0.0.1:38692)
+GET /api/items/a8f82cd8a7f74d1a/related 200 0s
+stream: Hidepth (127.0.0.1:52606)
+GET /api/home 200 2ms
+GET /api/series?sort=added&order=desc 200 0s
+GET /api/browse?path 200 0s
+GET /api/movies?sort=added&order=desc 200 0s
+GET /api/genres 200 0s
+GET /api/genres 200 0s
