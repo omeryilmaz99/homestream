@@ -1,7 +1,7 @@
 ; Inno Setup script for Home Dosya (Windows)
 #define AppName "Home Dosya"
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.0.1"
 #endif
 
 [Setup]

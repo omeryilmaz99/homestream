@@ -234,14 +234,16 @@ class _FilePaneState extends State<FilePane> {
     return ListenableBuilder(
       listenable: c,
       builder: (context, _) {
-        Widget body = _body();
+        // `list` is final: the builder below runs later, after `body` has
+        // been reassigned, so it must not refer to `body` itself.
+        final list = _body();
         // files dragged from the other pane
-        body = DragTarget<DragPayload>(
+        Widget body = DragTarget<DragPayload>(
           onWillAcceptWithDetails: (d) => d.data.from != c,
           onAcceptWithDetails: (d) => widget.host.send(d.data.from, d.data.items, intoDir: c.path),
           builder: (context, cand, _) => Stack(
             children: [
-              body,
+              Positioned.fill(child: list),
               if (cand.isNotEmpty || _dropHover) _dropOverlay(),
             ],
           ),
@@ -759,17 +761,18 @@ class _FilePaneState extends State<FilePane> {
       ),
     );
     if (e.isDir) {
+      final tile = w; // the builder runs later, after `w` is reassigned
       w = DragTarget<DragPayload>(
         onWillAcceptWithDetails: (d) => d.data.from != c,
         onAcceptWithDetails: (d) => widget.host.send(d.data.from, d.data.items, intoDir: e.path),
         builder: (_, cand, _) => cand.isEmpty
-            ? w
+            ? tile
             : DecoratedBox(
                 decoration: BoxDecoration(
                   border: Border.all(color: C.teal, width: 2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: w,
+                child: tile,
               ),
       );
     }
