@@ -61,7 +61,7 @@ jobs:
         if: always()
         run: |
           git config user.name ci; git config user.email ci@example.com
-          cp server.log emu-out/ 2>/dev/null || true
+          mkdir -p emu-out; cp server.log emu-out/ 2>/dev/null || true
           git checkout --orphan emu-layer-results
           git rm -rf --cached . >/dev/null
           mkdir -p r; cp -r emu-out/* r/ 2>/dev/null || true

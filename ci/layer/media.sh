@@ -16,5 +16,5 @@ for i in range(40):
     lines.append(f"{i+1}\n{f(s)} --> {f(e)}\nAltyazı satırı {i+1} — Çok güzel ğüşiöç\n")
 open("ci-lib/Filmler/Layertest.2020.tr.srt", "w").write("\n".join(lines))
 PY
-ffprobe -v error -show_entries stream=codec_name,profile,pix_fmt,width,height -of compact ci-lib/Filmler/*.mkv
+for f in ci-lib/Filmler/*.mkv; do ffprobe -v error -show_entries stream=codec_name,profile,pix_fmt,width,height -of compact "$f"; done
 ls -la ci-lib/Filmler
