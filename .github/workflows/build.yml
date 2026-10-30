@@ -132,6 +132,7 @@ jobs:
         run: |
           flutter pub get
           flutter analyze
+          flutter test
       - name: Build APK
         working-directory: files
         run: |

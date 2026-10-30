@@ -9,7 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'connect_screen.dart';
 
-const appVersion = '1.0.0';
+const appVersion = '1.0.1';
 
 /// Device settings (this computer / phone only).
 class SettingsScreen extends StatefulWidget {
