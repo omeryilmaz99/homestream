@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/platform.dart';
+import '../../core/prefs.dart';
+import '../../player/player_screen.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
@@ -10,6 +12,7 @@ import '../theme.dart';
 import 'browse_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
+import 'play_launcher.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/profile_avatar.dart';
@@ -22,15 +25,44 @@ class Shell extends StatefulWidget {
 }
 
 class ShellState extends State<Shell> {
+  static const _testLog = bool.fromEnvironment('HS_TEST_LOG');
   int _index = 0;
   final _searchKey = GlobalKey<SearchScreenState>();
   final _browseKey = GlobalKey<BrowseScreenState>();
   final homeNavFocus = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    _testPlay();
+  }
+
+  @override
   void dispose() {
     homeNavFocus.dispose();
     super.dispose();
+  }
+
+  /// Emulator test only (HS_TEST_PLAY="title|title"): plays the titles one
+  /// after another, each when the previous player has been closed.
+  Future<void> _testPlay() async {
+    const titles = String.fromEnvironment('HS_TEST_PLAY');
+    if (titles.isEmpty) return;
+    final state = context.read<AppState>();
+    state.prefs.playerMode = PlayerMode.internal;
+    for (final q in titles.split('|')) {
+      await Future.delayed(const Duration(seconds: 4));
+      final api = state.api;
+      if (!mounted || api == null) return;
+      try {
+        final it = (await api.search(q)).movies.firstOrNull;
+        debugPrint('HSTEST play "$q": ${it?.displayTitle}');
+        if (it != null && mounted) await playItem(context, it);
+      } catch (e) {
+        debugPrint('HSTEST error $e');
+      }
+    }
+    debugPrint('HSTEST done');
   }
 
   static const _tabs = ['Ana Sayfa', 'Filmler', 'Diziler', 'Klasörler'];
@@ -57,49 +89,63 @@ class ShellState extends State<Shell> {
     final compact = isCompact(context);
     // Back (phone, TV remote): folders go up one level, other pages return
     // to the home tab; only the home tab leaves the app
-    return PopScope(
-      canPop: _index == 0,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_index == 3 && _browseKey.currentState?.goUp() == true) return;
-        go(0);
-        // the page that had focus is hidden now; with a remote, continue
-        // from the "Ana Sayfa" tab
-        if (AppPlatform.isTv) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => homeNavFocus.requestFocus(),
-          );
-        }
-      },
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
-              go(4),
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlayerScreen.justClosed,
+      builder: (context, justClosed, child) => PopScope(
+        // a "back" right after the player closed is the same press
+        canPop: _index == 0 && !justClosed,
+        onPopInvokedWithResult: (didPop, _) {
+          if (_testLog) debugPrint('HSTEST shell back didPop=$didPop');
+          if (didPop || (_index == 0 && justClosed)) return;
+          _back();
         },
-        child: Scaffold(
-          extendBody: true,
-          bottomNavigationBar: compact ? _BottomNav(shell: this) : null,
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: IndexedStack(
-                  index: _index,
-                  children: [
-                    for (var i = 0; i < pages.length; i++)
-                      TickerMode(enabled: i == _index, child: pages[i]),
-                  ],
-                ),
+        child: child!,
+      ),
+      child: _body(context, pages, compact),
+    );
+  }
+
+  void _back() {
+    if (_index == 3 && _browseKey.currentState?.goUp() == true) return;
+    go(0);
+    // the page that had focus is hidden now; with a remote, continue
+    // from the "Ana Sayfa" tab
+    if (AppPlatform.isTv) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => homeNavFocus.requestFocus(),
+      );
+    }
+  }
+
+  Widget _body(BuildContext context, List<Widget> pages, bool compact) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+            go(4),
+      },
+      child: Scaffold(
+        extendBody: true,
+        bottomNavigationBar: compact ? _BottomNav(shell: this) : null,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: IndexedStack(
+                index: _index,
+                children: [
+                  for (var i = 0; i < pages.length; i++)
+                    TickerMode(enabled: i == _index, child: pages[i]),
+                ],
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                child: compact
-                    ? _CompactTopBar(shell: this)
-                    : _TopBar(shell: this),
-              ),
-            ],
-          ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: compact
+                  ? _CompactTopBar(shell: this)
+                  : _TopBar(shell: this),
+            ),
+          ],
         ),
       ),
     );

@@ -219,15 +219,11 @@ Future<void> playItem(
     return;
   }
 
-  await Navigator.of(context, rootNavigator: true).push(
-    PageRouteBuilder(
-      opaque: true,
-      transitionDuration: const Duration(milliseconds: 350),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, _, _) => PlayerScreen(item: it, startAt: start),
-      transitionsBuilder: (_, anim, _, child) =>
-          FadeTransition(opacity: anim, child: child),
-    ),
+  await PlayerScreen.waitForPlayer(
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<Object?>(PlayerScreen.route(it, startAt: start)),
   );
   state.bumpData();
 }

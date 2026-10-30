@@ -18,6 +18,7 @@ import '../state/app_state.dart';
 import '../ui/theme.dart';
 import 'end_screen.dart';
 import 'player_controls.dart';
+import 'video_layer.dart';
 
 /// Full screen video player built on libmpv (media_kit).
 ///
@@ -27,19 +28,106 @@ import 'player_controls.dart';
 class PlayerScreen extends StatefulWidget {
   final MediaItem item;
   final double startAt;
-  const PlayerScreen({super.key, required this.item, this.startAt = 0});
+
+  /// Always draw the video as a Flutter texture, never on the TV video layer
+  /// (used after the layer couldn't show a file).
+  final bool texture;
+  const PlayerScreen({
+    super.key,
+    required this.item,
+    this.startAt = 0,
+    this.texture = false,
+  });
+
+  /// The full screen player route. If the player replaces itself (to change
+  /// how the video is drawn), the route's result is the new route's
+  /// `popped` future, so callers can wait for the end of playback with
+  /// [waitForPlayer].
+  static Route<Object?> route(
+    MediaItem item, {
+    double startAt = 0,
+    bool texture = false,
+  }) => PageRouteBuilder<Object?>(
+    opaque: true,
+    transitionDuration: const Duration(milliseconds: 350),
+    reverseTransitionDuration: const Duration(milliseconds: 250),
+    pageBuilder: (_, _, _) =>
+        PlayerScreen(item: item, startAt: startAt, texture: texture),
+    transitionsBuilder: (_, anim, _, child) =>
+        FadeTransition(opacity: anim, child: child),
+  );
+
+  /// Waits until the player [route] (and any player that replaced it) is gone.
+  static Future<void> waitForPlayer(Future<Object?> pushed) async {
+    Object? r = await pushed;
+    while (r is Future) {
+      r = await r;
+    }
+  }
+
+  /// True for a moment after a player closed. A "back" from Android that
+  /// arrives then belongs to the press that closed the player, so the page
+  /// under it must not use it to leave the app.
+  static final ValueNotifier<bool> justClosed = ValueNotifier(false);
+  static Timer? _justClosedTimer;
+
+  static void _markClosed() {
+    justClosed.value = true;
+    _justClosedTimer?.cancel();
+    _justClosedTimer = Timer(
+      const Duration(milliseconds: 1200),
+      () => justClosed.value = false,
+    );
+  }
+
+  /// Android turns the release of the remote's back key into "back" for the
+  /// app when the app didn't use the release. The player acts on the press;
+  /// when that press closed it, the release would reach the page under it
+  /// (and leave the app from the home page), so it is swallowed here.
+  static bool _eatBackRelease = false;
+  static bool _backHandlerAdded = false;
+
+  static bool _isBack(LogicalKeyboardKey k) =>
+      k == LogicalKeyboardKey.goBack || k == LogicalKeyboardKey.escape;
+
+  static bool _onHardwareKey(KeyEvent e) {
+    if (!_isBack(e.logicalKey)) return false;
+    if (e is KeyDownEvent) {
+      _eatBackRelease = false;
+      return false;
+    }
+    if (!_eatBackRelease) return false;
+    if (e is KeyUpEvent) _eatBackRelease = false;
+    if (PlayerScreenState._testLog) debugPrint('LAYER swallowed back release');
+    return true;
+  }
 
   @override
   State<PlayerScreen> createState() => PlayerScreenState();
 }
 
 class PlayerScreenState extends State<PlayerScreen> with WindowListener {
+  /// Emulator test only: print what the player does.
+  static const _testLog = bool.fromEnvironment('HS_TEST_LOG');
   late final AppState app = context.read<AppState>();
   late final Prefs prefs = app.prefs;
   late final ApiClient api = app.api!;
 
   late final Player player;
-  late final VideoController controller;
+
+  /// The Flutter texture the video is drawn into (null on the TV video layer).
+  VideoController? controller;
+
+  /// Android TV: the video is shown by the TV box on its own video layer
+  /// under the app (see VideoLayer), instead of a Flutter texture.
+  late final bool layer = !widget.texture && _layerFor(widget.item);
+  int _layerToken = 0;
+  int _attachedWid = 0;
+  Future<void> _layerOps = Future.value();
+  bool _replacing = false;
+
+  /// Subtitle size in percent; the video layer draws subtitles in Flutter.
+  late final ValueNotifier<int> subScale = ValueNotifier(prefs.subtitleScale);
 
   late MediaItem item = widget.item;
   final ValueNotifier<Related?> related = ValueNotifier(null);
@@ -70,21 +158,40 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   @override
   void initState() {
     super.initState();
+    if (!PlayerScreen._backHandlerAdded) {
+      PlayerScreen._backHandlerAdded = true;
+      HardwareKeyboard.instance.addHandler(PlayerScreen._onHardwareKey);
+    }
     player = Player(
       configuration: PlayerConfiguration(
         title: 'Home Stream',
         libass: true,
         bufferSize: (AppPlatform.isAndroid ? 64 : 256) * 1024 * 1024,
-        logLevel: MPVLogLevel.warn,
+        logLevel: _testLog ? MPVLogLevel.v : MPVLogLevel.warn,
       ),
     );
-    controller = VideoController(
-      player,
-      configuration: VideoControllerConfiguration(
-        enableHardwareAcceleration: true,
-        hwdec: prefs.hardwareDecoding ? 'auto-safe' : 'no',
-      ),
-    );
+    if (_testLog) {
+      final keep = RegExp(
+        r'hwdec|hardware|mediacodec|Using|codec|vo/|wid|error|fatal|Video|surface',
+        caseSensitive: false,
+      );
+      _subs.add(
+        player.stream.log.listen((l) {
+          final line = '${l.prefix}/${l.level}: ${l.text.trim()}';
+          if (keep.hasMatch(line)) debugPrint('MPV $line');
+        }),
+      );
+      debugPrint('LAYER player for ${widget.item.displayTitle}: layer=$layer');
+    }
+    if (!layer) {
+      controller = VideoController(
+        player,
+        configuration: VideoControllerConfiguration(
+          enableHardwareAcceleration: true,
+          hwdec: prefs.hardwareDecoding ? _hwdec : 'no',
+        ),
+      );
+    }
     _subs.add(player.stream.completed.listen(_onCompleted));
     _subs.add(player.stream.error.listen(_onError));
     _subs.add(player.stream.tracks.listen((_) => _maybeApplyTracks()));
@@ -168,10 +275,14 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       // mpv's own default keeps MPEG-4 in software, which is cheap for these
       // SD files, so do the same (other codecs stay hardware decoded).
       try {
-        await controller.platform.future.timeout(const Duration(seconds: 5));
+        await controller?.platform.future.timeout(const Duration(seconds: 5));
       } catch (_) {}
       await set('hwdec-codecs', 'h264,hevc,mpeg2video,vp8,vp9,av1');
+      // media_kit turns on mpv's disk cache, which fails on Android ("Failed
+      // to create file cache") and isn't wanted on a TV box's small storage
+      await set('cache-on-disk', 'no');
     }
+    if (layer) await _setUpLayer();
     // Let mpv choose sensible defaults; we apply language preferences ourselves.
     await set('sid', 'no');
     await player.setVolume(prefs.volume.clamp(0, 150));
@@ -213,21 +324,193 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
           await p.setProperty('sub-delay', '0');
         } catch (_) {}
       }
+      if (layer) _checkLayer(token);
     } catch (e) {
       if (token == _openToken) error.value = 'Video açılamadı: $e';
     }
     _showControls();
   }
 
+  // ------------------------------------------------------------ video layer
+
+  /// Hardware decoders for the texture renderer. On Android, mpv's
+  /// "auto-safe" means MediaCodec in copy-back mode: every decoded frame is
+  /// copied to the CPU and uploaded to the GPU again, too slow for 1080p on
+  /// TV boxes. "mediacodec" hands the frames to the GPU directly; mpv falls
+  /// back to the copy mode (and then software) if that doesn't work.
+  String get _hwdec =>
+      AppPlatform.isAndroid ? 'mediacodec,mediacodec-copy' : 'auto-safe';
+
+  static bool _isAvi(MediaFile? f) =>
+      f != null &&
+      (f.container.toLowerCase() == 'avi' ||
+          f.path.toLowerCase().endsWith('.avi'));
+
+  /// Whether [it] can be shown on the TV video layer: the layer needs the
+  /// box's hardware decoder (it renders straight into the layer).
+  bool _layerFor(MediaItem it) {
+    if (!AppPlatform.isTv || !VideoLayer.available) return false;
+    if (!prefs.tvVideoLayer || !prefs.hardwareDecoding) return false;
+    final f = it.file;
+    if (f == null) return true;
+    if (_isAvi(f)) return false; // decoded in software (see _applyFileOptions)
+    const hw = {'h264', 'hevc', 'vp9', 'av1', 'mpeg2video', 'vp8'};
+    final codec = f.videoCodec.toLowerCase();
+    return codec.isEmpty || hw.contains(codec);
+  }
+
+  Future<void> _setLayerProp(String k, String v) async {
+    final p = player.platform;
+    if (p is! NativePlayer) return;
+    try {
+      await p.setProperty(k, v);
+    } catch (_) {}
+  }
+
+  Future<void> _setUpLayer() async {
+    // mpv hands the hardware decoder the layer's surface (vo=mediacodec_embed)
+    await _setLayerProp('vo', 'null');
+    await _setLayerProp('hwdec', 'mediacodec');
+    _subs.add(
+      player.stream.videoParams.listen((v) {
+        var w = v.dw ?? 0, h = v.dh ?? 0;
+        if (v.rotate == 90 || v.rotate == 270) (w, h) = (h, w);
+        if (w > 0 && h > 0) VideoLayer.setVideoSize(w, h);
+      }),
+    );
+    VideoLayer.surface.addListener(_onLayerSurface);
+    _layerToken = await VideoLayer.show();
+    if (VideoLayer.surface.value == 0) {
+      // wait for the surface, so the decoder starts with it
+      final ready = Completer<void>();
+      void check() {
+        if (VideoLayer.surface.value != 0 && !ready.isCompleted) {
+          ready.complete();
+        }
+      }
+
+      VideoLayer.surface.addListener(check);
+      await ready.future.timeout(const Duration(seconds: 3), onTimeout: () {});
+      VideoLayer.surface.removeListener(check);
+    }
+    _onLayerSurface();
+    await _layerOps;
+  }
+
+  void _onLayerSurface() {
+    final wid = VideoLayer.surface.value;
+    _layerOps = _layerOps.then((_) => _attachLayer(wid));
+  }
+
+  /// Points mpv at the layer's surface ([wid]), or detaches it (0) when the
+  /// surface goes away (app in the background, player closing).
+  Future<void> _attachLayer(int wid) async {
+    if (wid == _attachedWid || (_closing && wid != 0)) return;
+    _attachedWid = wid;
+    if (_testLog) debugPrint('LAYER attach wid=$wid');
+    // the order matters: mediacodec_embed must never start without a surface
+    await _setLayerProp('vo', 'null');
+    await _setLayerProp('wid', '$wid');
+    if (wid == 0) {
+      await _setLayerProp('vid', 'no');
+      return;
+    }
+    await _setLayerProp('vo', 'mediacodec_embed');
+    // reopen the video decoder on the new surface
+    await _setLayerProp('vid', 'auto');
+    if (player.state.duration > Duration.zero) {
+      await player.seek(player.state.position);
+    }
+  }
+
+  Future<void> _detachLayer() async {
+    if (!layer) return;
+    VideoLayer.surface.removeListener(_onLayerSurface);
+    _layerOps = _layerOps.then((_) => _attachLayer(0));
+    await _layerOps;
+  }
+
+  /// The layer only works with the box's hardware decoder. If it can't
+  /// decode this file (e.g. 10-bit H.264), mpv drops the video and only the
+  /// sound plays: reopen the file with the texture renderer, which can
+  /// decode in software.
+  Future<void> _checkLayer(int token) async {
+    bool stale() => !mounted || token != _openToken || _replacing || _closing;
+    // wait until the file plays (or has been loaded for a while)
+    Duration? from;
+    var waited = 0;
+    while (true) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (stale()) return;
+      if (_attachedWid == 0 || player.state.duration == Duration.zero) {
+        continue; // no surface (in the background) or still loading
+      }
+      from ??= player.state.position;
+      waited += 500;
+      final moved = player.state.position - from;
+      if (moved >= const Duration(milliseconds: 1500) || waited >= 8000) break;
+    }
+    // check twice, a decoder may still be starting
+    for (var i = 0; i < 2; i++) {
+      if (await _layerShowsVideo()) return;
+      await Future.delayed(const Duration(seconds: 2));
+      if (stale()) return;
+    }
+    _replace(item, player.state.position.inMilliseconds / 1000);
+  }
+
+  Future<bool> _layerShowsVideo() async {
+    final p = player.platform;
+    if (p is! NativePlayer || _attachedWid == 0) return true;
+    final hasVideo = player.state.tracks.video.any(
+      (t) => t.id != 'auto' && t.id != 'no',
+    );
+    if (!hasVideo) return true; // a sound-only file
+    var hw = '', vid = '';
+    try {
+      hw = await p.getProperty('hwdec-current');
+    } catch (_) {}
+    try {
+      vid = await p.getProperty('current-tracks/video/id');
+    } catch (_) {}
+    if (_testLog) debugPrint('LAYER check hwdec=$hw vid=$vid');
+    return hw.startsWith('mediacodec') && vid.isNotEmpty;
+  }
+
+  /// Reopens [it] in a new player that draws the video the other way.
+  Future<void> _replace(MediaItem it, double startAt) async {
+    if (_replacing || _closing || !mounted) return;
+    _replacing = true;
+    if (_testLog) debugPrint('LAYER replace (layer=$layer) at $startAt');
+    await _reportProgress(force: true);
+    await _detachLayer();
+    if (!mounted) return;
+    final next = PlayerScreen.route(it, startAt: startAt, texture: layer);
+    Navigator.of(context).pushReplacement(next, result: next.popped);
+  }
+
+  static bool _bitmapSubtitle(SubtitleTrack t) {
+    final c = (t.codec ?? '').toLowerCase();
+    return c.contains('pgs') ||
+        c.contains('dvd_sub') ||
+        c.contains('dvb_sub') ||
+        c.contains('vobsub') ||
+        c == 'xsub';
+  }
+
+  /// The video layer draws subtitles in Flutter from their text; picture
+  /// subtitles (Blu-ray PGS, DVD) only show with mpv's own renderer.
+  bool _needsTextureFor(SubtitleTrack t) {
+    if (!layer || !_bitmapSubtitle(t)) return false;
+    _replace(item, player.state.position.inMilliseconds / 1000);
+    return true;
+  }
+
   /// Per-file mpv options for AVI files.
   Future<void> _applyFileOptions(MediaItem it) async {
     final p = player.platform;
     if (p is! NativePlayer) return;
-    final f = it.file;
-    final avi =
-        f != null &&
-        (f.container.toLowerCase() == 'avi' ||
-            f.path.toLowerCase().endsWith('.avi'));
+    final avi = _isAvi(it.file);
     Future<void> set(String k, String v) async {
       try {
         await p.setProperty(k, v);
@@ -244,8 +527,8 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     // AVI has no presentation timestamps for B-frames. Android's MediaCodec
     // decoders need them (FFmpeg stamps such frames 0), so also H.264 in AVI
     // would stutter there; AVI files are SD, decode them in software.
-    if (AppPlatform.isAndroid && prefs.hardwareDecoding) {
-      await set('hwdec', avi ? 'no' : 'auto-safe');
+    if (AppPlatform.isAndroid && prefs.hardwareDecoding && !layer) {
+      await set('hwdec', avi ? 'no' : _hwdec);
     }
   }
 
@@ -358,6 +641,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       }
     }
     await player.setSubtitleTrack(pick ?? SubtitleTrack.no());
+    if (pick != null) _needsTextureFor(pick);
   }
 
   void _onCompleted(bool done) {
@@ -410,6 +694,12 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       }
       final full = await api.item(t.id);
       final start = startAt ?? (full.inProgress ? full.userData.position : 0.0);
+      // e.g. an AVI episode after an MKV one on the TV video layer
+      final wantLayer = !widget.texture && _layerFor(full);
+      if (wantLayer != layer) {
+        await _replace(full, start);
+        return;
+      }
       await _open(full, start);
     } catch (e) {
       flashOsd('Açılamadı: $e');
@@ -430,7 +720,10 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   Future<void> close() async {
     if (_closing) return;
     _closing = true;
+    if (_testLog) debugPrint('LAYER close');
+    PlayerScreen._markClosed();
     await _reportProgress(force: true);
+    await _detachLayer();
     if (AppPlatform.isDesktop)
       try {
         if (!_wasFullscreen && await windowManager.isFullScreen()) {
@@ -438,6 +731,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
         }
         windowManager.setTitle('Home Stream');
       } catch (_) {}
+    PlayerScreen._markClosed();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -620,6 +914,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
 
   Future<void> setSubScale(int percent) async {
     prefs.subtitleScale = percent;
+    subScale.value = percent;
     final p = player.platform;
     if (p is NativePlayer)
       await p.setProperty('sub-scale', (percent / 100).toStringAsFixed(2));
@@ -651,6 +946,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   Future<void> selectSubtitle(SubtitleTrack t) async {
     await player.setSubtitleTrack(t);
     _rememberSubtitle(t.id == 'no' ? null : t);
+    _needsTextureFor(t);
   }
 
   void _rememberSubtitle(SubtitleTrack? t) {
@@ -736,7 +1032,12 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     if (k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack) {
       // one step per press (repeats and the key release are swallowed, so
       // Android doesn't also treat the press as "leave the screen")
-      if (e is KeyDownEvent) handleBack();
+      if (_testLog) debugPrint('LAYER key ${e.runtimeType} back');
+      if (e is KeyDownEvent) {
+        handleBack();
+        // the release may come after the player is gone
+        if (_closing) PlayerScreen._eatBackRelease = true;
+      }
       return KeyEventResult.handled;
     }
     if (e is! KeyDownEvent && e is! KeyRepeatEvent)
@@ -868,7 +1169,12 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
           windowManager.setTitle('Home Stream');
         } catch (_) {}
     }
-    player.dispose();
+    VideoLayer.surface.removeListener(_onLayerSurface);
+    final token = _layerToken;
+    // mpv lets go of the layer's surface first, then the layer goes
+    final disposed = player.dispose();
+    if (layer) disposed.whenComplete(() => VideoLayer.hide(token));
+    subScale.dispose();
     _focus.dispose();
     playFocus.dispose();
     super.dispose();
@@ -880,10 +1186,12 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       canPop: _closing,
       // system back (when the key didn't reach the player first)
       onPopInvokedWithResult: (didPop, _) {
+        if (_testLog) debugPrint('LAYER system back didPop=$didPop');
         if (!didPop) handleBack();
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
+        // on the TV video layer the video is under the app: keep it visible
+        backgroundColor: layer ? Colors.transparent : Colors.black,
         body: Focus(
           focusNode: _focus,
           autofocus: true,
@@ -910,17 +1218,20 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
                       ? (d) => _doubleTapX = d.localPosition.dx
                       : null,
                   onDoubleTap: AppPlatform.isPhone ? _onDoubleTap : null,
-                  child: RepaintBoundary(
-                    child: Video(
-                      controller: controller,
-                      controls: NoVideoControls,
-                      fill: Colors.black,
-                      filterQuality: FilterQuality.medium,
-                      subtitleViewConfiguration:
-                          const SubtitleViewConfiguration(visible: false),
-                    ),
-                  ),
+                  child: layer
+                      ? const SizedBox.expand()
+                      : RepaintBoundary(
+                          child: Video(
+                            controller: controller!,
+                            controls: NoVideoControls,
+                            fill: Colors.black,
+                            filterQuality: FilterQuality.medium,
+                            subtitleViewConfiguration:
+                                const SubtitleViewConfiguration(visible: false),
+                          ),
+                        ),
                 ),
+                if (layer) LayerSubtitles(state: this),
                 // buffering spinner
                 StreamBuilder<bool>(
                   stream: player.stream.buffering,
@@ -1061,6 +1372,72 @@ class _ErrorOverlay extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Subtitles on the TV video layer, where mpv can't draw them: the current
+/// subtitle text in white with a dark outline, like mpv's own style.
+class LayerSubtitles extends StatelessWidget {
+  final PlayerScreenState state;
+  const LayerSubtitles({super.key, required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ValueListenableBuilder<int>(
+        valueListenable: state.subScale,
+        builder: (context, scale, _) => StreamBuilder<List<String>>(
+          stream: state.player.stream.subtitle,
+          initialData: state.player.state.subtitle,
+          builder: (context, snap) {
+            final text = (snap.data?.firstOrNull ?? '').trim();
+            if (text.isEmpty) return const SizedBox.shrink();
+            final h = MediaQuery.sizeOf(context).height;
+            // about mpv's default size (55 at 720 lines) at 100 %
+            final size = h * 0.064 * scale / 100;
+            final style = TextStyle(
+              fontSize: size,
+              height: 1.18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            );
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(h * 0.1, 0, h * 0.1, h * 0.055),
+                child: Stack(
+                  children: [
+                    Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      style: style.copyWith(
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = size * 0.14
+                          ..strokeJoin = StrokeJoin.round
+                          ..color = Colors.black,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            offset: Offset(0, size * 0.05),
+                            blurRadius: size * 0.08,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      style: style.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

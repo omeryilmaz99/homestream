@@ -10,6 +10,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'core/platform.dart';
 import 'core/prefs.dart';
+import 'player/video_layer.dart';
 import 'state/app_state.dart';
 import 'ui/root.dart';
 import 'ui/theme.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await AppPlatform.init();
+  await VideoLayer.init();
   if (AppPlatform.isTv) {
     // remote control: always show where the focus is
     FocusManager.instance.highlightStrategy =

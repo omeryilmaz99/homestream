@@ -1,0 +1,70 @@
+name: TV video layer emulator test
+
+on:
+  push:
+    branches: ['ci/emu-layer']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Test media and server
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          bash ci/layer/media.sh
+          cd server && go build -o /tmp/hs . && cd ..
+          (nohup /tmp/hs --port 8421 --data /tmp/hsdata --library $PWD/ci-lib --name CI > server.log 2>&1 &)
+          for i in $(seq 1 60); do sleep 2; curl -s http://127.0.0.1:8421/api/info | grep -q '"movieCount":2' && break; done
+          curl -s http://127.0.0.1:8421/api/info; echo
+          curl -s -X POST -H 'Content-Type: application/json' -d '{"name":"Test","color":"#2a9df4","avatar":"🙂"}' http://127.0.0.1:8421/api/profiles; echo
+      - name: Build APK
+        working-directory: client
+        run: |
+          flutter pub get
+          flutter build apk --release --target-platform android-x64 \
+            --dart-define=HS_TEST_SERVER=http://10.0.2.2:8421 \
+            --dart-define=HS_TEST_SCREEN=home \
+            --dart-define='HS_TEST_PLAY=Layertest|Hidepth' \
+            --dart-define=HS_TEST_LOG=true
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ci/layer/run.sh client/build/app/outputs/flutter-apk/app-release.apk
+      - name: Publish results
+        if: always()
+        run: |
+          git config user.name ci; git config user.email ci@example.com
+          mkdir -p emu-out; cp server.log emu-out/ 2>/dev/null || true
+          git checkout --orphan emu-layer-results
+          git rm -rf --cached . >/dev/null
+          mkdir -p r; cp -r emu-out/* r/ 2>/dev/null || true
+          git add -f r
+          git commit -m "layer test results $GITHUB_RUN_ID" >/dev/null
+          git push -f origin HEAD:refs/heads/ci/emu-layer-results

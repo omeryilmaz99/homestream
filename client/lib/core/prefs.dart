@@ -94,6 +94,11 @@ class Prefs {
   bool get hardwareDecoding => _p.getBool('hwdec') ?? true;
   set hardwareDecoding(bool v) => _p.setBool('hwdec', v);
 
+  /// Android TV: show videos on the TV box's own video layer (VideoLayer).
+  /// Read by the Android side at start, so a change applies at the next start.
+  bool get tvVideoLayer => _p.getBool('tvVideoLayer') ?? true;
+  set tvVideoLayer(bool v) => _p.setBool('tvVideoLayer', v);
+
   /// 'tur', 'eng' or 'off'
   String get subtitleLanguage => _p.getString('subLang') ?? 'tur';
   set subtitleLanguage(String v) => _p.setString('subLang', v);
