@@ -314,8 +314,31 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     final subs = all.subtitle
         .where((t) => t.id != 'auto' && t.id != 'no')
         .toList();
+    bool forcedTrack(SubtitleTrack t) =>
+        (t.title ?? '').toLowerCase().contains('forced');
     SubtitleTrack? pick;
-    if (sPref != 'off' && subs.isNotEmpty) {
+    final choice = prefs.subtitleChoice;
+    if (choice == 'off') {
+      // turned off in the player on this device: stays off until turned on
+      pick = null;
+    } else if (choice.startsWith('on:') && subs.isNotEmpty) {
+      // turned on in the player on this device: keep showing subtitles,
+      // preferably in the same language as last time
+      final lang = choice.substring(3);
+      final full = subs.where((t) => !forcedTrack(t)).toList();
+      final pool = full.isNotEmpty ? full : subs;
+      pick =
+          (lang.isNotEmpty
+              ? pool.where((t) => languageMatches(t.language, lang)).firstOrNull
+              : null) ??
+          (sPref != 'off'
+              ? pool
+                    .where((t) => languageMatches(t.language, sPref))
+                    .firstOrNull
+              : null) ??
+          pool.where((t) => t.isDefault == true).firstOrNull ??
+          pool.first;
+    } else if (sPref != 'off' && subs.isNotEmpty) {
       final audioIsPref = languageMatches(currentAudio.language, sPref);
       bool forced(SubtitleTrack t) =>
           (t.title ?? '').toLowerCase().contains('forced');
@@ -488,6 +511,45 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     }
   }
 
+  /// Back (remote, phone, Esc), one step at a time: close the menu or leave
+  /// the focused button for the play button, then hide the overlay so only
+  /// the video is left, then leave the player.
+  void handleBack() {
+    if (ended.value) {
+      close();
+      return;
+    }
+    if (menuOpen.value) {
+      menuOpen.value = false;
+      if (AppPlatform.isTv) focusControls();
+      return;
+    }
+    if (AppPlatform.isTv || AppPlatform.isPhone) {
+      if (controlsVisible.value) {
+        final f = FocusManager.instance.primaryFocus;
+        if (AppPlatform.isTv && _controlFocused && f != playFocus) {
+          focusControls();
+          return;
+        }
+        _hideTimer?.cancel();
+        controlsVisible.value = false;
+        _focus.requestFocus();
+        return;
+      }
+      close();
+      return;
+    }
+    // desktop (Esc): leave a focused button, then fullscreen, then the player
+    if (_controlFocused) {
+      _focus.requestFocus();
+      if (player.state.playing) controlsVisible.value = false;
+    } else if (fullscreen.value && !prefs.playerFullscreen) {
+      toggleFullscreen();
+    } else {
+      close();
+    }
+  }
+
   /// Shows the overlay and puts focus on the play button (remote control).
   void focusControls() {
     _showControls();
@@ -579,8 +641,20 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
         'select',
         path.split(RegExp(r'[\\/]')).last,
       ]);
+      prefs.subtitleChoice = 'on:';
       flashOsd('Altyazı yüklendi');
     }
+  }
+
+  /// Selects a subtitle track chosen by the user and remembers the choice
+  /// on this device (on/off and language) for the next videos.
+  Future<void> selectSubtitle(SubtitleTrack t) async {
+    await player.setSubtitleTrack(t);
+    _rememberSubtitle(t.id == 'no' ? null : t);
+  }
+
+  void _rememberSubtitle(SubtitleTrack? t) {
+    prefs.subtitleChoice = t == null ? 'off' : 'on:${t.language ?? ''}';
   }
 
   void cycleSubtitle() {
@@ -597,7 +671,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     final cur = player.state.track.subtitle;
     final i = subs.indexWhere((t) => t.id == cur.id);
     final next = subs[(i + 1) % subs.length];
-    player.setSubtitleTrack(next);
+    selectSubtitle(next);
     flashOsd(
       next.id == 'no' ? 'Altyazı kapalı' : 'Altyazı: ${trackLabel(next)}',
     );
@@ -658,13 +732,17 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent e) {
+    final k = e.logicalKey;
+    if (k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack) {
+      // one step per press (repeats and the key release are swallowed, so
+      // Android doesn't also treat the press as "leave the screen")
+      if (e is KeyDownEvent) handleBack();
+      return KeyEventResult.handled;
+    }
     if (e is! KeyDownEvent && e is! KeyRepeatEvent)
       return KeyEventResult.ignored;
-    final k = e.logicalKey;
     final step = prefs.seekStep;
     final shift = HardwareKeyboard.instance.isShiftPressed;
-    final isBack =
-        k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack;
     final isOk =
         k == LogicalKeyboardKey.select ||
         k == LogicalKeyboardKey.enter ||
@@ -681,17 +759,6 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       if (isArrow || isOk || k == LogicalKeyboardKey.tab) {
         onUserActivity();
         return KeyEventResult.ignored;
-      }
-      if (isBack) {
-        if (menuOpen.value) {
-          menuOpen.value = false;
-        } else if (ended.value) {
-          close();
-        } else {
-          _focus.requestFocus();
-          if (player.state.playing) controlsVisible.value = false;
-        }
-        return KeyEventResult.handled;
       }
     }
     if (ended.value && (isArrow || isOk)) return KeyEventResult.ignored;
@@ -758,15 +825,6 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       final r = (player.state.rate + 0.25).clamp(0.25, 3.0);
       player.setRate(r);
       flashOsd('Hız: ${r}x');
-    } else if (k == LogicalKeyboardKey.escape ||
-        k == LogicalKeyboardKey.goBack) {
-      if (menuOpen.value) {
-        menuOpen.value = false;
-      } else if (fullscreen.value && !prefs.playerFullscreen) {
-        toggleFullscreen();
-      } else {
-        close();
-      }
     } else if (k == LogicalKeyboardKey.backspace) {
       close();
     } else if (k.keyLabel.length == 1 &&
@@ -820,8 +878,9 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _closing,
+      // system back (when the key didn't reach the player first)
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) close();
+        if (!didPop) handleBack();
       },
       child: Scaffold(
         backgroundColor: Colors.black,

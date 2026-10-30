@@ -102,6 +102,11 @@ class Prefs {
   String get audioLanguage => _p.getString('audioLang') ?? 'original';
   set audioLanguage(String v) => _p.setString('audioLang', v);
 
+  /// Last subtitle choice made in the player on this device:
+  /// "" = none yet (use the language preference), "off", or "on:<lang>".
+  String get subtitleChoice => _p.getString('subChoice') ?? '';
+  set subtitleChoice(String v) => _p.setString('subChoice', v);
+
   /// Subtitle scale in percent (100 = mpv default size).
   int get subtitleScale => _p.getInt('subScale') ?? 100;
   set subtitleScale(int v) => _p.setInt('subScale', v);

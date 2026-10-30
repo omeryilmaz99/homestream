@@ -697,13 +697,13 @@ class _TrackMenuState extends State<TrackMenu> {
             option(
               'Kapalı',
               cur.subtitle.id == 'no',
-              () => p.setSubtitleTrack(SubtitleTrack.no()),
+              () => s.selectSubtitle(SubtitleTrack.no()),
             ),
             ...subs.map(
               (t) => option(
                 trackLabel(t),
                 cur.subtitle.id == t.id,
-                () => p.setSubtitleTrack(t),
+                () => s.selectSubtitle(t),
               ),
             ),
             const Divider(color: AppColors.border, height: 18),

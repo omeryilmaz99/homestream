@@ -17,7 +17,7 @@ import '../tv_focus.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.4.1';
+const appVersion = '1.4.2';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
