@@ -30,7 +30,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		"app": "homestream", "id": s.ServerID, "name": s.ServerName(), "version": s.Version,
 		"itemCount":  len(snap.Movies) + len(snap.Series),
 		"movieCount": len(snap.Movies), "seriesCount": len(snap.Series), "episodeCount": len(snap.Episodes),
-		"scanning": st.Running, "music": s.Music != nil,
+		"scanning": st.Running, "music": s.Music != nil, "files": s.Files != nil,
 	})
 }
 

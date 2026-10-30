@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"homestream/internal/files"
 	"homestream/internal/library"
 	"homestream/internal/music"
 	"homestream/internal/store"
@@ -26,6 +27,7 @@ type Server struct {
 	Port        int
 	ServerID    string
 	Music       *music.Library
+	Files       *files.Service  // Home Dosya (file transfer); nil = off
 	Ctx         context.Context // lives as long as the server (background jobs)
 }
 
@@ -82,6 +84,9 @@ func (s *Server) Handler() http.Handler {
 	if s.Music != nil {
 		s.musicRoutes(mux)
 	}
+	if s.Files != nil {
+		s.Files.Register(mux)
+	}
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "Bulunamadı")
 	})
@@ -136,9 +141,9 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 		start := time.Now()
 		h := w.Header()
 		h.Set("Access-Control-Allow-Origin", "*")
-		h.Set("Access-Control-Allow-Headers", "Content-Type, X-Profile, X-Admin-Password, Range, If-None-Match, If-Range")
+		h.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Profile, X-Admin-Password, Range, If-None-Match, If-Range")
 		h.Set("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, OPTIONS")
-		h.Set("Access-Control-Expose-Headers", "Content-Range, Content-Length, Accept-Ranges, ETag")
+		h.Set("Access-Control-Expose-Headers", "Content-Range, Content-Length, Accept-Ranges, ETag, X-File-Size, X-File-Mtime")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -158,7 +163,8 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			quiet := strings.HasPrefix(p, "/api/images/") || strings.HasSuffix(p, "/photo") || strings.HasPrefix(p, "/api/stream/") ||
 				strings.HasPrefix(p, "/api/music/covers/") || strings.HasPrefix(p, "/api/music/stream/") ||
 				p == "/api/music/scan/status" || strings.HasSuffix(p, "/played") ||
-				p == "/api/scan/status" || strings.HasSuffix(p, "/progress") || r.Method == http.MethodHead
+				p == "/api/scan/status" || p == "/api/files/thumb" || p == "/api/files/events" || p == "/api/files/system" ||
+				p == "/api/files/upload" && r.Method == http.MethodGet || strings.HasSuffix(p, "/progress") || r.Method == http.MethodHead
 			if !quiet || sw.status >= 500 {
 				log.Printf("%s %s %d %s", r.Method, r.URL.RequestURI(), sw.status, time.Since(start).Round(time.Millisecond))
 			}

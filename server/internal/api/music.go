@@ -89,6 +89,13 @@ func writeJSONz(w http.ResponseWriter, r *http.Request, status int, v any) {
 	_, _ = w.Write(buf.Bytes())
 }
 
+// CheckAdminPassword reports whether pw is the settings password.
+func CheckAdminPassword(pw string) bool {
+	pw = strings.TrimSpace(pw)
+	sum := sha256.Sum256([]byte(pw))
+	return pw != "" && subtle.ConstantTimeCompare([]byte(hex.EncodeToString(sum[:])), []byte(adminPasswordHash)) == 1
+}
+
 // requireAdmin checks the settings password (header X-Admin-Password).
 func requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	pw := strings.TrimSpace(r.Header.Get("X-Admin-Password"))
