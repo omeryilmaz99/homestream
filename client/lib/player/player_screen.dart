@@ -65,6 +65,43 @@ class PlayerScreen extends StatefulWidget {
     }
   }
 
+  /// True for a moment after a player closed. A "back" from Android that
+  /// arrives then belongs to the press that closed the player, so the page
+  /// under it must not use it to leave the app.
+  static final ValueNotifier<bool> justClosed = ValueNotifier(false);
+  static Timer? _justClosedTimer;
+
+  static void _markClosed() {
+    justClosed.value = true;
+    _justClosedTimer?.cancel();
+    _justClosedTimer = Timer(
+      const Duration(milliseconds: 1200),
+      () => justClosed.value = false,
+    );
+  }
+
+  /// Android turns the release of the remote's back key into "back" for the
+  /// app when the app didn't use the release. The player acts on the press;
+  /// when that press closed it, the release would reach the page under it
+  /// (and leave the app from the home page), so it is swallowed here.
+  static bool _eatBackRelease = false;
+  static bool _backHandlerAdded = false;
+
+  static bool _isBack(LogicalKeyboardKey k) =>
+      k == LogicalKeyboardKey.goBack || k == LogicalKeyboardKey.escape;
+
+  static bool _onHardwareKey(KeyEvent e) {
+    if (!_isBack(e.logicalKey)) return false;
+    if (e is KeyDownEvent) {
+      _eatBackRelease = false;
+      return false;
+    }
+    if (!_eatBackRelease) return false;
+    if (e is KeyUpEvent) _eatBackRelease = false;
+    if (PlayerScreenState._testLog) debugPrint('LAYER swallowed back release');
+    return true;
+  }
+
   @override
   State<PlayerScreen> createState() => PlayerScreenState();
 }
@@ -121,6 +158,10 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   @override
   void initState() {
     super.initState();
+    if (!PlayerScreen._backHandlerAdded) {
+      PlayerScreen._backHandlerAdded = true;
+      HardwareKeyboard.instance.addHandler(PlayerScreen._onHardwareKey);
+    }
     player = Player(
       configuration: PlayerConfiguration(
         title: 'Home Stream',
@@ -679,6 +720,8 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
   Future<void> close() async {
     if (_closing) return;
     _closing = true;
+    if (_testLog) debugPrint('LAYER close');
+    PlayerScreen._markClosed();
     await _reportProgress(force: true);
     await _detachLayer();
     if (AppPlatform.isDesktop)
@@ -688,6 +731,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
         }
         windowManager.setTitle('Home Stream');
       } catch (_) {}
+    PlayerScreen._markClosed();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -988,7 +1032,12 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
     if (k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack) {
       // one step per press (repeats and the key release are swallowed, so
       // Android doesn't also treat the press as "leave the screen")
-      if (e is KeyDownEvent) handleBack();
+      if (_testLog) debugPrint('LAYER key ${e.runtimeType} back');
+      if (e is KeyDownEvent) {
+        handleBack();
+        // the release may come after the player is gone
+        if (_closing) PlayerScreen._eatBackRelease = true;
+      }
       return KeyEventResult.handled;
     }
     if (e is! KeyDownEvent && e is! KeyRepeatEvent)
@@ -1137,6 +1186,7 @@ class PlayerScreenState extends State<PlayerScreen> with WindowListener {
       canPop: _closing,
       // system back (when the key didn't reach the player first)
       onPopInvokedWithResult: (didPop, _) {
+        if (_testLog) debugPrint('LAYER system back didPop=$didPop');
         if (!didPop) handleBack();
       },
       child: Scaffold(

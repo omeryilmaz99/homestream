@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/platform.dart';
 import '../../core/prefs.dart';
+import '../../player/player_screen.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
@@ -24,6 +25,7 @@ class Shell extends StatefulWidget {
 }
 
 class ShellState extends State<Shell> {
+  static const _testLog = bool.fromEnvironment('HS_TEST_LOG');
   int _index = 0;
   final _searchKey = GlobalKey<SearchScreenState>();
   final _browseKey = GlobalKey<BrowseScreenState>();
@@ -87,49 +89,63 @@ class ShellState extends State<Shell> {
     final compact = isCompact(context);
     // Back (phone, TV remote): folders go up one level, other pages return
     // to the home tab; only the home tab leaves the app
-    return PopScope(
-      canPop: _index == 0,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_index == 3 && _browseKey.currentState?.goUp() == true) return;
-        go(0);
-        // the page that had focus is hidden now; with a remote, continue
-        // from the "Ana Sayfa" tab
-        if (AppPlatform.isTv) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => homeNavFocus.requestFocus(),
-          );
-        }
-      },
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
-              go(4),
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlayerScreen.justClosed,
+      builder: (context, justClosed, child) => PopScope(
+        // a "back" right after the player closed is the same press
+        canPop: _index == 0 && !justClosed,
+        onPopInvokedWithResult: (didPop, _) {
+          if (_testLog) debugPrint('HSTEST shell back didPop=$didPop');
+          if (didPop || (_index == 0 && justClosed)) return;
+          _back();
         },
-        child: Scaffold(
-          extendBody: true,
-          bottomNavigationBar: compact ? _BottomNav(shell: this) : null,
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: IndexedStack(
-                  index: _index,
-                  children: [
-                    for (var i = 0; i < pages.length; i++)
-                      TickerMode(enabled: i == _index, child: pages[i]),
-                  ],
-                ),
+        child: child!,
+      ),
+      child: _body(context, pages, compact),
+    );
+  }
+
+  void _back() {
+    if (_index == 3 && _browseKey.currentState?.goUp() == true) return;
+    go(0);
+    // the page that had focus is hidden now; with a remote, continue
+    // from the "Ana Sayfa" tab
+    if (AppPlatform.isTv) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => homeNavFocus.requestFocus(),
+      );
+    }
+  }
+
+  Widget _body(BuildContext context, List<Widget> pages, bool compact) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+            go(4),
+      },
+      child: Scaffold(
+        extendBody: true,
+        bottomNavigationBar: compact ? _BottomNav(shell: this) : null,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: IndexedStack(
+                index: _index,
+                children: [
+                  for (var i = 0; i < pages.length; i++)
+                    TickerMode(enabled: i == _index, child: pages[i]),
+                ],
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                child: compact
-                    ? _CompactTopBar(shell: this)
-                    : _TopBar(shell: this),
-              ),
-            ],
-          ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: compact
+                  ? _CompactTopBar(shell: this)
+                  : _TopBar(shell: this),
+            ),
+          ],
         ),
       ),
     );
