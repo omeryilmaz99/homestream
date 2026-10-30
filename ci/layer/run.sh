@@ -23,13 +23,14 @@ adb shell am start -n com.homestream.home_stream/.MainActivity
 sleep 8
 shot 4-back-from-home
 adb shell dumpsys SurfaceFlinger --list > emu-out/sf-playing.txt
-key 4 2; key 4 3   # back: hide the controls, then leave the player
+# back: leave the player (a second press if the first only hid the controls)
+closes() { adb logcat -d | grep -c "LAYER attach wid=0"; }
+n=$(closes); key 4 3; [ "$(closes)" = "$n" ] && key 4 3
 shot 5-closed
 sleep 30   # the 10-bit film starts and should switch renderers
 shot 6-hidepth
 sleep 8
 shot 7-hidepth-later
-key 4 2; key 4 3
 adb logcat -d > emu-out/logcat.txt
 grep -E "HSTEST|LAYER|MPV|VideoLayer|flutter.*(Exception|Error)|FATAL|AndroidRuntime" emu-out/logcat.txt > emu-out/test.txt
 grep -iE "CCodec|MediaCodec|c2\.|OMX" emu-out/logcat.txt | head -300 > emu-out/codec.txt
