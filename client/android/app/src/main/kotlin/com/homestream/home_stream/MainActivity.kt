@@ -9,12 +9,51 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.TransparencyMode
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    /**
+     * Android TV: the Flutter surface is transparent so the video layer
+     * under it shows through (see VideoLayer). Decided once at start; the
+     * setting can turn it off for the next start.
+     */
+    private val videoLayerOn: Boolean by lazy {
+        if (!isTv()) return@lazy false
+        try {
+            getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
+                .getBoolean("flutter.tvVideoLayer", true)
+        } catch (e: Throwable) {
+            true
+        }
+    }
+
+    override fun getTransparencyMode(): TransparencyMode =
+        if (videoLayerOn) TransparencyMode.transparent else TransparencyMode.opaque
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val videoChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "homestream/video")
+        val layer = VideoLayer(this, videoChannel)
+        videoChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "available" -> result.success(videoLayerOn)
+                "show" -> {
+                    if (videoLayerOn) layer.show()
+                    result.success(videoLayerOn)
+                }
+                "hide" -> {
+                    layer.hide()
+                    result.success(null)
+                }
+                "size" -> {
+                    layer.setVideoSize(call.argument<Int>("w") ?: 0, call.argument<Int>("h") ?: 0)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "homestream/platform")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -42,6 +81,8 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun isTv(): Boolean {
+        // the emulator test starts the app with this extra to get the TV app
+        if (intent?.getBooleanExtra("forceTv", false) == true) return true
         val ui = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
         if (ui.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) return true
         val pm = packageManager

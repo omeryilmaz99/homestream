@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/platform.dart';
+import '../../core/prefs.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
@@ -10,6 +11,7 @@ import '../theme.dart';
 import 'browse_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
+import 'play_launcher.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/profile_avatar.dart';
@@ -28,9 +30,37 @@ class ShellState extends State<Shell> {
   final homeNavFocus = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    _testPlay();
+  }
+
+  @override
   void dispose() {
     homeNavFocus.dispose();
     super.dispose();
+  }
+
+  /// Emulator test only (HS_TEST_PLAY="title|title"): plays the titles one
+  /// after another, each when the previous player has been closed.
+  Future<void> _testPlay() async {
+    const titles = String.fromEnvironment('HS_TEST_PLAY');
+    if (titles.isEmpty) return;
+    final state = context.read<AppState>();
+    state.prefs.playerMode = PlayerMode.internal;
+    for (final q in titles.split('|')) {
+      await Future.delayed(const Duration(seconds: 4));
+      final api = state.api;
+      if (!mounted || api == null) return;
+      try {
+        final it = (await api.search(q)).movies.firstOrNull;
+        debugPrint('HSTEST play "$q": ${it?.displayTitle}');
+        if (it != null && mounted) await playItem(context, it);
+      } catch (e) {
+        debugPrint('HSTEST error $e');
+      }
+    }
+    debugPrint('HSTEST done');
   }
 
   static const _tabs = ['Ana Sayfa', 'Filmler', 'Diziler', 'Klasörler'];

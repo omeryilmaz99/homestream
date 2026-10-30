@@ -9,6 +9,7 @@ import '../../core/image_cache.dart';
 import '../../core/models.dart';
 import '../../core/platform.dart';
 import '../../core/prefs.dart';
+import '../../player/video_layer.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
 import '../settings_lock.dart';
@@ -17,7 +18,7 @@ import '../tv_focus.dart';
 import '../widgets/common.dart';
 import 'play_launcher.dart';
 
-const appVersion = '1.4.2';
+const appVersion = '1.4.3';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -302,6 +303,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: prefs.hardwareDecoding,
           onChanged: (v) => setState(() => prefs.hardwareDecoding = v),
         ),
+        if (AppPlatform.isTv && AppPlatform.isAndroid)
+          _SwitchRow(
+            title: 'Videoyu TV kutusunun video katmanında göster',
+            subtitle: prefs.tvVideoLayer && !VideoLayer.available
+                ? 'Uygulamayı kapatıp açınca etkin olur.'
+                : 'Kutunun kendi oynatıcısı gibi: daha net ve akıcı görüntü '
+                      '(4K, HDR). Görüntü gelmezse kapat.',
+            value: prefs.tvVideoLayer,
+            onChanged: (v) => setState(() => prefs.tvVideoLayer = v),
+          ),
         if (AppPlatform.isDesktop)
           _SwitchRow(
             title: 'Tam ekranda başlat',
