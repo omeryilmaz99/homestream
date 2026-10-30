@@ -2,6 +2,7 @@ package com.homestream.home_stream
 
 import android.app.Activity
 import android.graphics.Color
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -38,6 +39,12 @@ class VideoLayer(private val activity: Activity, private val channel: MethodChan
             return
         }
         val root = activity.findViewById<ViewGroup>(android.R.id.content) ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Android outlines the focused view (the Flutter view) once a
+            // remote key is pressed; drawn under the transparent Flutter
+            // surface it would frame the video
+            for (i in 0 until root.childCount) root.getChildAt(i).defaultFocusHighlightEnabled = false
+        }
         val box = FrameLayout(activity).apply {
             // letterbox bars
             setBackgroundColor(Color.BLACK)
