@@ -13,10 +13,12 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"homestream/internal/api"
+	"homestream/internal/files"
 	"homestream/internal/library"
 	"homestream/internal/music"
 	"homestream/internal/store"
@@ -112,6 +114,18 @@ func main() {
 	defer stop()
 	srv := &api.Server{Lib: lib, St: st, Version: version, DefaultName: *name, Port: *port, ServerID: serverID,
 		Music: mus, Ctx: ctx}
+	fsvc, err := files.New(ctx, files.Config{
+		DB: st.DB, DataDir: *dataDir, Home: home, Library: *libDir, DrivesDir: *drives,
+		Version: version, ServerID: serverID, ServerName: srv.ServerName,
+		CheckPassword: api.CheckAdminPassword,
+		LibraryDirs:   func() []files.Place { return libraryPlaces(st, mus) },
+		OnChange:      func(dir string) { rescanIfLibrary(st, lib, mus, dir) },
+	})
+	if err != nil {
+		log.Printf("warning: file transfer (Home Dosya) disabled: %v", err)
+	} else {
+		srv.Files = fsvc
+	}
 
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
 	if err != nil {
@@ -144,5 +158,46 @@ func main() {
 	defer cancel()
 	if err := httpSrv.Shutdown(shCtx); err != nil {
 		_ = httpSrv.Close()
+	}
+}
+
+// libraryPlaces lists the video and music folders as shortcuts for Home Dosya.
+func libraryPlaces(st *store.Store, mus *music.Library) []files.Place {
+	var out []files.Place
+	if fs, err := st.Folders(); err == nil {
+		for _, f := range fs {
+			out = append(out, files.Place{Name: f.Name, Path: f.Path, Kind: "library"})
+		}
+	}
+	if fs, err := mus.Folders(); err == nil {
+		for _, f := range fs {
+			out = append(out, files.Place{Name: f.Name, Path: f.Path, Kind: "music"})
+		}
+	}
+	return out
+}
+
+// rescanIfLibrary starts a library scan when files were added in a media folder,
+// so uploaded films and songs show up without waiting for the next scan.
+func rescanIfLibrary(st *store.Store, lib *library.Library, mus *music.Library, dir string) {
+	inside := func(root string) bool {
+		root = filepath.Clean(root)
+		return dir == root || strings.HasPrefix(dir, root+string(filepath.Separator))
+	}
+	if fs, err := mus.Folders(); err == nil {
+		for _, f := range fs {
+			if inside(f.Path) {
+				mus.RequestScan()
+				break
+			}
+		}
+	}
+	if fs, err := st.Folders(); err == nil {
+		for _, f := range fs {
+			if inside(f.Path) {
+				lib.RequestScan(false)
+				return
+			}
+		}
 	}
 }

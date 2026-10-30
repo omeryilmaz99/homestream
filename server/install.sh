@@ -90,6 +90,8 @@ AUTOMOUNT_UNIT=$ROOT/etc/systemd/system/homestream-automount.service
 AUTOMOUNT_TIMER=$ROOT/etc/systemd/system/homestream-automount.timer
 AUTOMOUNT_RULE=$ROOT/etc/udev/rules.d/99-homestream-automount.rules
 DRIVES_DIR=/media/homestream
+DISK_HELPER=$ROOT/usr/local/sbin/homestream-disk
+DISK_SUDOERS=$ROOT/etc/sudoers.d/homestream-disk
 
 setup_automount() {
   msg "Otomatik disk bağlama kuruluyor ($DRIVES_DIR)"
@@ -106,9 +108,17 @@ OWN_UID=@UID@
 OWN_GID=@GID@
 MIN_BYTES=$((2 * 1024 * 1024 * 1024))
 SKIP=/run/homestream-automount.skip
+EJECTED=/run/homestream-automount.ejected
 exec 9>/run/homestream-automount.lock
 flock 9
 mkdir -p "$BASE"
+
+# disks ejected from the app stay unmounted until they are unplugged
+if [ -s "$EJECTED" ]; then
+  tmp=$(mktemp)
+  while IFS= read -r l; do [ -b "${l%%:*}" ] && printf '%s\n' "$l"; done < "$EJECTED" > "$tmp"
+  cat "$tmp" > "$EJECTED"; rm -f "$tmp"
+fi
 
 # 1) drop mounts whose disk was unplugged, and leftover empty folders
 for d in "$BASE"/*/; do
@@ -151,6 +161,7 @@ lsblk -bPnpo NAME,TYPE,FSTYPE,SIZE,LABEL,UUID,PARTTYPE,PKNAME,MOUNTPOINT | while
   esac
   findmnt -rn -S "$NAME" >/dev/null 2>&1 && continue
   grep -qsxF "$NAME:$UUID" "$SKIP" && continue
+  grep -qsxF "$NAME:$UUID" "$EJECTED" && continue
   grep -qsE "^[[:space:]]*(UUID=$UUID|$NAME)[[:space:]]" /etc/fstab && [ -n "$UUID" ] && continue
 
   name=${LABEL:-Disk-${UUID:0:8}}
@@ -192,6 +203,7 @@ done
 exit 0
 AMEOF
   $SUDO chmod 0755 "$AUTOMOUNT_BIN"
+  setup_disk_helper
   printf '%s\n' "[Unit]" "Description=Home Stream otomatik disk bağlama" "After=local-fs.target" "" \
     "[Service]" "Type=oneshot" "ExecStartPre=/bin/sleep 2" "ExecStart=/usr/local/sbin/homestream-automount" "" \
     "[Install]" "WantedBy=multi-user.target" | $SUDO tee "$AUTOMOUNT_UNIT" >/dev/null
@@ -205,9 +217,69 @@ AMEOF
   $SUDO systemctl start homestream-automount.service || warn "Disk bağlama çalıştırılamadı (journalctl -t homestream-automount)."
 }
 
+# Home Dosya: "Güvenle çıkar" / "Bağla" for disks, run by the service through sudo.
+setup_disk_helper() {
+  cat <<'DHEOF' | $SUDO tee "$DISK_HELPER" >/dev/null
+#!/bin/bash
+# Home Stream: eject or mount a data disk from the apps.
+#   homestream-disk eject /media/homestream/<disk>
+#   homestream-disk mount /dev/sdX1
+set -u
+BASE=/media/homestream
+EJECTED=/run/homestream-automount.ejected
+SKIP=/run/homestream-automount.skip
+case "${1:-}" in
+  eject)
+    dir=$(realpath -m -- "${2:-}")
+    [ "$(dirname "$dir")" = "$BASE" ] || { echo "geçersiz disk"; exit 2; }
+    mountpoint -q "$dir" || { echo "disk bağlı değil"; exit 3; }
+    src=$(findmnt -no SOURCE --mountpoint "$dir")
+    uuid=$(blkid -o value -s UUID "$src" 2>/dev/null)
+    sync
+    if ! err=$(umount "$dir" 2>&1); then
+      case "$err" in *busy*) echo "busy" ;; *) echo "$err" ;; esac
+      exit 4
+    fi
+    rmdir "$dir" 2>/dev/null
+    printf '%s:%s\n' "$src" "$uuid" >> "$EJECTED"
+    # power the USB disk off when nothing else on it is mounted
+    disk=$(lsblk -no PKNAME "$src" 2>/dev/null | head -n1)
+    if [ -n "$disk" ] && ! lsblk -no MOUNTPOINT "/dev/$disk" 2>/dev/null | grep -q . &&
+       [ "$(lsblk -dno TRAN "/dev/$disk" 2>/dev/null)" = usb ] && command -v udisksctl >/dev/null 2>&1; then
+      udisksctl power-off -b "/dev/$disk" --no-user-interaction >/dev/null 2>&1 || true
+    fi
+    logger -t homestream-disk "çıkarıldı: $src ($dir)"
+    ;;
+  mount)
+    dev="${2:-}"
+    case "$dev" in /dev/sd*|/dev/nvme*|/dev/mmcblk*|/dev/vd*|/dev/hd*) ;; *) echo "geçersiz disk"; exit 2 ;; esac
+    [ -b "$dev" ] || { echo "disk bulunamadı"; exit 3; }
+    for f in "$EJECTED" "$SKIP"; do
+      [ -f "$f" ] && sed -i "\\#^$dev:#d" "$f"
+    done
+    /usr/local/sbin/homestream-automount
+    findmnt -rn -S "$dev" >/dev/null 2>&1 || { echo "disk bağlanamadı (dosya sistemi tanınmadı ya da sistem diski)"; exit 4; }
+    ;;
+  *) echo "kullanım: homestream-disk eject <klasör> | mount <aygıt>"; exit 2 ;;
+esac
+exit 0
+DHEOF
+  $SUDO chmod 0755 "$DISK_HELPER"
+  local tmp
+  tmp=$(mktemp)
+  printf '%s ALL=(root) NOPASSWD: %s\n' "$RUN_USER" "/usr/local/sbin/homestream-disk" > "$tmp"
+  if command -v visudo >/dev/null 2>&1 && ! visudo -cqf "$tmp" >/dev/null 2>&1; then
+    warn "Disk izni (sudoers) yazılamadı; uygulamadan disk çıkarma çalışmayacak."
+  else
+    $SUDO mkdir -p "$(dirname "$DISK_SUDOERS")"
+    $SUDO install -m 0440 "$tmp" "$DISK_SUDOERS"
+  fi
+  rm -f "$tmp"
+}
+
 remove_automount() {
   $SUDO systemctl disable --now homestream-automount.timer homestream-automount.service 2>/dev/null || true
-  $SUDO rm -f "$AUTOMOUNT_BIN" "$AUTOMOUNT_UNIT" "$AUTOMOUNT_TIMER" "$AUTOMOUNT_RULE"
+  $SUDO rm -f "$AUTOMOUNT_BIN" "$AUTOMOUNT_UNIT" "$AUTOMOUNT_TIMER" "$AUTOMOUNT_RULE" "$DISK_HELPER" "$DISK_SUDOERS"
   $SUDO udevadm control --reload-rules 2>/dev/null || true
 }
 

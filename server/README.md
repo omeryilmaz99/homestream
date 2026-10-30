@@ -77,6 +77,14 @@ disk geri takılınca izleme geçmişiyle birlikte geri gelir.
 **Afiş ve özetler (isteğe bağlı):** themoviedb.org'dan ücretsiz bir API anahtarı alıp
 uygulamanın Ayarlar ekranına girerseniz Türkçe özetler, türler, puanlar ve afişler indirilir.
 
+## Home Dosya (dosya aktarımı)
+
+Home Dosya uygulaması aynı sunucuya bağlanır; giriş şifresi, sunucunun **ayarlar şifresidir**.
+Kurulum betiği USB diskleri uygulamadan güvenle çıkarabilmek / bağlayabilmek için küçük bir
+yardımcı (`/usr/local/sbin/homestream-disk`) ve yalnızca o komuta izin veren bir sudo kuralı
+(`/etc/sudoers.d/homestream-disk`) kurar. Sunucuyu güncellemek için kurulum komutunu yeniden
+çalıştırmanız yeterli. Uç noktalar: [docs/FILES_API.md](../docs/FILES_API.md).
+
 ## Sorun giderme
 
 ```bash
