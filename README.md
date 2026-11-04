@@ -4,6 +4,7 @@ Ev sunucusundaki filmler ve diziler için Netflix tarzı bir uygulama.
 
 - `server/` — Ubuntu sunucuda çalışan küçük program (Go, tek dosya). HomeStream klasörünü ve eklenen diğer klasörleri tarar, kapakları, profilleri ve kaldığın yerleri tutar. Ayrıntı: [server/README.md](server/README.md)
 - `client/` — Windows uygulaması (Flutter + mpv). Aynı kod ileride Android TV ve telefon için de kullanılacak.
+- `tizen/` — **Samsung TV (Tizen)** sürümü: web uygulaması, TV'nin kendi oynatıcısıyla (AVPlay). Kurulum: [tizen/README.md](tizen/README.md)
 - `music/` — **Home Müzik**: Spotify tarzı müzik uygulaması (Android telefon, Flutter + mpv). Aynı sunucuya ve aynı profillere bağlanır. Ayrıntı: [music/README.md](music/README.md)
 - `files/` — **Home Dosya**: bilgisayar / telefon ile sunucu arasında dosya aktarımı ve sunucu yönetimi (Windows + Android, Flutter). Ayrıntı: [files/README.md](files/README.md)
 - `docs/API.md` — sunucu ile uygulama arasındaki arayüz; müzik için `docs/MUSIC_API.md`, dosya aktarımı için `docs/FILES_API.md`.
@@ -13,6 +14,7 @@ Ev sunucusundaki filmler ve diziler için Netflix tarzı bir uygulama.
 GitHub'a her gönderimde `.github/workflows/build.yml` çalışır ve "latest" sürümüne şunları koyar:
 - `HomeStream-Setup.exe` (Windows kurulum dosyası) ve `HomeStream-Windows-Portable.zip`
 - `HomeStream-Android.apk` / `HomeStream-AndroidTV.apk` (video) ve `HomeMuzik-Android.apk` (müzik)
+- `HomeStream-Tizen.wgt` (Samsung TV, imzasız: kurmadan önce kendi sertifikanla imzala)
 - `HomeDosya-Setup.exe`, `HomeDosya-Windows-Portable.zip` ve `HomeDosya-Android.apk` (dosya aktarımı)
 - `homestream-server-linux-amd64` / `-arm64` ve `install.sh`
 

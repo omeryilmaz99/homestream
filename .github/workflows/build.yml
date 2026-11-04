@@ -173,10 +173,34 @@ jobs:
           name: files-windows
           path: dist/*
 
+  tizen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check
+        working-directory: tizen
+        run: |
+          for f in js/*.js; do node --check "$f"; done
+          python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('config.xml')"
+          # old TV browsers (Chromium 56): no optional chaining, ?? or object spread
+          if grep -nE '\?\.[a-zA-Z_(\[]|\?\?|\{ *\.\.\.|, *\.\.\.[a-zA-Z]' js/*.js; then
+            echo "Yeni JavaScript söz dizimi eski TV'lerde çalışmaz"; exit 1
+          fi
+      - name: Package (unsigned)
+        working-directory: tizen
+        run: |
+          ./build.sh --unsigned
+          mkdir -p ../dist
+          cp HomeStream.wgt ../dist/HomeStream-Tizen.wgt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tizen
+          path: dist/*
+
   release:
     # only from main / tags: branches and pull requests just build
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-    needs: [server, windows, android, music-android, files-android, files-windows]
+    needs: [server, windows, android, music-android, files-android, files-windows, tizen]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -185,7 +209,7 @@ jobs:
       - name: Collect files
         run: |
           mkdir -p release
-          find out -type f \( -name 'homestream-server-*' -o -name 'install.sh' -o -name '*.exe' -o -name '*.zip' -o -name '*.apk' \) -exec cp {} release/ \;
+          find out -type f \( -name 'homestream-server-*' -o -name 'install.sh' -o -name '*.exe' -o -name '*.zip' -o -name '*.apk' -o -name '*.wgt' \) -exec cp {} release/ \;
           ls -la release
       - name: Publish "latest" release
         uses: softprops/action-gh-release@v2
